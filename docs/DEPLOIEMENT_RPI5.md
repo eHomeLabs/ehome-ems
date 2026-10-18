@@ -1,5 +1,7 @@
 # Déploiement cible — Raspberry Pi 5
 
+> Pour la procédure détaillée, suivre le [guide pas à pas](wiki/Home.md), puis [l’installation RPi5/NVMe depuis Windows](wiki/03-Installation-RPi5-NVMe.md).
+
 ## Décision validée
 eHome EMS sera hébergé sur un Raspberry Pi 5 dédié, distinct du Raspberry Pi 4 qui héberge Home Assistant OS.
 

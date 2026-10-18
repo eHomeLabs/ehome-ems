@@ -54,5 +54,7 @@ Restent à préciser : fréquence et rétention des données, authentification e
 
 ## Documentation
 
+**[📚 Guide pas à pas](docs/wiki/Home.md)** — installation Windows → SSD NVMe → RPi5, configuration, déploiement, validation, sauvegarde et dépannage.
+
 - [Cahier des charges](docs/CAHIER_DES_CHARGES.md) — vision et périmètre fonctionnel.
 - [Déploiement Raspberry Pi 5](docs/DEPLOIEMENT_RPI5.md) — cible technique et étapes de mise en service.
