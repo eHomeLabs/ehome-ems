@@ -1,5 +1,7 @@
 # eHome EMS
 
+![Vision eHome EMS : solaire, réseau, batteries et usages reliés à un EMS local sur RPi5/NVMe ; V1 en lecture seule.](docs/assets/ehome-ems-overview.svg)
+
 **Observer, comprendre et, à terme, piloter l’énergie de la maison — en local.**
 
 eHome EMS est un système résidentiel de gestion de l’énergie **local-first, multi-marques et multi-protocoles**, avec une interface web graphique en français. Son cœur est indépendant de Home Assistant : celui-ci constitue une source de données optionnelle, aux côtés de MQTT et des API des équipements.

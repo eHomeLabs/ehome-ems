@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="480" viewBox="0 0 1120 480" role="img" aria-labelledby="title desc">
+<title id="title">eHome EMS — l’énergie de la maison, en local</title>
+<desc id="desc">Vision du projet : solaire, réseau, batteries et usages de la maison reliés à un EMS local sur Raspberry Pi 5. V1 en lecture seule ; pilotage prévu en V2.</desc>
+<defs>
+<linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101f35"/><stop offset="1" stop-color="#122f3b"/></linearGradient>
+<linearGradient id="core" x2="1" y2="1"><stop stop-color="#193f51"/><stop offset="1" stop-color="#194c51"/></linearGradient>
+</defs>
+<rect width="1120" height="480" rx="24" fill="url(#bg)"/>
+<g font-family="Segoe UI,Arial,sans-serif">
+<text x="42" y="50" fill="#f0f8fc" font-size="26" font-weight="700">L’énergie de la maison, en local.</text>
+<text x="42" y="79" fill="#b5cad7" font-size="16">Multi-marques · Multi-protocoles · Indépendant de Home Assistant</text>
+<rect x="897" y="31" width="181" height="32" rx="16" fill="#244657"/>
+<text x="987" y="52" text-anchor="middle" fill="#bcefe4" font-size="13" font-weight="600">VISION DU PROJET</text>
+
+<g fill="none" stroke="#4f9baf" stroke-width="3">
+<path d="M292 177 H350 Q374 177 374 201 V242 H410"/>
+<path d="M292 319 H350 Q374 319 374 295 V242"/>
+<path d="M710 242 H746 Q770 242 770 216 V177 H828"/>
+<path d="M746 242 Q770 242 770 268 V319 H828"/>
+</g>
+<g fill="#74e1c4"><circle cx="330" cy="177" r="5"/><circle cx="330" cy="319" r="5"/><circle cx="795" cy="177" r="5"/><circle cx="795" cy="319" r="5"/></g>
+
+<g fill="#192f44" stroke="#365268">
+<rect x="42" y="122" width="250" height="110" rx="18"/>
+<rect x="42" y="264" width="250" height="110" rx="18"/>
+<rect x="828" y="122" width="250" height="110" rx="18"/>
+<rect x="828" y="264" width="250" height="110" rx="18"/>
+</g>
+
+<g stroke="#ffd479" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="83" cy="148" r="8"/><path d="M83 134 V130 M69 148 H65 M97 148 H101 M73 138 L70 135 M93 138 L96 135"/>
+<path d="M66 166 H104 L111 193 H59 Z M70 180 H105 M80 166 L77 193 M92 166 L95 193 M85 193 V201 M73 201 H97"/>
+</g>
+<text x="130" y="169" fill="#f0f8fc" font-size="20" font-weight="600">Solaire</text>
+<text x="130" y="195" fill="#b5cad7" font-size="15">Production PV</text>
+
+<g stroke="#8abaff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M83 286 L65 348 M83 286 L101 348 M73 319 H93 M68 338 H98 M62 304 H104 M73 296 H93 M62 304 V315 M104 304 V315 M73 319 L98 338 M93 319 L68 338"/>
+</g>
+<text x="130" y="311" fill="#f0f8fc" font-size="20" font-weight="600">Réseau</text>
+<text x="130" y="337" fill="#b5cad7" font-size="15">Import / export</text>
+
+<g stroke="#74e1c4" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<rect x="853" y="151" width="37" height="48" rx="5"/><path d="M865 145 H878 V151"/>
+<path d="M875 159 L865 176 H878 L869 190"/>
+</g>
+<text x="915" y="169" fill="#f0f8fc" font-size="20" font-weight="600">Batteries</text>
+<text x="915" y="195" fill="#b5cad7" font-size="15">Charge / décharge</text>
+
+<g stroke="#c6b8ff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M849 314 L872 293 L895 314 M855 309 V340 H889 V309 M866 340 V324 H878 V340"/>
+<path d="M869 303 L864 313 H875 L869 321"/>
+</g>
+<text x="915" y="307" fill="#f0f8fc" font-size="20" font-weight="600">Usages</text>
+<text x="915" y="331" fill="#b5cad7" font-size="14">Maison · Chauffe-eau</text>
+<text x="915" y="351" fill="#b5cad7" font-size="14">Recharge VE</text>
+
+<rect x="410" y="132" width="300" height="232" rx="24" fill="url(#core)" stroke="#60d4bb" stroke-width="1.5"/>
+<g stroke="#81ebcf" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M538 180 L560 162 L582 180 V204 H538 Z"/>
+<path d="M550 194 V185 M560 194 V177 M570 194 V182"/>
+</g>
+<text x="560" y="241" text-anchor="middle" fill="#ffffff" font-size="32" font-weight="700">eHome EMS</text>
+<text x="560" y="270" text-anchor="middle" fill="#c3e4e3" font-size="16">Observer · Comprendre · Anticiper</text>
+<rect x="450" y="292" width="220" height="39" rx="10" fill="#102f3b"/>
+<text x="560" y="317" text-anchor="middle" fill="#94e4d0" font-size="15">RPi5 + NVMe · Données locales</text>
+
+<path d="M42 405 H1078" stroke="#365268"/>
+<text x="42" y="443" fill="#d6e6ed" font-size="16"><tspan fill="#74e1c4" font-weight="700">V1</tspan>  Observer en lecture seule</text>
+<text x="425" y="443" fill="#d6e6ed" font-size="16"><tspan fill="#8abaff" font-weight="700">V2</tspan>  Piloter en sécurité</text>
+<text x="800" y="443" fill="#d6e6ed" font-size="16"><tspan fill="#c6b8ff" font-weight="700">V3</tspan>  Prévoir et optimiser</text>
+</g>
+</svg>
