@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurer les sources énergétiques",
+        "description": "Sélectionnez les capteurs de puissance déjà disponibles dans Home Assistant. Le signe de la puissance réseau est conservé tel quel.",
+        "data": {
+          "grid_power": "Puissance réseau",
+          "solar_power": "Production photovoltaïque",
+          "home_power": "Consommation maison"
+        }
+      }
+    },
+    "error": {
+      "select_source": "Sélectionnez au moins un capteur."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Modifier les sources",
+        "data": {
+          "grid_power": "Puissance réseau",
+          "solar_power": "Production photovoltaïque",
+          "home_power": "Consommation maison"
+        }
+      }
+    }
+  }
+}
