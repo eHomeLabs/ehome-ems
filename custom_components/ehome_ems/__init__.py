@@ -21,5 +21,8 @@ async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload mapped sensors."""
-    return await hass.config_entries.async_unload_platforms(entry, ["sensor"])
+    """Unload mapped sensors and registered listeners."""
+    unloaded = await hass.config_entries.async_unload_platforms(entry, ["sensor"])
+    if unloaded:
+        entry.async_unload()
+    return unloaded
