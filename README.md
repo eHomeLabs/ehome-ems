@@ -1,8 +1,18 @@
 # eHome EMS — Universal Energy Manager
 
+![eHome EMS — Universal Energy Manager, intégration Home Assistant](docs/assets/ehome-ems-banner.svg)
+
 **Votre installation. Vos équipements. Votre énergie. Un EMS sur mesure.**
 
-> **Statut : conception / cadrage.** Projet d'intégration personnalisée **Home Assistant**, distribuable via **HACS**. Les fonctions décrites constituent des objectifs de développement et ne sont pas encore disponibles.
+> **Statut : V0.1 en développement, non validée.** Le squelette d'intégration et la sélection manuelle de capteurs de puissance sont présents dans le dépôt. La découverte automatique, le dashboard et le pilotage restent à développer. **Ne pas installer sur un Home Assistant de production avant validation.**
+
+## État de la V0.1
+
+- Code initial dans [`custom_components/ehome_ems`](custom_components/ehome_ems).
+- Assistant de sélection manuelle de capteurs de puissance réseau, solaire et maison.
+- Capteurs EMS en lecture seule, avec conversion kW → W et indisponibilité en cas de source invalide.
+- Traduction française initiale.
+- **Non testé sur une instance Home Assistant à ce stade.** Compatibilité HACS, rechargement des options, détection et dashboard restent à valider.
 
 ## Vision
 
