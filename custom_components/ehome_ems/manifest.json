@@ -1,0 +1,12 @@
+{
+  "domain": "ehome_ems",
+  "name": "eHome EMS — Universal Energy Manager",
+  "version": "0.1.0",
+  "documentation": "https://github.com/eHomeLabs/ehome-ems",
+  "issue_tracker": "https://github.com/eHomeLabs/ehome-ems/issues",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "requirements": [],
+  "iot_class": "local_push"
+}
