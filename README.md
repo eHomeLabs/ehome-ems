@@ -1,60 +1,142 @@
-# eHome EMS
+# eHome EMS — Universal Energy Manager
 
-![Vision eHome EMS : solaire, réseau, batteries et usages reliés à un EMS local sur RPi5/NVMe ; V1 en lecture seule.](docs/assets/ehome-ems-overview.svg)
+**Votre installation. Vos équipements. Votre énergie. Un EMS sur mesure.**
 
-**Observer, comprendre et, à terme, piloter l’énergie de la maison — en local.**
+> **Statut : conception / cadrage.** Projet d'intégration personnalisée **Home Assistant**, distribuable via **HACS**. Les fonctions décrites constituent des objectifs de développement et ne sont pas encore disponibles.
 
-eHome EMS est un système résidentiel de gestion de l’énergie **local-first, multi-marques et multi-protocoles**, avec une interface web graphique en français. Son cœur est indépendant de Home Assistant : celui-ci constitue une source de données optionnelle, aux côtés de MQTT et des API des équipements.
+## Vision
 
-> **Statut : cadrage initial.** Le dépôt contient les documents de conception ; le prototype reste à développer. Les fonctions ci-dessous constituent la feuille de route.
+**eHome EMS** ambitionne de rendre la gestion énergétique résidentielle accessible aux utilisateurs de Home Assistant, sans imposer de fabricant, de protocole ni de serveur supplémentaire.
 
-## Une architecture ouverte
+L'utilisateur installe l'intégration depuis HACS, puis un assistant l'accompagne pour découvrir, sélectionner et associer ses entités Home Assistant aux fonctions énergétiques de son installation. eHome EMS construit ensuite un **dashboard énergétique personnalisable et évolutif** et peut proposer des stratégies d'optimisation ou des automatisations à valider.
+
+**Périmètre : exclusivement Home Assistant.** eHome EMS réutilise les équipements et données déjà exposés par les intégrations HA (Zigbee, MQTT, Wi-Fi, Modbus, API locales/cloud, etc.). Il n'est **pas** prévu de développer un serveur EMS autonome, une application indépendante ni des connecteurs matériels parallèles à HA. Un Raspberry Pi dédié n'est pas nécessaire.
+
+## Principes fondateurs
+
+- **Universel dans l'écosystème Home Assistant** : indépendant des marques, fondé sur des fonctions énergétiques communes.
+- **Installation guidée** : aucune configuration YAML obligatoire pour les fonctions de base.
+- **Détection assistée** : propositions automatiques de correspondances, toujours vérifiables et modifiables.
+- **Local-first** : calcul, configuration et pilotage exécutés dans HA ; pas de cloud eHome EMS requis. Certaines intégrations HA peuvent elles-mêmes dépendre du cloud.
+- **Progressif** : utilisable pour une installation simple, extensible aux installations complexes.
+- **Transparent** : données, hypothèses, règles et actions compréhensibles.
+- **Sécurisé** : lecture seule au démarrage ; aucune commande d'équipement sans autorisation explicite.
+- **Open source** : architecture documentée, contributions et profils d'équipements communautaires encouragés.
+
+## Parcours utilisateur envisagé
+
+1. **Installer** eHome EMS depuis HACS, puis ajouter l'intégration dans Home Assistant.
+2. **Choisir les modules** présents dans l'installation : réseau, photovoltaïque, batteries, chauffe-eau, chauffage/climatisation, recharge VE, autres charges.
+3. **Découvrir les entités** : l'assistant propose des correspondances à partir des métadonnées et capacités HA ; l'utilisateur peut rechercher, confirmer ou corriger chaque association.
+4. **Valider les mesures** : unités, signes, sources, fraîcheur, capacités, limites et risques de doubles comptages.
+5. **Générer le dashboard EMS** : vues et indicateurs adaptés aux modules configurés ; personnalisation et évolutions sans perdre les choix de l'utilisateur.
+6. **Optimiser à la demande** : scénarios suggérés, simulation si disponible, validation explicite et activation réversible.
+
+## Modules fonctionnels
+
+| Module | Données ou capacités visées |
+| --- | --- |
+| Réseau électrique | Puissance, import/export, énergies cumulées, tarifs |
+| Maison | Consommation totale, bilans, historique |
+| Photovoltaïque | Production instantanée et cumulée |
+| Batteries | État de charge, capacité, puissance de charge/décharge, limites, commandes si disponibles |
+| Eau chaude | Température, puissance, énergie, consigne ou marche/arrêt si disponibles |
+| Chauffage et climatisation | Températures, modes, consignes, consommations et commandes |
+| Recharge VE | État de charge, puissance, courant maximal, énergie et pilotage si disponibles |
+| Autres charges | Mesure, classification, priorités et délestage si possible |
+
+L'absence d'un module ne doit pas bloquer les autres.
+
+## Architecture cible
 
 ```text
-Sources → Adaptateurs → Normalisation → Moteur de calcul → Stockage local → API → Interface web
+Équipements et services
+  Zigbee · MQTT · Wi-Fi · Modbus · API · Cloud (via HA)
+                       ↓
+         Intégrations Home Assistant
+                       ↓
+      eHome EMS (custom integration / HACS)
+      ├─ Découverte et association d'entités
+      ├─ Modèle énergétique normalisé
+      ├─ Contrôle de qualité des données
+      ├─ Configuration et profils d'équipements
+      ├─ Calculs, bilans et indicateurs
+      └─ Moteur de stratégies et de sécurité
+                       ↓
+       Dashboard Home Assistant / Lovelace
+                       +
+       Automatisations et services HA
 ```
 
-Les sources prévues sont Home Assistant (WebSocket/REST), MQTT et les API locales ou cloud selon les équipements. Les adaptateurs directs seront ajoutés progressivement. Le traitement et les historiques restent locaux ; une source cloud éventuelle ne définit pas le cœur de l’EMS.
+Le **modèle énergétique** sépare le rôle d'un équipement de sa marque. Une batterie Zendure, EcoFlow ou Victron doit pouvoir être décrite par les mêmes concepts (SOC, puissance, énergie, capacité), sous réserve des entités réellement disponibles. Les profils fabricants pourront faciliter l'association, sans devenir obligatoires.
 
-Les mesures seront normalisées : puissance (W), énergie (Wh), charge des batteries (%), horodatage, provenance et qualité. Import/export réseau et charge/décharge seront distingués, avec détection des données périmées ou absentes et prévention des doubles comptages.
+La configuration devra prendre en compte les unités (W, kW, Wh, kWh, %), les conventions de signe, l'horodatage, la qualité des mesures, les données manquantes et les doubles comptages. Les valeurs déduites devront être distinguées des valeurs mesurées.
 
-## Feuille de route
+### Interface et personnalisation
 
-| Version | Objectif | Fonctions prévues |
+L'objectif est de produire automatiquement un dashboard Home Assistant lisible (flux énergétiques, jauges, bilans, historiques, états des équipements), qui reste **modifiable et évolutif**. L'architecture de génération devra préserver les personnalisations lors des mises à jour ou de l'ajout de modules. Le choix entre vues Lovelace natives et cartes frontend dédiées sera validé par prototype.
+
+### Automatisations et IA
+
+Trois niveaux sont envisagés :
+
+1. **Manuel** : consultation et commande volontaire des équipements compatibles.
+2. **Règles** : stratégies configurables (surplus PV, chauffe-eau, batterie, heures creuses, recharge VE, délestage) avec validation préalable.
+3. **Assistance intelligente facultative** : recommandations fondées sur les historiques, prévisions et tarifs ; l'IA propose, mais ne remplace pas les sécurités déterministes.
+
+Les commandes devront respecter les limites matérielles, les priorités, les conditions d'arrêt et les possibilités de retour au pilotage manuel. Une perte de données ou de communication ne doit pas entraîner de commandes dangereuses.
+
+## Feuille de route prévisionnelle
+
+| Version | Objectif | Livrables envisagés |
 | --- | --- | --- |
-| **V1 — Observer** | Lecture seule, sans commande aux équipements | Flux en temps réel : production photovoltaïque, consommation maison, import/export, batteries (SOC, puissance, énergie), chauffe-eau, borne VE et consommateurs. Historiques sur 24 h, bilans journaliers, correspondance configurable des entités HA avec les métriques métier, alertes de qualité des données et démonstration simulée. |
-| **V2 — Piloter** | Pilotage sécurisé après validation explicite | Priorités, modes de fonctionnement et délestage. |
-| **V3 — Anticiper** | Optimisation énergétique | Prévisions solaires, anticipation de consommation et optimisation tarifaire. |
+| **V0.1 — Fondations** | Intégration HACS et lecture seule | Config flow, découverte/association manuelle, réseau, PV, consommation maison, normalisation et diagnostics |
+| **V0.2 — Visualisation** | Dashboard généré | Flux, historiques, indicateurs, personnalisation conservée |
+| **V0.3 — Équipements** | Étendre la couverture | Batteries, eau chaude, chauffage/climatisation, borne VE |
+| **V0.4 — Pilotage** | Automatisations sûres | Scénarios, règles, confirmations, désactivation et contrôles |
+| **V0.5 — Intelligence** | Optimisation facultative | Prévisions, recommandations, assistance IA optionnelle |
 
-## Équipements ciblés
+Les versions et fonctionnalités pourront évoluer en fonction des tests.
 
-Périmètre envisagé, dont les intégrations restent à développer et à valider :
+## Banc d'essai initial : eHome Labs
 
-- **Production et stockage :** Hoymiles PV, Zendure SolarFlow AC 2400, Aferiy P210.
-- **Mesure et équipements associés :** Shelly Pro 3EM, Zlinky, NodOn Zigbee.
-- **Usages pilotables à terme :** chauffe-eau, routeur solaire F1ATB et borne VE 20 A.
+L'installation eHome Labs servira de référence pour tester des équipements et situations variés déjà intégrés dans Home Assistant :
 
-## Stack et déploiement envisagés
+- **Mesure** : Linky/ZLinky, Shelly Pro 3EM, modules Zigbee NodOn.
+- **Photovoltaïque** : micro-onduleurs Hoymiles.
+- **Stockage** : Zendure SolarFlow AC 2400 et Aferiy P210.
+- **Eau chaude** : routeur solaire F1ATB et cumulus.
+- **Recharge** : borne VE 20 A.
+- **Protocoles via HA** : Zigbee, MQTT, Wi-Fi et autres intégrations.
 
-- **Backend :** Python / FastAPI.
-- **Frontend :** React / TypeScript, compilé et servi localement.
-- **Stockage :** SQLite sur volume persistant.
-- **Hébergement :** Raspberry Pi 5 dédié, Raspberry Pi OS Lite 64 bits, SSD NVMe avec HAT PCIe, Docker Engine et Docker Compose ARM64.
+Ces équipements constituent un **terrain de validation**, et non une liste exclusive de compatibilité.
 
-Le RPi5 sera distinct du RPi4 hébergeant Home Assistant OS. La première connexion à HA se fera en lecture seule sur le réseau local. Aucune ouverture de port Internet par défaut ; secrets locaux non versionnés, sauvegardes, contrôles de santé et journaux sans secrets sont prévus.
+## Pistes techniques
+
+- Intégration personnalisée Python sous `custom_components/ehome_ems`.
+- Assistant de configuration Home Assistant (`config_flow` et options).
+- Sélection d'entités existantes, sans dupliquer leurs intégrations.
+- Capteurs et diagnostics eHome EMS lorsque nécessaire.
+- Dashboard Lovelace généré et/ou cartes dédiées selon les contraintes de personnalisation.
+- Tests automatisés, données simulées, documentation et traductions (français prioritaire, anglais envisagé).
 
 ## Prochaines étapes
 
-1. Construire un prototype autonome avec données simulées.
-2. Préparer le RPi5/NVMe et les conteneurs Docker Compose ARM64, puis déployer en LAN.
-3. Connecter Home Assistant en lecture seule et configurer les métriques.
-4. Valider les mesures de référence, les conventions de signe, la fraîcheur des données et l’absence de doubles comptages.
+1. Valider le modèle de données énergétiques et les conventions de signe.
+2. Définir le parcours de configuration et les règles de découverte d'entités.
+3. Prototyper une V0.1 en lecture seule sur une installation Home Assistant de test.
+4. Vérifier la cohérence des bilans et l'absence de doubles comptages.
+5. Prototyper le dashboard généré, puis le mécanisme de personnalisation durable.
 
-Restent à préciser : fréquence et rétention des données, authentification et éventuel accès distant, RAM, capacité du SSD et connexion Ethernet/Wi-Fi.
+## Documentation existante
 
-## Documentation
+Les documents historiques du dépôt décrivent encore l'**ancien concept de serveur autonome sur Raspberry Pi 5** et doivent être révisés ou archivés avant d'être utilisés comme référence d'implémentation :
 
-**[📚 Guide pas à pas](docs/wiki/Home.md)** — installation Windows → SSD NVMe → RPi5, configuration, déploiement, validation, sauvegarde et dépannage.
+- [Ancien cahier des charges](docs/CAHIER_DES_CHARGES.md)
+- [Ancien guide de déploiement RPi5](docs/DEPLOIEMENT_RPI5.md)
+- [Ancien guide pas à pas](docs/wiki/Home.md)
 
-- [Cahier des charges](docs/CAHIER_DES_CHARGES.md) — vision et périmètre fonctionnel.
-- [Déploiement Raspberry Pi 5](docs/DEPLOIEMENT_RPI5.md) — cible technique et étapes de mise en service.
+---
+
+**eHome EMS — Universal Energy Manager**  
+*Votre installation. Vos équipements. Votre énergie. Un EMS sur mesure.*
