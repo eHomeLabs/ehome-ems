@@ -4,15 +4,18 @@
 
 **Votre installation. Vos équipements. Votre énergie. Un EMS sur mesure.**
 
-> **Statut : V0.1 en développement, non validée.** Le squelette d'intégration et la sélection manuelle de capteurs de puissance sont présents dans le dépôt. La découverte automatique, le dashboard et le pilotage restent à développer. **Ne pas installer sur un Home Assistant de production avant validation.**
+> **Statut : V0.1 pilote, non encore testée sur une instance Home Assistant réelle.** Configuration manuelle de cinq sources de puissance, capteurs de lecture seule et rechargement des associations. Avant tout essai sur l'installation principale, effectuer une sauvegarde complète.
 
-## État de la V0.1
+## Essayer la V0.1
 
-- Code initial dans [`custom_components/ehome_ems`](custom_components/ehome_ems).
-- Assistant de sélection manuelle de capteurs de puissance réseau, solaire et maison.
-- Capteurs EMS en lecture seule, avec conversion kW → W et indisponibilité en cas de source invalide.
-- Traduction française initiale.
-- **Non testé sur une instance Home Assistant à ce stade.** Compatibilité HACS, rechargement des options, détection et dashboard restent à valider.
+**[Guide d'installation et de validation sur Home Assistant](docs/INSTALLATION_V0_1.md)**
+
+- Intégration Python dans [`custom_components/ehome_ems`](custom_components/ehome_ems), métadonnées HACS à la racine.
+- Assistant de sélection manuelle de **cinq** sources : réseau signé, import, injection, solaire, maison.
+- Cinq capteurs EMS de lecture seule, reprenant les valeurs HA (W ou conversion kW → W), sans commandes.
+- Options de modification avec rechargement de l'intégration, sans redémarrage du Raspberry Pi.
+- Traductions française et anglaise.
+- **Limites :** aucun dashboard ni pilotage, pas de validation en conditions réelles à ce stade. HACS peut ne pas accéder au dépôt privé ; la copie manuelle est documentée.
 
 ## Vision
 
@@ -142,9 +145,10 @@ Ces équipements constituent un **terrain de validation**, et non une liste excl
 
 Les documents historiques du dépôt décrivent encore l'**ancien concept de serveur autonome sur Raspberry Pi 5** et doivent être révisés ou archivés avant d'être utilisés comme référence d'implémentation :
 
-- [Ancien cahier des charges](docs/CAHIER_DES_CHARGES.md)
-- [Ancien guide de déploiement RPi5](docs/DEPLOIEMENT_RPI5.md)
-- [Ancien guide pas à pas](docs/wiki/Home.md)
+- [Cahier des charges Home Assistant](docs/CAHIER_DES_CHARGES.md)
+- [Note d'abandon du déploiement RPi5](docs/DEPLOIEMENT_RPI5.md)
+- [Accueil de la documentation](docs/wiki/Home.md)
+- [Plan de validation V0.1](docs/VALIDATION_V0_1.md)
 
 ---
 
