@@ -15,7 +15,8 @@
 - Le formulaire accepte une à trois sources de puissance, et refuse une configuration vide.
 - Les entités créées suivent les valeurs sources en W (conversion kW si nécessaire).
 - Une source indisponible ou non numérique rend le capteur EMS indisponible.
-- Le signe du réseau est conservé : **ne pas interpréter import/export sans paramétrage ultérieur**.
+- Convention confirmée sur l'installation eHome Labs par capture HA du 18/10/2026 à 14:07 : **−711 W = injection de 711 W** ; les valeurs positives correspondent à l'importation. Le capteur brut conserve son signe.
+- Prévoir pour les autres installations un paramètre de convention inversée ; **non implémenté à ce stade**.
 - Modifier les associations via les options recharge les entités sans redémarrer le RPi.
 - Retirer une association supprime sa production active ; vérifier l'état des anciennes entités dans le registre.
 - Désactiver ou supprimer l'intégration arrête les abonnements aux événements.
