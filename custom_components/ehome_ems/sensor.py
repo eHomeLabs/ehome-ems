@@ -5,17 +5,22 @@ from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, Sen
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from .const import SOURCES, CONF_GRID_POWER, CONF_SOLAR_POWER, CONF_HOME_POWER
+from .const import (
+    SOURCES, CONF_GRID_POWER, CONF_GRID_IMPORT, CONF_GRID_EXPORT,
+    CONF_SOLAR_POWER, CONF_HOME_POWER,
+)
 
 LABELS = {
     CONF_GRID_POWER: "Grid power",
+    CONF_GRID_IMPORT: "Grid import",
+    CONF_GRID_EXPORT: "Grid export",
     CONF_SOLAR_POWER: "Solar power",
     CONF_HOME_POWER: "Home power",
 }
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    """Create mirrors only for mapped power sensors."""
+    """Create read-only mirrors of mapped power sensors."""
     mapping = entry.options if entry.options else entry.data
     async_add_entities([
         MappedPowerSensor(entry.entry_id, key, mapping[key])
@@ -24,7 +29,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 
 class MappedPowerSensor(SensorEntity):
-    """Mirror a selected HA sensor, preserving its sign convention."""
+    """Mirror an existing HA sensor without issuing any commands."""
 
     _attr_device_class = SensorDeviceClass.POWER
     _attr_native_unit_of_measurement = "W"
@@ -38,7 +43,7 @@ class MappedPowerSensor(SensorEntity):
         self._attr_available = False
 
     async def async_added_to_hass(self):
-        """Subscribe to updates, cleaned up automatically on unload."""
+        """Subscribe to source changes and remove subscription on unload."""
         self._update_from_source()
 
         @callback
