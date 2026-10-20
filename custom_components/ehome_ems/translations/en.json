@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure energy sources",
+        "description": "Select existing power sensors. Values and signs are preserved.",
+        "data": {
+          "grid_power": "Signed grid power",
+          "grid_import": "Grid import power",
+          "grid_export": "Grid export power",
+          "solar_power": "Solar production power",
+          "home_power": "Home consumption power"
+        }
+      }
+    },
+    "error": {
+      "select_source": "Select at least one sensor."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit energy sources",
+        "data": {
+          "grid_power": "Signed grid power",
+          "grid_import": "Grid import power",
+          "grid_export": "Grid export power",
+          "solar_power": "Solar production power",
+          "home_power": "Home consumption power"
+        }
+      }
+    },
+    "error": {
+      "select_source": "Select at least one sensor."
+    }
+  }
+}
