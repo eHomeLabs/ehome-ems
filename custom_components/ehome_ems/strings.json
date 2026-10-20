@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure energy sources",
+        "description": "Select available Home Assistant power sensors. Grid power follows the source sensor's sign convention.",
+        "data": {
+          "grid_power": "Grid power",
+          "solar_power": "Solar production power",
+          "home_power": "Home consumption power"
+        }
+      }
+    },
+    "error": {
+      "select_source": "Select at least one sensor."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit energy sources",
+        "data": {
+          "grid_power": "Grid power",
+          "solar_power": "Solar production power",
+          "home_power": "Home consumption power"
+        }
+      }
+    }
+  }
+}
