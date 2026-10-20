@@ -6,15 +6,16 @@ from .const import DOMAIN, SOURCES
 
 
 def source_schema(existing=None):
-    """Build a schema for optional power sensors."""
+    """Build optional power sensor selectors."""
     existing = existing or {}
     power = selector.EntitySelector(
         selector.EntitySelectorConfig(domain="sensor", device_class="power")
     )
-    return vol.Schema({
-        vol.Optional(key, description={"suggested_value": existing[key]} if existing.get(key) else None): power
-        for key in SOURCES
-    })
+    schema = {}
+    for key in SOURCES:
+        description = {"suggested_value": existing[key]} if existing.get(key) else None
+        schema[vol.Optional(key, description=description)] = power
+    return vol.Schema(schema)
 
 
 class EhomeEmsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -42,7 +43,7 @@ class EhomeEmsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class EhomeEmsOptionsFlow(config_entries.OptionsFlow):
-    """Edit sensor associations; options become the authoritative mapping."""
+    """Edit sensor associations and reload mapped entities."""
 
     async def async_step_init(self, user_input=None):
         if user_input is not None:
