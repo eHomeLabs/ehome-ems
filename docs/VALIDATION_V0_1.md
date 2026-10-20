@@ -33,3 +33,15 @@
 ## Critère de passage à l'installation pilote
 
 Revue de code, tests automatisés et validation du parcours de configuration sur une instance Home Assistant de test, puis accord explicite avant installation sur l'instance principale.
+
+## Cartographie réelle eHome Labs — octobre 2026
+
+| Fonction | Entité |
+|---|---|
+| Réseau signé | `sensor.sem_linky_power` |
+| Import réseau | `sensor.import_reseau` |
+| Injection réseau | `sensor.injection_reseau` |
+| Production PV | `sensor.prod_solaire_additionnee` |
+| Consommation maison | `sensor.conso_reelle_maison` |
+
+**Principe de conception :** privilégier les capteurs existants ; ne calculer des capteurs dérivés que si les données nécessaires manquent. Les capteurs import/injection existants sont des candidats pour les modules ultérieurs, pas encore sélectionnables dans le formulaire V0.1 actuel. Vérifier leur unité et leur convention de signe avant utilisation.
