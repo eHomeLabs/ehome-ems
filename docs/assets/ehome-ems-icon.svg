@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="eHome EMS">
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0a233e"/><stop offset="1" stop-color="#062e35"/></linearGradient><linearGradient id="flow"><stop stop-color="#18b7ff"/><stop offset="1" stop-color="#4de27b"/></linearGradient></defs>
+<rect x="5" y="5" width="246" height="246" rx="52" fill="url(#bg)" stroke="#26c7c7" stroke-width="7"/>
+<path d="M46 112 128 45 210 112" fill="none" stroke="#d7f6ff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M66 104V179H190V104" fill="none" stroke="#24bff3" stroke-width="10" stroke-linecap="round"/>
+<rect x="107" y="104" width="42" height="76" rx="10" fill="#153e51" stroke="#4de27b" stroke-width="5"/>
+<path d="m132 113-14 28h13l-8 26 20-34h-13z" fill="#65f18c"/>
+<path d="M48 202c28-22 53-21 80 0s53 22 80 0" fill="none" stroke="url(#flow)" stroke-width="12" stroke-linecap="round"/>
+<circle cx="80" cy="107" r="13" fill="#ffd04d"/>
+</svg>
