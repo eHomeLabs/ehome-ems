@@ -10,6 +10,7 @@ from .const import DOMAIN, VERSION, SOURCES, CONF_BATTERIES, BATTERY_SOURCES
 from .const import CONF_USAGES, USAGE_SOURCES
 from .dashboard import build_dashboard
 from .source_editor import binding_metadata
+from .simulation import plan
 
 SERVICE_GENERATE = "generate_dashboard"
 
@@ -64,6 +65,8 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
             ),
         })
     result["bindings"] = binding_metadata(mapping, entities)
+    result["simulation"] = plan(mapping)
+    result["simulation_history"] = list(getattr(hass, "data", {}).get(DOMAIN, {}).get("simulation_history", {}).get(entry.entry_id, []))
     result["flow"] = {
         "entities": {key: entities.get(key) for key in SOURCES},
         "home_calculated": mapping.get("home_power_mode") == "calculated",

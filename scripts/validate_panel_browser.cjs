@@ -38,7 +38,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.ok(navBox.y < flowBox.y);
       await page.locator(".flow-house img").evaluate(img => img.decode());
       assert.equal(await page.locator(".flow-links path.active").count(), 4);
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b9").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b10").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -113,8 +113,23 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(calls.filter(call => call.type === "call_service").length, 0);
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
       assert.equal(await page.getByText("Aucune commande envoyée", { exact: true }).count(), 1);
+      await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).check();
+      await page.getByRole("spinbutton",{name:"Plafond (W) · Zendure",exact:true}).fill("1000");
+      assert.equal(await page.getByRole("button",{name:"Simuler ce budget",exact:true}).isDisabled(),true);
+      await page.getByRole("button",{name:"Monter · Cumulus",exact:true}).click();
+      await page.getByRole("button",{name:"Enregistrer les priorités de simulation",exact:true}).click();
+      await page.getByText("Priorités de simulation enregistrées. Aucun équipement modifié.",{exact:true}).waitFor();
+      const priorities=await page.evaluate(()=>calls.find(call=>call.type==="ehome_ems/save_simulation").targets);
+      assert.deepEqual(priorities.map(t=>t.id),["usage:b","battery:a","usage:c"]);
+      assert.equal(priorities[1].max_w,1000);
+      await page.getByRole("spinbutton",{name:"Budget hypothétique à répartir (W)",exact:true}).fill("1500");
+      await page.getByRole("button",{name:"Simuler ce budget",exact:true}).click();
+      await page.locator(".scenario-result").first().getByText("Budget : 1500 W · Alloué : 1000 W · Non alloué : 500 W",{exact:true}).waitFor();
+      await page.locator(".simulation-editor").screenshot({path:path.join(output,viewport.width<600?"simulation-editor-mobile.png":"simulation-editor-desktop.png")});
+      await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
+      assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.0b9 · Intégration 0.2.0b9", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.0b10 · Intégration 0.2.0b10", { exact: true }).count());
       await page.getByRole("button", { name: "Changer la source", exact: true }).first().click();
       await page.getByRole("dialog").waitFor();
       await page.getByRole("button", { name: "Annuler", exact: true }).click();
@@ -124,6 +139,9 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("alert").getByText("Flux indisponible dans cette version chargée").waitFor();
       await page.evaluate(() => { fixtureHass.user = { is_admin: false }; fixturePanel.hass = { ...fixtureHass }; });
       assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(), 0);
+      await page.getByRole("button", { name: "Stratégie", exact: true }).click();
+      assert.equal(await page.getByRole("button",{name:"Enregistrer les priorités de simulation",exact:true}).count(),0);
+      assert.equal(await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).isDisabled(),true);
       assert.deepEqual(errors, []);
       await page.close();
     }

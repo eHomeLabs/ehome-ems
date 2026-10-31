@@ -247,7 +247,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b9.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b10.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -262,9 +262,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.0b9"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-0b9"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.0b9.js"
+                assert snapshot["version"] == "0.2.0b10"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-0b10"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.0b10.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -278,6 +278,39 @@ async def validate(config_dir):
                                "entity_id": solar_id, "source_id": "sensor.sim_solar",
                                "expected_source": "sensor.sim_solar", "revision": old_revision}, success=False)
                 assert entry.options["solar_power"] == "sensor.sim_pv_new"
+                snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
+                targets = [{"id": item["id"], "enabled": True, "min_w": 0 if item["kind"] == "battery" else 800,
+                            "max_w": 1000 if item["kind"] == "battery" else 1800}
+                           for item in snapshot["simulation"]["targets"]]
+                assert len(targets) >= 2
+                previous_revision = snapshot["revision"]
+                await command({"type": "ehome_ems/save_simulation", "entry_id": entry.entry_id,
+                               "revision": previous_revision, "targets": targets})
+                await hass.async_block_till_done()
+                assert entry.options["solar_power"] == "sensor.sim_pv_new"
+                await command({"type": "ehome_ems/save_simulation", "entry_id": entry.entry_id,
+                               "revision": previous_revision, "targets": targets}, success=False)
+                service_events = []
+                remove_listener = hass.bus.async_listen("call_service", lambda event: service_events.append(event.data))
+                scenario = await command({"type": "ehome_ems/simulate", "entry_id": entry.entry_id,
+                                          "revision": entry.modified_at.isoformat(), "budget_w": 2100})
+                assert scenario["allocated_w"] == 2100 and scenario["remaining_w"] == 0
+                assert not scenario["commands_sent"]
+                assert sum(item["allocated_w"] for item in scenario["targets"]) == 2100
+                await command({"type": "ehome_ems/simulate", "entry_id": entry.entry_id,
+                               "revision": previous_revision, "budget_w": 2100}, success=False)
+                for index in range(22):
+                    await command({"type": "ehome_ems/simulate", "entry_id": entry.entry_id,
+                                   "revision": entry.modified_at.isoformat(), "budget_w": index})
+                await hass.async_block_till_done()
+                remove_listener()
+                assert not service_events, service_events
+                assert await hass.config_entries.async_reload(entry.entry_id)
+                await hass.async_block_till_done()
+                snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
+                assert len(snapshot["simulation_history"]) == 20
+                assert snapshot["simulation_history"][-1]["budget_w"] == 21
+                assert snapshot["simulation"]["targets"][0]["enabled"]
             ordinary = await hass.auth.async_create_user("Simulated reader", group_ids=["system-users"])
             refresh = await hass.auth.async_create_refresh_token(ordinary, client_id="https://example.local")
             access = hass.auth.async_create_access_token(refresh)
@@ -293,6 +326,13 @@ async def validate(config_dir):
                                    "entity_id": solar_id, "source_id": "sensor.sim_solar",
                                    "expected_source": "sensor.sim_pv_new", "revision": entry.modified_at.isoformat()})
                 assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id": 3, "type": "ehome_ems/save_simulation", "entry_id": entry.entry_id,
+                                   "revision": entry.modified_at.isoformat(), "targets": targets})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id": 4, "type": "ehome_ems/simulate", "entry_id": entry.entry_id,
+                                   "revision": entry.modified_at.isoformat(), "budget_w": 500})
+                scenario = await ws.receive_json()
+                assert scenario["success"] and not scenario["result"]["commands_sent"]
 
         assert await hass.config_entries.async_unload(entry.entry_id)
         await hass.async_block_till_done()

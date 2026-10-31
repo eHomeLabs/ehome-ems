@@ -1,8 +1,13 @@
-# eHome EMS 0.2.0b9 — installation et retour arrière
+# eHome EMS 0.2.0b10 — installation et retour arrière
 
 Première bêta en observation. Le périmètre produit « V2 » n'est pas encore livré
 en totalité. La bêta contient l'assistant, les mesures normalisées, le suivi
 multi-batteries et l'export manuel d'un dashboard natif.
+
+La b10 ajoute des priorités de simulation enregistrées et un répartiteur de
+budget hypothétique dans Stratégie. Tous les équipements sont exclus par défaut.
+Le journal est limité à 20 scénarios en mémoire. Aucun pilotage n'est activé.
+Voir SIMULATION.md pour les hypothèses et les limites.
 
 La b9 ajoute un seuil d'animation global de 10 W, corrige l'espace réservé aux
 cartes du flux et enrichit les diagnostics de sources dans Configuration.
@@ -11,7 +16,7 @@ Tester une borne à 1 W : la valeur doit rester visible sans animation.
 Vérifier aussi une batterie avec charge et décharge à zéro : aucune carte ne
 doit recouvrir le texte placé sous la scène.
 
-La bêta 0.2.0b9 ajoute des explications dans chaque étape et une aide par champ
+La bêta 0.2.0b10 ajoute des explications dans chaque étape et une aide par champ
 pour les batteries. Une consommation maison déjà calculée est acceptée si elle
 décrit les usages réels. L'énergie restante doit être un stock, pas un compteur
 cumulatif. Les compteurs déclarés total/total_increasing sont refusés ; au-delà
@@ -21,11 +26,12 @@ Le champ reste facultatif : laissez-le vide si aucune source ne convient.
 La vue automatique et la copie native sont disponibles depuis 0.2.0b5 ;
 un synoptique animé est disponible dans la vue gérée depuis 0.2.0b7.
 
-La bêta 0.2.0b9 organise le dashboard avec une navigation haute : Vue d’ensemble,
+La bêta 0.2.0b10 organise le dashboard avec une navigation haute : Vue d’ensemble,
 Historique, Stockage, Usages, Stratégie et Configuration. Les mesures principales
 sont en haut, le flux au centre, les usages en bas et la situation EMS à droite
 sur PC. Sur mobile, la colonne de droite passe sous le flux et les usages.
-La stratégie reste en observation : aucun moteur de décision ni pilotage actif.
+L'EMS reste en observation ; la simulation manuelle ne constitue pas un moteur
+de pilotage actif.
 La page Configuration montre les sources et les versions chargées.
 
 À l'étape Maison, choisir entre une source existante et le calcul automatique EMS.
@@ -37,14 +43,14 @@ rendent le résultat indisponible. Voir CONSOMMATION_MAISON.md avant activation.
 
 Dans GitHub → Actions → Home Assistant beta package, ouvrir une exécution réussie
 correspondant au dernier commit de la proposition de code puis télécharger
-l'artefact ehome-ems-0.2.0b9. Il contient le ZIP installable, son SHA-256 et ce guide.
+l'artefact ehome-ems-0.2.0b10. Il contient le ZIP installable, son SHA-256 et ce guide.
 Le paquet est produit seulement après succès de la validation backend HA réelle.
 Les artefacts GitHub sont conservés 90 jours et peuvent être reconstruits avec
 scripts/build_test_package.py ou en relançant le workflow.
 
 Le ZIP installable contient custom_components/ehome_ems uniquement. L'archive
 d'artefact GitHub est une enveloppe : extraire d'abord le fichier
-ehome-ems-0.2.0b9.zip qu'elle contient.
+ehome-ems-0.2.0b10.zip qu'elle contient.
 
 La cible actuelle est Home Assistant Core 2026.11.0b0 et Python 3.14.
 La CI vérifie aussi 2026.9.1 comme point de comparaison.
@@ -65,11 +71,11 @@ propre environnement. Aucune autre version HA n'est déclarée validée ici.
 Le dépôt reste privé. Ce guide ne suppose pas un téléchargement direct par HACS
 et ne demande aucun changement de visibilité du dépôt.
 
-1. Extraire ehome-ems-0.2.0b9.zip sur le PC.
+1. Extraire ehome-ems-0.2.0b10.zip sur le PC.
 2. Copier son dossier custom_components/ehome_ems dans
    /config/custom_components/ehome_ems sur HA, en remplaçant le code précédent.
    Vérifier qu'il n'y a pas de niveau ehome_ems/ehome_ems imbriqué.
-3. Vérifier la présence de manifest.json avec version 0.2.0b9.
+3. Vérifier la présence de manifest.json avec version 0.2.0b10.
    Copier aussi les sous-dossiers frontend et brand, avec tous leurs fichiers.
 4. Redémarrer Home Assistant une fois pour charger le nouveau code.
 5. Si l'intégration existe déjà : Paramètres → Appareils et services → eHome EMS
@@ -106,7 +112,7 @@ et la version chargée : ne pas conclure automatiquement à un problème de cach
 
 Après remplacement complet du dossier, redémarrer HA une fois puis recharger
 complètement la page ou fermer/réouvrir l'application HA. Dans Configuration,
-les versions Interface et Intégration doivent toutes deux indiquer 0.2.0b9.
+les versions Interface et Intégration doivent toutes deux indiquer 0.2.0b10.
 Un serveur ne fournissant pas le flux déclenche maintenant une explication visible,
 au lieu de masquer silencieusement le composant.
 

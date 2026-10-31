@@ -38,3 +38,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # HA runs entry.async_on_unload callbacks after the platforms unload.
     # Calling ConfigEntry.async_unload here would recurse into its lifecycle.
     return await hass.config_entries.async_unload_platforms(entry, ["sensor"])
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Forget the bounded in-memory scenario journal when an entry is removed."""
+    hass.data.get(DOMAIN, {}).get("simulation_history", {}).pop(entry.entry_id, None)

@@ -1,5 +1,5 @@
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.0b9";
+export const UI_VERSION = "0.2.0b10";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -160,6 +160,9 @@ export class EhomeEmsPanel extends BaseElement {
       .observation{display:inline-block;border:1px solid var(--primary-color,#70a246);border-radius:20px;padding:3px 10px;font-size:13px;margin-bottom:12px}.strategy .row{align-items:center}.strategy .row .value{white-space:nowrap}.strategy .row>span:first-child{font-size:14px}.strategy button{margin-top:12px}
       .load-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}.load-grid .kpi{padding:12px}.load-grid .value{font-size:24px}
       .source-list{display:grid;gap:12px}.source-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;border-bottom:1px solid var(--divider-color,#3b536b);padding:12px 0}.source-item code{display:block;overflow-wrap:anywhere;font-size:12px}.config-links{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0}
+      .simulation-editor{display:grid;gap:12px;margin:16px 0}.simulation-row{display:grid;grid-template-columns:minmax(180px,2fr) repeat(2,minmax(100px,1fr)) auto;align-items:end;gap:12px;border-bottom:1px solid var(--divider-color,#3b536b);padding:12px 0}
+      .simulation-row label,.scenario-budget{display:block;font-size:14px}.simulation-row input[type=number],.scenario-budget input{display:block;max-width:100%;width:100%;font:inherit;padding:10px;background:var(--card-background-color,#15222d);color:inherit;border:1px solid var(--divider-color,#3b536b);border-radius:8px}.scenario-budget{max-width:360px;margin:16px 0}.scenario-result{margin:16px 0;padding:16px;border:1px solid var(--divider-color,#3b536b);border-radius:12px}.scenario-result .row{flex-wrap:wrap}.scenario-history details{margin:12px 0}.scenario-history summary{cursor:pointer;padding:10px 0}.simulation-row .move-buttons{display:flex;gap:6px}
+      @media(max-width:700px){.simulation-row{grid-template-columns:1fr 1fr}.simulation-target,.simulation-row .move-buttons{grid-column:1/-1}}
       @media(min-width:1051px){.overview-grid .flow-stage{aspect-ratio:1000/600}.overview-grid .flow-house{left:29%;top:26%;width:54%}.overview-grid .flow-solar,.overview-grid .flow-grid{width:36%}.overview-grid .flow-battery{top:50%}}
       @media(max-width:1050px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.overview-grid{grid-template-columns:1fr}.overview-grid>.strategy{grid-column:1;grid-row:3}.overview-grid>.secondary{grid-row:2}.overview-grid>.quality-panel{grid-column:1;grid-row:4}}
       @media(max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpi{padding:12px}.top-nav{margin:12px 0}.top-nav button{flex:none}.source-item{grid-template-columns:1fr}.source-item button{justify-self:start}}
@@ -315,10 +318,126 @@ export class EhomeEmsPanel extends BaseElement {
     panel.append(this._node("h3", this._t("Décisions et priorités", "Decisions and priorities")),
       this._node("p", this._t("Aucune stratégie de pilotage active. Les mesures sont observées sans modifier les régulations de vos équipements.",
         "No active control strategy. Readings are monitored without changing device regulation."), "note"));
-    if (expanded) panel.append(this._node("p", this._t("L’édition des priorités, la simulation et les conseils seront ajoutés dans une prochaine étape. Une injection mesurée n’est pas, à elle seule, une puissance disponible pour un autre usage.",
-      "Priority editing, simulation and advice will be added in a later step. Measured export alone does not establish power available to another load."), "note"));
-    else panel.append(this._button(this._t("Ouvrir Stratégie", "Open Strategy"), () => { this._tab = 4; this._render(); }));
+    if (expanded) panel.append(this._simulation());
+    else {
+      panel.append(this._node("h3", this._t("Priorités de simulation", "Simulation priorities")));
+      const active = (this._snapshotData?.simulation?.targets || []).filter(item => item.enabled);
+      const list = this._node("ol");
+      for (const item of active) list.append(this._node("li", item.name));
+      if (active.length) panel.append(list);
+      else panel.append(this._node("p", this._t("Aucun équipement inclus dans un scénario.", "No equipment included in a scenario."), "note"));
+      panel.append(this._button(this._t("Ouvrir Stratégie", "Open Strategy"), () => { this._tab = 4; this._render(); }));
+    }
     panel.append(this._node("p", this._t("Aucune commande envoyée", "No commands sent"), "note")); return panel;
+  }
+  _simulationResult(result) {
+    const root = this._node("div", undefined, "scenario-result");
+    root.append(this._node("strong", this._t("Scénario hypothétique · aucune commande", "Hypothetical scenario · no commands")),
+      this._node("p", this._t("Budget : ", "Budget: ") + result.budget_w + " W · " + this._t("Alloué : ", "Allocated: ") + result.allocated_w + " W · " + this._t("Non alloué : ", "Unallocated: ") + result.remaining_w + " W"));
+    const reasons = {
+      disabled: this._t("Exclu du scénario", "Excluded from scenario"),
+      budget_exhausted: this._t("Budget épuisé par les priorités précédentes", "Budget exhausted by earlier priorities"),
+      below_minimum: this._t("Budget restant inférieur au minimum déclaré", "Remaining budget below declared minimum"),
+      ceiling_reached: this._t("Plafond déclaré atteint", "Declared ceiling reached"),
+      allocated: this._t("Allocation dans les limites déclarées", "Allocation within declared limits"),
+    };
+    for (const item of result.targets || []) {
+      const row = this._node("div", undefined, "row");
+      row.append(this._node("span", item.name), this._node("span", item.allocated_w + " W", "value"),
+        this._node("span", reasons[item.reason] || item.reason, "note"),
+        this._node("span", this._t("Minimum : ", "Minimum: ") + item.min_w + " W · " + this._t("Plafond : ", "Ceiling: ") + item.max_w + " W", "note")); root.append(row);
+    }
+    return root;
+  }
+  _simulation() {
+    const root = this._node("section", undefined, "simulation");
+    root.append(this._node("h2", this._t("Priorités et simulation manuelle", "Priorities and manual simulation")),
+      this._node("p", this._t("Répartissez un budget hypothétique selon des limites que vous déclarez. Ce budget n’est pas déduit de l’injection réseau. Les plafonds ne constituent pas des capacités matérielles vérifiées.",
+        "Allocate a hypothetical budget using limits you declare. This budget is not inferred from grid export. Ceilings are not verified hardware capabilities."), "note"),
+      this._node("p", this._t("Cette simulation ne tient pas encore compte du SOC, des échéances, des pertes, des régulations natives ou de la fraîcheur des mesures. Ce n’est pas une consigne à appliquer au matériel.",
+        "This simulation does not yet account for SOC, deadlines, losses, native regulation or reading freshness. It is not a setpoint to apply to hardware."), "note"),
+      this._node("p", this._t("Les allocations ne s’ajoutent pas aux consommations en cours. Aucune puissance mesurée n’est automatiquement ajoutée ou retranchée au budget saisi.",
+        "Allocations do not add to current consumption. No measured power is automatically added to or subtracted from the entered budget."), "note"));
+    const snapshot = this._snapshotData;
+    const targets = structuredClone(snapshot.simulation?.targets || []);
+    if (!targets.length) {
+      root.append(this._node("p", this._t("Ajoutez un usage ou une batterie active AC dans Configuration pour préparer un scénario. Les batteries de secours et DC sont exclues de cette première simulation.",
+        "Add a load or an active AC battery in Configuration to prepare a scenario. Backup and DC batteries are excluded from this first simulation."), "note")); return root;
+    }
+    let dirty = false, run;
+    const status = this._node("p", "", "note"); status.setAttribute("role", "status");
+    const editor = this._node("div", undefined, "simulation-editor");
+    const markDirty = () => { dirty = true; if (run) run.disabled = true; status.textContent = this._t("Paramètres modifiés : enregistrez avant de simuler.", "Settings changed: save before simulating."); };
+    const editable = !!this._hass?.user?.is_admin;
+    const draw = () => {
+      editor.replaceChildren();
+      targets.forEach((target, index) => {
+        const row = this._node("div", undefined, "simulation-row");
+        const name = this._node("label", undefined, "simulation-target");
+        const enabled = this._node("input"); enabled.type = "checkbox"; enabled.checked = target.enabled; enabled.disabled = !editable;
+        enabled.setAttribute("aria-label", this._t("Inclure ", "Include ") + target.name);
+        enabled.addEventListener("change", () => { target.enabled = enabled.checked; markDirty(); });
+        name.append(enabled, this._node("strong", ` ${index + 1}. ${target.name}`)); row.append(name);
+        for (const [key, title] of [["min_w", this._t("Minimum (W)", "Minimum (W)")], ["max_w", this._t("Plafond (W)", "Ceiling (W)")]]) {
+          const label = this._node("label", title), input = this._node("input");
+          input.type = "number"; input.min = 0; input.max = 1000000; input.step = 1; input.required = true;
+          input.value = target[key]; input.disabled = !editable;
+          input.setAttribute("aria-label", title + " · " + target.name);
+          input.addEventListener("input", () => { target[key] = Number(input.value); markDirty(); }); label.append(input); row.append(label);
+        }
+        if (editable) {
+          const moves = this._node("div", undefined, "move-buttons");
+          for (const [delta, title] of [[-1, this._t("Monter", "Move up")], [1, this._t("Descendre", "Move down")]]) {
+            const button = this._button(title, () => { [targets[index], targets[index + delta]] = [targets[index + delta], targets[index]]; markDirty(); draw(); });
+            button.disabled = index + delta < 0 || index + delta >= targets.length;
+            button.setAttribute("aria-label", title + " · " + target.name); moves.append(button);
+          }
+          row.append(moves);
+        }
+        editor.append(row);
+      });
+    };
+    draw(); root.append(editor, status);
+    if (editable) {
+      const save = this._button(this._t("Enregistrer les priorités de simulation", "Save simulation priorities"), async () => {
+        if (![...editor.querySelectorAll("input[type=number]")].every(input => input.reportValidity())) return;
+        save.disabled = true; editor.inert = true; if (run) run.disabled = true;
+        try {
+          await this._hass.callWS({type:"ehome_ems/save_simulation", entry_id:this._panel.config.entry_id, revision:snapshot.revision,
+            targets:targets.map(({id, enabled, min_w, max_w}) => ({id, enabled, min_w, max_w}))});
+          await this._load(); this._message.textContent = this._t("Priorités de simulation enregistrées. Aucun équipement modifié.", "Simulation priorities saved. No equipment changed.");
+        } catch (error) {
+          status.textContent = error.code === "conflict" || error.code === "targets_changed" ? this._t("La configuration a changé. Actualisez avant de réessayer.", "Configuration changed. Refresh before retrying.") :
+            this._t("Paramètres refusés : minimum ≤ plafond, plafond positif pour un équipement inclus, valeurs entières entre 0 et 1 000 000 W.", "Settings rejected: minimum ≤ ceiling, positive ceiling for included equipment, integer values from 0 to 1,000,000 W.");
+        } finally { editor.inert = false; save.disabled = false; if (run) run.disabled = dirty; }
+      }); root.append(save);
+    }
+    const budgetLabel = this._node("label", this._t("Budget hypothétique à répartir (W)", "Hypothetical budget to allocate (W)"), "scenario-budget");
+    const budget = this._node("input"); budget.type = "number"; budget.min = 0; budget.max = 1000000; budget.step = 1; budget.required = true;
+    budget.placeholder = this._t("Exemple : 1500", "Example: 1500"); budget.setAttribute("aria-label", budgetLabel.textContent); budgetLabel.append(budget); root.append(budgetLabel);
+    const resultBox = this._node("div"); resultBox.setAttribute("aria-live", "polite");
+    const history = this._node("div", undefined, "scenario-history");
+    const drawHistory = () => {
+      history.replaceChildren(this._node("h3", this._t("Journal des scénarios manuels", "Manual scenario journal")),
+        this._node("p", this._t("20 résultats maximum en mémoire, perdus au redémarrage de Home Assistant. Ce journal contient des simulations, pas des décisions exécutées.",
+          "Up to 20 results in memory, lost when Home Assistant restarts. This journal contains simulations, not executed decisions."), "note"));
+      for (const result of [...(this._snapshotData.simulation_history || [])].reverse()) {
+        const item = this._node("details"); item.append(this._node("summary", new Date(result.created_at).toLocaleString(this._hass?.language || "fr", {timeZone:this._hass?.config?.time_zone}) + " · " + result.budget_w + " W"), this._simulationResult(result)); history.append(item);
+      }
+    };
+    drawHistory();
+    run = this._button(this._t("Simuler ce budget", "Simulate this budget"), async () => {
+      if (dirty || !budget.reportValidity()) return;
+      run.disabled = true;
+      try {
+        const result = await this._hass.callWS({type:"ehome_ems/simulate", entry_id:this._panel.config.entry_id, revision:this._snapshotData.revision, budget_w:Number(budget.value)});
+        resultBox.replaceChildren(this._simulationResult(result));
+        this._snapshotData.simulation_history = [...(this._snapshotData.simulation_history || []), result].slice(-20); drawHistory();
+        status.textContent = this._t("Scénario calculé, aucune commande envoyée.", "Scenario calculated, no commands sent.");
+      } catch (error) { status.textContent = error.code === "conflict" ? this._t("La configuration a changé. Actualisez avant de simuler.", "Configuration changed. Refresh before simulating.") : this._t("Simulation impossible. Vérifiez le budget et les paramètres enregistrés.", "Simulation failed. Check the budget and saved settings."); }
+      finally { run.disabled = dirty; }
+    });
+    root.append(run, resultBox, history); return root;
   }
   _configuration(snapshot) {
     const root = this._node("section", undefined, "card");

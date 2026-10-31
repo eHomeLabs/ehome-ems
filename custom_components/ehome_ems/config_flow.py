@@ -106,6 +106,8 @@ class PowerWizard:
         self._draft = {key: (existing or {}).get(key) for key in SOURCES}
         self._draft[CONF_BATTERIES] = deepcopy((existing or {}).get(CONF_BATTERIES, {}))
         self._draft[CONF_USAGES] = deepcopy((existing or {}).get(CONF_USAGES, {}))
+        if "simulation" in (existing or {}):
+            self._draft["simulation"] = deepcopy(existing["simulation"])
         for key in HOME_SETTINGS:
             if key in (existing or {}):
                 self._draft[key] = existing[key]

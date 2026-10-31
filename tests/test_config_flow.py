@@ -82,6 +82,14 @@ def state(value="100", unit="W"):
 
 
 class WizardTests(IsolatedAsyncioTestCase):
+    async def test_simulation_settings_survive_mapping_wizard_as_independent_copy(self):
+        existing = {"simulation": {"schema_version": 1, "targets": [{"id": "usage:test", "enabled": False, "min_w": 0, "max_w": 0}]}}
+        wizard = flow_module.EhomeEmsConfigFlow()
+        wizard._start(existing)
+        self.assertEqual(wizard._draft["simulation"], existing["simulation"])
+        wizard._draft["simulation"]["targets"][0]["max_w"] = 500
+        self.assertEqual(existing["simulation"]["targets"][0]["max_w"], 0)
+
     def setUp(self):
         self.states = {"sensor.grid": state("-200"), "sensor.pv": state("1.5", "kW"),
                        "sensor.home": state("1300")}

@@ -1,4 +1,4 @@
-# Vue automatique et copie modifiable — 0.2.0b9
+# Vue automatique et copie modifiable — 0.2.0b10
 
 Après confirmation de l'assistant et chargement de l'intégration, une entrée
 eHome EMS apparaît dans la barre latérale. Aucune copie de YAML ni ajout manuel
@@ -38,8 +38,10 @@ de relire les sources, de les réassocier avec les droits administrateur et de
 vérifier les versions du serveur et de l'interface. Les pages Stockage et Usages
 restent présentes même lorsqu'aucun équipement n'y est associé.
 
-Le panneau Stratégie décrit uniquement la situation observée. L'édition des
-priorités, la simulation, les conseils et le pilotage ne sont pas encore livrés.
+Le panneau Stratégie décrit la situation observée et propose depuis b10 des
+[priorités et scénarios manuels](SIMULATION.md) avec budget hypothétique explicite.
+Il ne déduit pas ce budget de l'injection et ne commande aucun équipement.
+Les conseils opérationnels et le pilotage ne sont pas encore livrés.
 Les chiffres fictifs de la maquette ne sont jamais fournis à la vue réelle.
 
 Le module et le composant web ont un nom propre à la version pour éviter de
