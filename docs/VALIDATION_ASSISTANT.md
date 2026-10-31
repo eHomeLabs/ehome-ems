@@ -1,6 +1,8 @@
 # Premier assistant du lot A — validation
 
-Branche de développement, sans publication HACS ni validation matérielle.
+Bêta 0.2.0b1, sans publication HACS ni validation matérielle.
+Le [rapport backend](VALIDATION_0_2_0B1.md) complète les tests à doubles par un
+parcours exécuté dans Home Assistant Core 2026.9.1 et 2026.11.0b0 réels.
 Le périmètre couvre les puissances réseau, solaire et maison et plusieurs
 batteries en suivi seul. Les usages, les énergies journalières, les bilans
 et le dashboard restent à développer.
@@ -85,4 +87,6 @@ réels, ni le rechargement des entités.
 - Vérifier le retrait réel des abonnements lors de la décharge de l'intégration,
   puis l'absence de doublons après rechargement.
 
-Ces vérifications HA réelles restent à effectuer avant une release installable.
+Les parcours backend, options et cycles de chargement ont été exécutés dans
+les environnements HA temporaires décrits dans le rapport. Le rendu visuel et
+les essais sur l'installation physique restent à effectuer pendant la bêta.

@@ -2,7 +2,7 @@
 
 Cette étape génère une configuration Lovelace modifiable avec les cartes natives
 de Home Assistant, sans dépendance frontend supplémentaire. Elle n'est pas encore
-le dashboard animé de la V2 et n'est pas une release HACS.
+le dashboard animé de la V2 et ne constitue pas une validation officielle HACS.
 
 ## Contenu
 
@@ -62,5 +62,7 @@ commandes ou de modification de dashboard. Les tests d'API utilisent des doubles
 Restent à valider dans HA : disponibilité de l'action, restitution de la réponse,
 collage de la configuration, rendu mobile/tablette/PC, états indisponibles,
 historique Recorder et conservation de la copie après modification des options.
+L'appel de l'action et sa résolution du registre ont été vérifiés dans les vrais
+moteurs HA 2026.9.1 et 2026.11.0b0 (rapport VALIDATION_0_2_0B1.md).
 La génération native est une base fonctionnelle ; elle ne vaut pas validation
 visuelle du dashboard V2 final.

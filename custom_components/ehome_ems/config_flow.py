@@ -38,7 +38,9 @@ def battery_schema(existing):
             selector.SelectSelectorConfig(options=["ac", "dc"], translation_key="battery_coupling")
         ),
         vol.Optional("capacity_kwh", description={"suggested_value": existing["capacity_kwh"]}
-                     if existing.get("capacity_kwh") else None): positive_capacity,
+                     if existing.get("capacity_kwh") else None): vol.All(
+                         vol.Coerce(float), vol.Range(min=0.001)
+                     ),
     }
     for key in BATTERY_SOURCES:
         device_class = "battery" if key == "soc" else "energy" if key == "remaining_energy" else "power"
@@ -152,6 +154,8 @@ class PowerWizard:
             # Validate scalar fields even when called outside the UI.
             try:
                 battery = battery_schema(existing)(user_input)
+                if "capacity_kwh" in battery:
+                    battery["capacity_kwh"] = positive_capacity(battery["capacity_kwh"])
             except vol.Invalid:
                 errors = {"base": "invalid_battery"}
             else:

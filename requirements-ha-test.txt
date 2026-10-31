@@ -1,0 +1,2 @@
+# Real backend validation baseline matching the user's reported HA version.
+homeassistant==2026.11.0b0

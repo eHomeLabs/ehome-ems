@@ -6,26 +6,32 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : cadrage V2, développement à poursuivre.** Cette documentation remplace le cadrage V0.1. Le code présent dans `custom_components/ehome_ems` reste le prototype V0.1 de lecture seule ; les fonctions V2 décrites ici ne sont pas encore livrées. V2 désigne le périmètre produit, pas une release logicielle 2.0.
+**Statut : première bêta 0.2.0b1 en observation, préparée pour les essais.**
+Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
+et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
+en développement, et non une release logicielle 2.0.
 
 ## Où en est le projet ? — Repères au 31 octobre 2026
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible | Prototype V0.1 en lecture seule, conservé dans `custom_components/ehome_ems` |
+| Code disponible sur cette branche | Bêta 0.2.0b1 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
-| Assistant pas à pas | Réseau, solaire, maison, batteries et vérification codés sur cette branche de développement ; validation HA réelle à faire |
+| Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
 | Dashboard | Première configuration native exportable : synthèse, batteries, historique et qualité ; rendu HA à valider |
 | Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
-| Prochaine étape | Développer et valider le lot A : assistant, mesures fiables, flux, jauges et statistiques |
+| Prochaine étape | Installer la bêta au moment choisi puis valider les écrans et mesures sur l'installation réelle |
 | Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
 
-**V2 est la vision produit en préparation. Elle n'est pas une version installable du logiciel à ce stade.**
+**La bêta est une première version de test. Les flux animés, les bilans journaliers,
+les prévisions, conseils et commandes ne sont pas encore disponibles.**
 
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b1](docs/INSTALLATION_BETA.md).
+- **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
 
@@ -33,8 +39,8 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-Cette branche prépare la normalisation des puissances et le premier assistant.
-Elle ne constitue pas une livraison complète du lot A ni une release HACS.
+Cette branche fournit le premier paquet de test du lot A.
+Elle ne constitue pas une livraison complète du lot A ni une validation officielle HACS.
 
 - Conversion W/kW vers W.
 - Capteur réseau global signé conservé ; export présenté comme une magnitude
@@ -78,6 +84,17 @@ La CI vérifie aussi la syntaxe Python. Les tests du parcours utilisent les
 vrais schémas Voluptuous et des doubles des API HA ; ils ne remplacent pas
 un test de chargement/rechargement dans Home Assistant.
 Voir le [plan de validation de l'assistant](docs/VALIDATION_ASSISTANT.md).
+
+Une validation supplémentaire utilise un vrai Home Assistant Core dans un
+environnement temporaire avec sources simulées. Installer les dépendances
+de requirements-ha-test.txt dans un environnement Python 3.14 séparé, puis
+exécuter `python scripts/validate_home_assistant.py`.
+La cible actuelle est 2026.11.0b0 ; la CI vérifie aussi 2026.9.1.
+Elle vérifie les API réelles de configuration, les capteurs, les changements
+d'état, le renommage, l'action dashboard, les options, le rechargement,
+le déchargement et la compatibilité des anciennes données V0.1.
+La sérialisation du formulaire batterie pour l'interface HA est aussi vérifiée.
+Cela ne remplace pas les essais matériels et visuels sur l'installation réelle.
 
 ## Documentation de référence
 
