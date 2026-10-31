@@ -1,84 +1,51 @@
-# Validation du flux — 0.2.0b9
+# Validation — priorités et scénarios manuels 0.2.0b10
 
 final result: passed
 
 ## Référence et preuves
 
-Source : capture appareil fournie par l'utilisateur, `upload/01-1000021476.jpg`,
-691 × 1536. Le problème est visible sous la batterie Zendure : la carte cache
-le texte et une borne à 1 W a une branche animée.
+Direction visuelle : maquette globale validée `generated_images/exec-f13f025c-7b57-4a86-adef-ef9e1745b156.png` (1536 × 1024), avec navigation haute demandée ensuite. La vue d'ensemble conserve cette organisation. Les nouveaux formulaires étendent les composants existants ; aucune maquette détaillée du formulaire n'avait été demandée.
 
-Code vérifié : `5f19b8217abadfd38b36cf9d85ed0dc74c8e3aba`.
-Exécution : https://github.com/eHomeLabs/ehome-ems/actions/runs/41245666096.
-Artefact : `panel-preview-simulated`, captures `idle-mobile.png`,
-`idle-desktop.png`, `flow-mobile.png`, `flow-desktop.png`, `desktop.png`,
-`mobile.png` et captures du sélecteur de source.
+Code vérifié : `c6cead66114069ec56efeaf9a0926477b9920985`.
+Exécution réussie : https://github.com/eHomeLabs/ehome-ems/actions/runs/41246726433.
+Artefact `panel-preview-simulated` : desktop.png, mobile.png, captures du flux au repos, du sélecteur de source et des nouveaux formulaires/résultats.
 
-Viewports CSS : 390 × 844 et 1440 × 1600, densité 1. Capture mobile du composant
-au repos : 358 × 823. La région de flux de la capture appareil a été recadrée
-puis ramenée à 358 px de large, sans étirement, et juxtaposée à la capture
-Chromium native. Le nom batterie plus long dans la fixture est volontaire.
-La navigation sticky peut apparaître en haut de la capture isolée lors du
-scroll ; elle ne fait pas partie du défaut du texte sous Zendure.
+Viewports CSS : 1440 × 1600 et 390 × 844, densité 1. Captures régionales : simulation-editor-desktop.png (1350 × 292), simulation-editor-mobile.png (316 × 598), simulation-result-desktop.png (1350 × 283), simulation-result-mobile.png (316 × 526).
 
-## Cas de régression
+La maquette et la capture desktop ont été juxtaposées à largeur commune 768 px, sans étirement. Les formulaires et résultats ont été ouverts à leur résolution native pour le contrôle régional. La navigation sticky peut couvrir le bord supérieur d'une capture isolée lorsqu'elle est prise pendant le défilement ; elle ne masque pas durablement une ligne du formulaire.
 
-- Solaire 0 W, import 731 W, injection 0 W, maison source existante 731 W.
-- Batterie Zendure : charge 0 W ET décharge 0 W visibles, SOC 10 %.
-- Cumulus 0 W ; véhicule 1 W, valeur conservée.
-- Cas limite véhicule : 9,99 W non animé, 10 W animé, retour à 1 W non animé.
-- Tests unitaires complémentaires : conversion 0,009/0,010 kW et disponibilité.
+## Parcours inspecté
 
-## Corrections et comparaison visuelle
+- Paramètres initiaux : tous les équipements exclus du scénario, limites à zéro.
+- Inclusion de Zendure, plafond 1000 W, déplacement de Cumulus au-dessus de Zendure, sauvegarde.
+- Budget hypothétique 1500 W : Zendure reçoit 1000 W, Cumulus et véhicule exclus, reliquat 500 W.
+- Chaque résultat montre les minima/plafonds utilisés et la raison, sans modifier le flux réel.
+- Lecteur : paramètres en lecture seule, pas de bouton d'enregistrement ; simulation sur configuration enregistrée autorisée.
 
-1. La scène de hauteur supposée ne réservait pas la hauteur réelle d'une carte
-   affichant deux puissances à zéro et un nom sur plusieurs lignes. Un wrapper
-   réserve désormais la borne inférieure réelle des cartes et du libellé maison.
-   La scène garde sa géométrie propre : sa hauteur ne dépend pas du wrapper,
-   pour éviter une boucle de redimensionnement.
-2. Un ResizeObserver suit la scène et les cartes ; il est retiré au changement
-   de vue et à la déconnexion, puis recréé si nécessaire. La réserve suit les
-   changements de contenu, le chargement de l'image et les redimensionnements.
-3. Le premier rendu corrigé a révélé un trait passant derrière la valeur maison.
-   Le départ du trait est maintenant calculé sous le bas réel de cette valeur,
-   et son extrémité est incluse dans l'espace réservé.
-4. Recapture finale : la note est entièrement sous la carte Zendure sur mobile
-   et desktop, même avec le nom long et les deux lignes à zéro. Le trait maison
-   démarre sous le texte. Les assertions géométriques vérifient un écart de 8 px
-   minimum pour ces deux points.
-
-La comparaison juxtaposée et l'inspection des captures natives ont porté sur la
-zone batterie/note, la valeur maison/trait et les branches d'usages. La branche
-véhicule est grisée ; l'absence d'animation est confirmée par le test DOM,
-pas déduite d'une image statique.
+Le banc navigateur utilise un résultat connu pour contrôler l'interface. Le moteur Python est testé séparément sur les contraintes et la conservation ; le scénario HA utilise les vrais endpoints WebSocket.
 
 ## Surfaces vérifiées
 
-- Typographie : styles HA conservés, valeurs et unités inchangées ; nom batterie
-  long et libellé source existante ne masquent plus la note.
-- Espacement : hauteur adaptée au contenu ; navigation haute et disposition
-  centrale/droite conservées. Pas de débordement horizontal du dashboard.
-- Couleurs : palette précédente conservée ; sous 10 W le trait est inactif,
-  sans griser ou effacer la mesure numérique.
-- Image : maison WebP locale inchangée, transparence et cadrage conservés ;
-  icônes MDI natives.
-- Texte : seuil expliqué comme un seuil visuel, sans prétendre qu'une faible
-  valeur prouve l'arrêt d'un équipement. Configuration présente valeur source,
-  valeur EMS et raisons de qualité disponibles ; qualité manquante non inventée.
+- Typographie : police et hiérarchie HA conservées, valeurs et unités lisibles. Libellés explicites des champs et des boutons Monter/Descendre.
+- Espacement : grille desktop, deux champs côte à côte sur mobile, nom et commandes de déplacement sur une ligne dédiée. Résultats repliés sans débordement horizontal du dashboard.
+- Couleurs : palette précédente conservée, contrôle coché distinct d'un interrupteur matériel. Badge Observation toujours visible ; pas d'état automatique présenté comme actif.
+- Images : maison et MDI inchangés. Aucune nouvelle illustration ou icône dessinée comme substitut.
+- Texte : budget hypothétique explicite, pas d'inférence à partir de l'injection. Hypothèses, limites non matérielles, absence de contraintes SOC/échéances/régulations et absence de commande expliquées. Allocations distinctes de consommations supplémentaires à additionner.
 
-## Validation et limites
+Aucun écart P0/P1/P2 constaté. La navigation haute et la densité plus aérée que l'image de présentation sont des adaptations déjà retenues. P3 : améliorer encore le maintien du focus après déplacement d'une ligne au clavier ; le déplacement par boutons fonctionne et reste accessible.
 
-Tous les jobs réussissent : tests Python, 9 tests JavaScript, scénarios sur HA
-2026.9.1 et 2026.11.0b0, Chromium mobile/desktop, paquet ZIP contrôlé.
-Les interactions existantes (navigation, historique, changement de source,
-annulation, copie indépendante), réduction des animations et contrôles de droits
-restent vérifiés. Aucune erreur JavaScript observée.
+## Validation fonctionnelle
 
-Le seuil est global à 10 W inclus pour toutes les branches. Il ne modifie pas
-les capteurs, le calcul maison, les compteurs ni les automatismes. Les mesures
-absentes ne deviennent pas zéro. Stratégie reste en observation.
+- Tests du répartiteur : priorité, minimum non atteint, plafond, exclusion secours/DC, configuration absente/invalide, identifiants inconnus/dupliqués, type/limites du budget et changements concurrents.
+- 200 scénarios déterministes vérifient conservation du budget et respect des bornes ; le même watt n'est pas attribué deux fois.
+- Sauvegarde des priorités préservant les sources ; copie indépendante des réglages au démarrage de l'assistant de modification.
+- Moteurs HA 2026.9.1 et 2026.11.0b0 : sauvegarde/reload, refus de révision périmée, refus d'écriture pour lecteur, lecteur autorisé à simuler, journal limité à 20 entrées et conservé sur reload.
+- Écoute des événements call_service pendant les simulations HA : aucun appel émis.
+- Chromium : formulaire, ordre sauvegardé, paramètres non enregistrés bloquant la simulation, résultat/reliquat, affichage des raisons et limites, accès lecteur, absence d'erreurs JavaScript.
+- Régressions du flux 10 W, batterie au repos, appui prolongé, copie native, historique et module versionné conservées dans la même validation.
 
-Le rendu dans le shell Android et la fluidité sur RPi4 demandent encore le retour
-sur appareil. Aucun P0/P1/P2 restant dans les cas capturés ; P3 : ajuster la densité
-visuelle selon les prochains retours, sans remplacer la réserve dynamique par
-une hauteur supposée.
+## Limites du lot
+
+Pas de budget calculé depuis les mesures, pas de boucle d'arbitrage en temps réel, pas de contrainte SOC/réserve/échéance, pas de consigne matérielle. Le journal est en mémoire (20 résultats), perdu au redémarrage HA ou au retrait de l'entrée. Les priorités persistent dans les options HA.
+
+La validation sur le shell Android et le RPi4 physique reste à confirmer. Ce lot est un répartiteur hypothétique explicable, pas une validation de pilotage automatique ou du fonctionnement matériel des équipements.
