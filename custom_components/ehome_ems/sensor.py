@@ -1,5 +1,5 @@
 """Read-only Home Assistant power sensor mapping."""
-from math import isfinite
+from .measurement import normalize_power
 
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.core import callback
@@ -39,6 +39,7 @@ class MappedPowerSensor(SensorEntity):
         self._attr_unique_id = f"{entry_id}_{key}"
         self._attr_name = f"eHome EMS {LABELS[key]}"
         self._source = source
+        self._role = key
         self._attr_native_value = None
         self._attr_available = False
 
@@ -60,19 +61,16 @@ class MappedPowerSensor(SensorEntity):
         state = self.hass.states.get(self._source)
         self._attr_available = False
         self._attr_native_value = None
-        if state is None or state.state in ("unknown", "unavailable"):
-            return
-        factor = {"W": 1, "kW": 1000}.get(
-            state.attributes.get("unit_of_measurement")
+        reading = normalize_power(
+            state.state if state else None,
+            state.attributes.get("unit_of_measurement") if state else None,
+            self._role,
         )
-        if factor is None:
-            return
-        try:
-            value = float(state.state) * factor
-        except (ValueError, TypeError, OverflowError):
-            return
-        if not isfinite(value):
-            return
-        self._attr_native_value = round(value, 2)
-        self._attr_available = True
-        self._attr_extra_state_attributes = {"source_entity_id": self._source}
+        self._attr_extra_state_attributes = {
+            "source_entity_id": self._source,
+            "data_quality": reading.quality,
+            "value_origin": "measured",
+            "source_unit": state.attributes.get("unit_of_measurement") if state else None,
+        }
+        self._attr_native_value = reading.value
+        self._attr_available = reading.value is not None
