@@ -69,6 +69,25 @@ class PowerNormalizationTests(unittest.TestCase):
                 self.assertIsNone(reading.value)
                 self.assertEqual(reading.quality, "invalid_value")
 
+    def test_remaining_energy_rejects_declared_cumulative_counters(self):
+        for state_class in ("total", "total_increasing"):
+            reading = measurement.normalize_battery(
+                "1", "kWh", "remaining_energy", capacity_kwh=8.2, state_class=state_class
+            )
+            self.assertIsNone(reading.value)
+            self.assertEqual(reading.quality, "cumulative_energy")
+
+    def test_remaining_energy_capacity_check_and_tolerance(self):
+        for raw, unit in (("305.799", "kWh"), ("305799", "Wh")):
+            reading = measurement.normalize_battery(raw, unit, "remaining_energy", capacity_kwh=8.2)
+            self.assertEqual(reading.quality, "exceeds_capacity")
+        self.assertEqual(measurement.normalize_battery(
+            "8.5", "kWh", "remaining_energy", capacity_kwh=8.2
+        ).quality, "valid")
+        self.assertEqual(measurement.normalize_battery(
+            "2", "kWh", "remaining_energy", state_class="measurement"
+        ).quality, "valid")
+
 
 if __name__ == "__main__":
     unittest.main()

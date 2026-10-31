@@ -3,30 +3,38 @@
     "step": {
       "grid": {
         "title": "1 — Electricity grid",
-        "description": "Map available grid measurements, or leave empty. Signed grid power keeps its sign; export is shown as a positive magnitude. These readings are not added together. No commands will be sent.",
+        "description": "Prefer ONE method: separate import/export sensors, or a genuine signed grid sensor. Use instantaneous power in W or kW. With separate import/export, signed power can be left empty. A sensor that stays at zero during export does not describe both directions. Selected readings are not added together.",
         "data": {
           "grid_power": "Signed grid power",
           "grid_import": "Grid import power",
           "grid_export": "Grid export power"
+        },
+        "data_description": {
+          "grid_power": "Optional. Must change sign between import and export. This beta preserves the source convention; do not choose an energy counter in kWh.",
+          "grid_import": "Power purchased from the grid, normally positive or zero. This is not total home consumption.",
+          "grid_export": "Power sent to the grid. Negative source values are accepted and displayed as a positive magnitude."
         }
       },
       "solar": {
         "title": "2 — Solar production",
-        "description": "Choose a total production measurement in W or kW, or leave empty if you have no solar installation.",
+        "description": "Choose total solar production power in W or kW. An existing calculated sum of inverter outputs is suitable. Do not choose daily energy in kWh or exported surplus. Leave empty if you have no solar installation.",
         "data": {
           "solar_power": "Solar production power"
         }
       },
       "home": {
         "title": "3 — Home consumption",
-        "description": "Choose measured total home consumption in W or kW. This first increment does not calculate a balance or add submeters. Continue to configure batteries or skip storage.",
+        "description": "Choose total power actually consumed by home loads in W or kW, regardless of supply: grid, solar or battery discharge. An existing calculated sensor is suitable when it already represents this total; EMS uses it without adding solar or batteries again. Grid import alone usually is not home consumption.",
         "data": {
           "home_power": "Home consumption power"
+        },
+        "data_description": {
+          "home_power": "Example with a consistent AC measurement boundary: 1,000 W solar + 200 W import + 100 W discharge − 50 W export − 250 W charge = 1,000 W for loads. Do not apply this formula without checking meter placement."
         }
       },
       "review": {
         "title": "5 — Review measurements",
-        "description": "Normalized preview in W:\\n\\n{summary}\\n\\nA missing reading is never replaced by zero. Quality codes indicate valid, unavailable, invalid_value or unexpected_direction. Edit any step before continuing. Backup batteries are monitored separately and are not eligible for the future active balance.",
+        "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
@@ -37,7 +45,7 @@
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. An initial dashboard can be exported afterwards using ehome_ems.generate_dashboard. Balances and animated flows are still to be developed. To correct an error, select return to review.",
+        "description": "{summary}\n\nConfirming only saves observation mappings. No equipment is commanded and no dashboard is automatically added in this beta. For the initial native view, use Developer tools → Actions → ehome_ems.generate_dashboard, then copy the configuration into a NEW dashboard. Animated flows and automatic creation remain to be developed. Settings reload without a full HA restart.",
         "data": {
           "back_to_review": "Return to review without saving"
         }
@@ -54,7 +62,7 @@
       },
       "add_battery": {
         "title": "Add a battery",
-        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "description": "Map at least one reading and give the battery a clear name. Missing readings can be left empty. Charge and discharge are distinct positive instantaneous powers. SOC is a percentage; remaining energy is the current stock, not a lifetime input counter.",
         "data": {
           "name": "Battery name",
           "role": "Role",
@@ -64,11 +72,21 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Display name, for example Main battery or Backup battery.",
+          "role": "Active: participates in daily exchanges. Backup: separate monitoring, outside the future active balance. Neither role sends commands.",
+          "coupling": "AC: storage connected on the AC side. DC: monitoring is available, but the simple AC balance needs a topology adapter.",
+          "capacity_kwh": "Declared usable capacity in kWh for the monitored system. This is neither power in W nor remaining energy. Example: 8.2 kWh.",
+          "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
+          "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
+          "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
         }
       },
       "battery_details": {
         "title": "Edit battery measurements",
-        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "description": "Map at least one reading and give the battery a clear name. Missing readings can be left empty. Charge and discharge are distinct positive instantaneous powers. SOC is a percentage; remaining energy is the current stock, not a lifetime input counter.",
         "data": {
           "name": "Battery name",
           "role": "Role",
@@ -78,6 +96,16 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Display name, for example Main battery or Backup battery.",
+          "role": "Active: participates in daily exchanges. Backup: separate monitoring, outside the future active balance. Neither role sends commands.",
+          "coupling": "AC: storage connected on the AC side. DC: monitoring is available, but the simple AC balance needs a topology adapter.",
+          "capacity_kwh": "Declared usable capacity in kWh for the monitored system. This is neither power in W nor remaining energy. Example: 8.2 kWh.",
+          "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
+          "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
+          "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
         }
       },
       "edit_battery": {
@@ -100,8 +128,10 @@
       "recursive_source": "Select an original source, not an eHome EMS sensor.",
       "missing_source": "This sensor no longer exists. Choose another source.",
       "unsupported_unit": "Invalid unit: W/kW for power, % for SOC, Wh/kWh for remaining energy.",
-      "sources_changed": "A source is missing, duplicated or has an invalid unit. Return to review to correct the mappings.",
-      "invalid_battery": "Check name, role, coupling and capacity (a finite positive number)."
+      "sources_changed": "A mapping is inconsistent: missing source, duplicate, wrong unit, cumulative counter or stock above capacity. Return to review.",
+      "invalid_battery": "Check name, role, coupling and capacity (a finite positive number).",
+      "cumulative_energy": "This sensor is declared as a cumulative energy counter. Choose current remaining stock, or leave this field empty.",
+      "exceeds_capacity": "This energy is more than 10% above declared capacity. Check sensor, unit and capacity, or leave the field empty."
     },
     "abort": {
       "already_configured": "eHome EMS is already configured. Use Configure to edit its settings."
@@ -111,30 +141,38 @@
     "step": {
       "grid": {
         "title": "1 — Electricity grid",
-        "description": "Map available grid measurements, or leave empty. Signed grid power keeps its sign; export is shown as a positive magnitude. These readings are not added together. No commands will be sent.",
+        "description": "Prefer ONE method: separate import/export sensors, or a genuine signed grid sensor. Use instantaneous power in W or kW. With separate import/export, signed power can be left empty. A sensor that stays at zero during export does not describe both directions. Selected readings are not added together.",
         "data": {
           "grid_power": "Signed grid power",
           "grid_import": "Grid import power",
           "grid_export": "Grid export power"
+        },
+        "data_description": {
+          "grid_power": "Optional. Must change sign between import and export. This beta preserves the source convention; do not choose an energy counter in kWh.",
+          "grid_import": "Power purchased from the grid, normally positive or zero. This is not total home consumption.",
+          "grid_export": "Power sent to the grid. Negative source values are accepted and displayed as a positive magnitude."
         }
       },
       "solar": {
         "title": "2 — Solar production",
-        "description": "Choose a total production measurement in W or kW, or leave empty if you have no solar installation.",
+        "description": "Choose total solar production power in W or kW. An existing calculated sum of inverter outputs is suitable. Do not choose daily energy in kWh or exported surplus. Leave empty if you have no solar installation.",
         "data": {
           "solar_power": "Solar production power"
         }
       },
       "home": {
         "title": "3 — Home consumption",
-        "description": "Choose measured total home consumption in W or kW. This first increment does not calculate a balance or add submeters. Continue to configure batteries or skip storage.",
+        "description": "Choose total power actually consumed by home loads in W or kW, regardless of supply: grid, solar or battery discharge. An existing calculated sensor is suitable when it already represents this total; EMS uses it without adding solar or batteries again. Grid import alone usually is not home consumption.",
         "data": {
           "home_power": "Home consumption power"
+        },
+        "data_description": {
+          "home_power": "Example with a consistent AC measurement boundary: 1,000 W solar + 200 W import + 100 W discharge − 50 W export − 250 W charge = 1,000 W for loads. Do not apply this formula without checking meter placement."
         }
       },
       "review": {
         "title": "5 — Review measurements",
-        "description": "Normalized preview in W:\\n\\n{summary}\\n\\nA missing reading is never replaced by zero. Quality codes indicate valid, unavailable, invalid_value or unexpected_direction. Edit any step before continuing. Backup batteries are monitored separately and are not eligible for the future active balance.",
+        "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
@@ -145,7 +183,7 @@
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. An initial dashboard can be exported afterwards using ehome_ems.generate_dashboard. Balances and animated flows are still to be developed. To correct an error, select return to review.",
+        "description": "{summary}\n\nConfirming only saves observation mappings. No equipment is commanded and no dashboard is automatically added in this beta. For the initial native view, use Developer tools → Actions → ehome_ems.generate_dashboard, then copy the configuration into a NEW dashboard. Animated flows and automatic creation remain to be developed. Settings reload without a full HA restart.",
         "data": {
           "back_to_review": "Return to review without saving"
         }
@@ -162,7 +200,7 @@
       },
       "add_battery": {
         "title": "Add a battery",
-        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "description": "Map at least one reading and give the battery a clear name. Missing readings can be left empty. Charge and discharge are distinct positive instantaneous powers. SOC is a percentage; remaining energy is the current stock, not a lifetime input counter.",
         "data": {
           "name": "Battery name",
           "role": "Role",
@@ -172,11 +210,21 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Display name, for example Main battery or Backup battery.",
+          "role": "Active: participates in daily exchanges. Backup: separate monitoring, outside the future active balance. Neither role sends commands.",
+          "coupling": "AC: storage connected on the AC side. DC: monitoring is available, but the simple AC balance needs a topology adapter.",
+          "capacity_kwh": "Declared usable capacity in kWh for the monitored system. This is neither power in W nor remaining energy. Example: 8.2 kWh.",
+          "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
+          "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
+          "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
         }
       },
       "battery_details": {
         "title": "Edit battery measurements",
-        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "description": "Map at least one reading and give the battery a clear name. Missing readings can be left empty. Charge and discharge are distinct positive instantaneous powers. SOC is a percentage; remaining energy is the current stock, not a lifetime input counter.",
         "data": {
           "name": "Battery name",
           "role": "Role",
@@ -186,6 +234,16 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Display name, for example Main battery or Backup battery.",
+          "role": "Active: participates in daily exchanges. Backup: separate monitoring, outside the future active balance. Neither role sends commands.",
+          "coupling": "AC: storage connected on the AC side. DC: monitoring is available, but the simple AC balance needs a topology adapter.",
+          "capacity_kwh": "Declared usable capacity in kWh for the monitored system. This is neither power in W nor remaining energy. Example: 8.2 kWh.",
+          "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
+          "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
+          "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
         }
       },
       "edit_battery": {
@@ -208,8 +266,10 @@
       "recursive_source": "Select an original source, not an eHome EMS sensor.",
       "missing_source": "This sensor no longer exists. Choose another source.",
       "unsupported_unit": "Invalid unit: W/kW for power, % for SOC, Wh/kWh for remaining energy.",
-      "sources_changed": "A source is missing, duplicated or has an invalid unit. Return to review to correct the mappings.",
-      "invalid_battery": "Check name, role, coupling and capacity (a finite positive number)."
+      "sources_changed": "A mapping is inconsistent: missing source, duplicate, wrong unit, cumulative counter or stock above capacity. Return to review.",
+      "invalid_battery": "Check name, role, coupling and capacity (a finite positive number).",
+      "cumulative_energy": "This sensor is declared as a cumulative energy counter. Choose current remaining stock, or leave this field empty.",
+      "exceeds_capacity": "This energy is more than 10% above declared capacity. Check sensor, unit and capacity, or leave the field empty."
     }
   },
   "selector": {

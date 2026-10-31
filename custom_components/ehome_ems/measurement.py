@@ -36,10 +36,14 @@ def normalize_power(raw: object, unit: str | None, role: str) -> PowerReading:
     return PowerReading(round(value, 2), "valid")
 
 
-def normalize_battery(raw: object, unit: str | None, role: str) -> PowerReading:
+def normalize_battery(raw: object, unit: str | None, role: str, *,
+                      capacity_kwh: float | None = None,
+                      state_class: str | None = None) -> PowerReading:
     """Normalize separate positive power, SOC %, or measured stored energy kWh."""
     if role in ("charge_power", "discharge_power"):
         return normalize_power(raw, unit, role)
+    if role == "remaining_energy" and state_class in ("total", "total_increasing"):
+        return PowerReading(None, "cumulative_energy")
     if raw is None or raw in ("unknown", "unavailable"):
         return PowerReading(None, "unavailable")
     factors = {"%": 1} if role == "soc" else {"Wh": 0.001, "kWh": 1}
@@ -54,4 +58,8 @@ def normalize_battery(raw: object, unit: str | None, role: str) -> PowerReading:
         return PowerReading(None, "invalid_value")
     if value < 0 or (role == "soc" and value > 100):
         return PowerReading(None, "out_of_range")
+    # Allow 10% for nominal/usable-capacity differences and calibration.
+    # This is a consistency check, never an estimate of stored energy.
+    if role == "remaining_energy" and capacity_kwh and value > capacity_kwh * 1.1:
+        return PowerReading(None, "exceeds_capacity")
     return PowerReading(round(value, 3), "valid")

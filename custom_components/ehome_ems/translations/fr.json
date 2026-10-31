@@ -3,30 +3,38 @@
     "step": {
       "grid": {
         "title": "1 — Réseau électrique",
-        "description": "Associez les mesures réseau disponibles, ou laissez vide. Le capteur global conserve son signe ; l’injection est affichée en valeur positive. Ces mesures ne seront pas additionnées. Aucune commande ne sera envoyée.",
+        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/injection, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et injection, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’injection ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
         "data": {
           "grid_power": "Puissance réseau signée",
           "grid_import": "Puissance importée du réseau",
           "grid_export": "Puissance injectée sur le réseau"
+        },
+        "data_description": {
+          "grid_power": "Facultatif. Doit changer de signe entre import et injection. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
+          "grid_import": "Puissance achetée au réseau, normalement positive ou nulle. Ce n’est pas la consommation totale de la maison.",
+          "grid_export": "Puissance renvoyée vers le réseau. Un signe négatif fourni par la source est accepté et affiché en valeur positive."
         }
       },
       "solar": {
         "title": "2 — Production photovoltaïque",
-        "description": "Choisissez une mesure de production totale en W ou kW, ou laissez vide si vous n’avez pas de photovoltaïque.",
+        "description": "Choisissez la puissance totale produite par le photovoltaïque, en W ou kW. Un capteur calculé additionnant vos onduleurs convient. Ne choisissez ni une énergie journalière en kWh, ni le surplus injecté. Laissez vide si vous n’avez pas de photovoltaïque.",
         "data": {
           "solar_power": "Production photovoltaïque"
         }
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape. Continuez pour configurer les batteries ou ignorer le stockage.",
+        "description": "Choisissez la puissance totale réellement consommée par les usages de la maison, en W ou kW, quelle que soit son origine : réseau, solaire ou décharge batterie. Un capteur calculé existant convient s’il représente déjà ce total ; l’EMS reprend sa valeur sans ajouter une seconde fois solaire ou batteries. L’import réseau seul ne représente généralement pas la consommation maison.",
         "data": {
           "home_power": "Consommation de la maison"
+        },
+        "data_description": {
+          "home_power": "Exemple cohérent sur un même périmètre AC : 1 000 W solaire + 200 W import + 100 W décharge − 50 W injection − 250 W charge = 1 000 W pour les usages. N’appliquez pas cette formule sans vérifier où vos compteurs sont placés."
         }
       },
       "review": {
         "title": "5 — Vérifier les mesures",
-        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer. Les batteries de secours sont suivies séparément et ne sont pas éligibles au futur bilan actif.",
+        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
@@ -37,7 +45,7 @@
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Un premier dashboard peut être exporté ensuite via l’action ehome_ems.generate_dashboard. Les bilans et les flux animés restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
+        "description": "{summary}\n\nEn confirmant, vous enregistrez seulement les associations en observation. Aucun équipement n’est commandé et aucun dashboard n’est ajouté automatiquement dans cette bêta. Pour obtenir la première vue native, utilisez ensuite Outils de développement → Actions → ehome_ems.generate_dashboard, puis copiez la configuration dans un NOUVEAU dashboard. Les flux animés et la création automatique restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
         }
@@ -54,7 +62,7 @@
       },
       "add_battery": {
         "title": "Ajouter une batterie",
-        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
         "data": {
           "name": "Nom de la batterie",
           "role": "Rôle",
@@ -64,11 +72,21 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
         }
       },
       "battery_details": {
         "title": "Modifier les mesures de la batterie",
-        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
         "data": {
           "name": "Nom de la batterie",
           "role": "Rôle",
@@ -78,6 +96,16 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
         }
       },
       "edit_battery": {
@@ -100,8 +128,10 @@
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
       "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
       "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
-      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations.",
-      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini)."
+      "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
+      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",
+      "cumulative_energy": "Ce capteur est déclaré comme un cumul d’énergie. Choisissez un stock restant instantané, ou laissez ce champ vide.",
+      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide."
     },
     "abort": {
       "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
@@ -111,30 +141,38 @@
     "step": {
       "grid": {
         "title": "1 — Réseau électrique",
-        "description": "Associez les mesures réseau disponibles, ou laissez vide. Le capteur global conserve son signe ; l’injection est affichée en valeur positive. Ces mesures ne seront pas additionnées. Aucune commande ne sera envoyée.",
+        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/injection, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et injection, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’injection ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
         "data": {
           "grid_power": "Puissance réseau signée",
           "grid_import": "Puissance importée du réseau",
           "grid_export": "Puissance injectée sur le réseau"
+        },
+        "data_description": {
+          "grid_power": "Facultatif. Doit changer de signe entre import et injection. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
+          "grid_import": "Puissance achetée au réseau, normalement positive ou nulle. Ce n’est pas la consommation totale de la maison.",
+          "grid_export": "Puissance renvoyée vers le réseau. Un signe négatif fourni par la source est accepté et affiché en valeur positive."
         }
       },
       "solar": {
         "title": "2 — Production photovoltaïque",
-        "description": "Choisissez une mesure de production totale en W ou kW, ou laissez vide si vous n’avez pas de photovoltaïque.",
+        "description": "Choisissez la puissance totale produite par le photovoltaïque, en W ou kW. Un capteur calculé additionnant vos onduleurs convient. Ne choisissez ni une énergie journalière en kWh, ni le surplus injecté. Laissez vide si vous n’avez pas de photovoltaïque.",
         "data": {
           "solar_power": "Production photovoltaïque"
         }
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape. Continuez pour configurer les batteries ou ignorer le stockage.",
+        "description": "Choisissez la puissance totale réellement consommée par les usages de la maison, en W ou kW, quelle que soit son origine : réseau, solaire ou décharge batterie. Un capteur calculé existant convient s’il représente déjà ce total ; l’EMS reprend sa valeur sans ajouter une seconde fois solaire ou batteries. L’import réseau seul ne représente généralement pas la consommation maison.",
         "data": {
           "home_power": "Consommation de la maison"
+        },
+        "data_description": {
+          "home_power": "Exemple cohérent sur un même périmètre AC : 1 000 W solaire + 200 W import + 100 W décharge − 50 W injection − 250 W charge = 1 000 W pour les usages. N’appliquez pas cette formule sans vérifier où vos compteurs sont placés."
         }
       },
       "review": {
         "title": "5 — Vérifier les mesures",
-        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer. Les batteries de secours sont suivies séparément et ne sont pas éligibles au futur bilan actif.",
+        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
@@ -145,7 +183,7 @@
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Un premier dashboard peut être exporté ensuite via l’action ehome_ems.generate_dashboard. Les bilans et les flux animés restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
+        "description": "{summary}\n\nEn confirmant, vous enregistrez seulement les associations en observation. Aucun équipement n’est commandé et aucun dashboard n’est ajouté automatiquement dans cette bêta. Pour obtenir la première vue native, utilisez ensuite Outils de développement → Actions → ehome_ems.generate_dashboard, puis copiez la configuration dans un NOUVEAU dashboard. Les flux animés et la création automatique restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
         }
@@ -162,7 +200,7 @@
       },
       "add_battery": {
         "title": "Ajouter une batterie",
-        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
         "data": {
           "name": "Nom de la batterie",
           "role": "Rôle",
@@ -172,11 +210,21 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
         }
       },
       "battery_details": {
         "title": "Modifier les mesures de la batterie",
-        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
         "data": {
           "name": "Nom de la batterie",
           "role": "Rôle",
@@ -186,6 +234,16 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
         }
       },
       "edit_battery": {
@@ -208,8 +266,10 @@
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
       "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
       "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
-      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations.",
-      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini)."
+      "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
+      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",
+      "cumulative_energy": "Ce capteur est déclaré comme un cumul d’énergie. Choisissez un stock restant instantané, ou laissez ce champ vide.",
+      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide."
     }
   },
   "selector": {

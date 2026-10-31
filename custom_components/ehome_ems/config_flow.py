@@ -101,6 +101,15 @@ class PowerWizard:
                 errors[key] = "missing_source"
             elif state.attributes.get("unit_of_measurement") not in units:
                 errors[key] = "unsupported_unit"
+            elif role == "remaining_energy":
+                battery = candidate[CONF_BATTERIES][key.split(".")[1]]
+                reading = normalize_battery(
+                    state.state, state.attributes.get("unit_of_measurement"), role,
+                    capacity_kwh=battery.get("capacity_kwh"),
+                    state_class=state.attributes.get("state_class"),
+                )
+                if reading.quality in ("cumulative_energy", "exceeds_capacity"):
+                    errors[key] = reading.quality
         return errors
 
     async def _power_step(self, step, next_step, user_input):
@@ -214,10 +223,16 @@ class PowerWizard:
             state = self.hass.states.get(entity_id)
             is_battery = key.startswith("batteries.")
             normalize = normalize_battery if is_battery else normalize_power
+            battery = self._draft[CONF_BATTERIES][key.split(".")[1]] if is_battery else None
+            details = {
+                "capacity_kwh": battery.get("capacity_kwh"),
+                "state_class": state.attributes.get("state_class") if state else None,
+            } if battery else {}
             reading = normalize(
                 state.state if state else None,
                 state.attributes.get("unit_of_measurement") if state else None,
                 role,
+                **details,
             )
             unit = "%" if role == "soc" else "kWh" if role == "remaining_energy" else "W"
             value = f"{reading.value:g} {unit}" if reading.value is not None else "—"

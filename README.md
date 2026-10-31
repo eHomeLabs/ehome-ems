@@ -6,7 +6,7 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : première bêta 0.2.0b1 en observation, préparée pour les essais.**
+**Statut : première bêta 0.2.0b2 en observation, préparée pour les essais.**
 Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
 et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
 en développement, et non une release logicielle 2.0.
@@ -15,7 +15,7 @@ en développement, et non une release logicielle 2.0.
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible sur cette branche | Bêta 0.2.0b1 en lecture seule, compatible avec les associations V0.1 |
+| Code disponible sur cette branche | Bêta 0.2.0b2 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
@@ -30,7 +30,7 @@ les prévisions, conseils et commandes ne sont pas encore disponibles.**
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
-- **Installer ou revenir en arrière :** [guide bêta 0.2.0b1](docs/INSTALLATION_BETA.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b2](docs/INSTALLATION_BETA.md).
 - **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
@@ -38,6 +38,22 @@ les prévisions, conseils et commandes ne sont pas encore disponibles.**
 Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour la suite du développement, les références sont le cahier des charges V2 et la feuille de route.
 
 ## Premier incrément du lot A — en développement
+
+### Retour des premiers essais — 0.2.0b2
+
+Les écrans expliquent maintenant le choix entre réseau signé et import/injection,
+l'utilisation d'une consommation maison déjà calculée et la distinction entre
+énergie restante, capacité et compteurs cumulatifs. Une aide par champ accompagne
+les batteries. La confirmation précise que la création du dashboard reste manuelle.
+
+Le statut valid signifie valeur et unité lisibles, pas association physique garantie.
+Pour l'énergie restante, les sources déclarées total/total_increasing sont refusées.
+Un stock supérieur à la capacité déclarée de plus de 10 % est également refusé à
+la configuration et rendu indisponible pendant le suivi, avec une raison explicite.
+Cette tolérance couvre de petits écarts de capacité nominale/utile et de calibration ;
+elle ne prouve pas que les autres associations sont correctes.
+HA peut masquer les attributs supplémentaires d'une entité indisponible ; le
+motif détaillé reste visible dans l'aperçu de configuration.
 
 Cette branche fournit le premier paquet de test du lot A.
 Elle ne constitue pas une livraison complète du lot A ni une validation officielle HACS.

@@ -118,3 +118,15 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
         await sensor_module.async_setup_entry(self.hass, entry, created.extend)
         self.assertEqual([item._attr_unique_id for item in created],
                          ["entry_grid_power", "entry_stable_soc"])
+
+    async def test_invalid_stored_energy_never_remains_displayed_as_a_valid_stock(self):
+        sensor = self.make_sensor()
+        await sensor.async_added_to_hass()
+        self.states["sensor.source"].state = "305799"
+        self.hass.listeners[0](None)
+        self.assertIsNone(sensor._attr_native_value)
+        self.assertEqual(sensor._attr_extra_state_attributes["data_quality"], "exceeds_capacity")
+        self.states["sensor.source"].state = "2500"
+        self.states["sensor.source"].attributes["state_class"] = "total_increasing"
+        self.hass.listeners[0](None)
+        self.assertEqual(sensor._attr_extra_state_attributes["data_quality"], "cumulative_energy")

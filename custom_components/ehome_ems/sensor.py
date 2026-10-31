@@ -86,10 +86,15 @@ class MappedPowerSensor(SensorEntity):
         self._attr_available = False
         self._attr_native_value = None
         normalize = normalize_battery if self._battery else normalize_power
+        details = {
+            "capacity_kwh": self._battery.get("capacity_kwh"),
+            "state_class": state.attributes.get("state_class") if state else None,
+        } if self._battery else {}
         reading = normalize(
             state.state if state else None,
             state.attributes.get("unit_of_measurement") if state else None,
             self._role,
+            **details,
         )
         self._attr_extra_state_attributes = {
             "source_entity_id": self._source,

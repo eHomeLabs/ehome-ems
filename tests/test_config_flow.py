@@ -270,3 +270,30 @@ class WizardTests(IsolatedAsyncioTestCase):
         self.assertIn(battery_id, saved["batteries"])
         self.assertEqual(options._draft["batteries"], {})
         self.assertEqual((await options.async_step_confirm({}))["errors"]["base"], "select_source")
+
+    async def test_remaining_energy_mapping_rejects_lifetime_energy(self):
+        await self.flow.async_step_user()
+        self.states["sensor.lifetime"] = state("2", "kWh")
+        self.states["sensor.lifetime"].attributes["state_class"] = "total_increasing"
+        result = await self.add_battery(remaining_energy="sensor.lifetime", capacity_kwh=8.2)
+        self.assertEqual(result["errors"]["remaining_energy"], "cumulative_energy")
+        self.assertEqual(self.flow._draft["batteries"], {})
+
+    async def test_remaining_energy_mapping_rejects_stock_above_capacity(self):
+        await self.flow.async_step_user()
+        self.states["sensor.lifetime"] = state("305.799", "kWh")
+        result = await self.add_battery(remaining_energy="sensor.lifetime", capacity_kwh=8.2)
+        self.assertEqual(result["errors"]["remaining_energy"], "exceeds_capacity")
+
+    async def test_saved_incoherent_energy_is_visible_and_can_be_cleared(self):
+        await self.flow.async_step_user()
+        self.states["sensor.energy"] = state("2", "kWh")
+        await self.add_battery(remaining_energy="sensor.energy", capacity_kwh=8.2)
+        battery_id = next(iter(self.flow._draft["batteries"]))
+        self.states["sensor.energy"].state = "305.799"
+        review = await self.flow.async_step_review()
+        self.assertIn("[exceeds_capacity]", review["description_placeholders"]["summary"])
+        self.assertEqual((await self.flow.async_step_confirm({}))["errors"]["base"], "sources_changed")
+        await self.flow.async_step_edit_battery({"battery_id": battery_id})
+        await self.flow.async_step_battery_details({"name": "Corrected", "soc": "sensor.soc"})
+        self.assertEqual((await self.flow.async_step_confirm({}))["type"], "create_entry")

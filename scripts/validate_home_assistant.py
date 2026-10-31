@@ -81,6 +81,15 @@ async def validate(config_dir):
         assert float(energy.state) == 3.25
         assert energy.attributes["state_class"] == "measurement"
         assert not energy.attributes["eligible_for_ac_balance"]
+        energy_id, _ = mirror(f"{battery_id}_remaining_energy")
+        hass.states.async_set("sensor.sim_energy", "305799", {"unit_of_measurement": "Wh"})
+        await hass.async_block_till_done()
+        assert hass.states.get(energy_id).state == "unavailable"
+        # HA omits extra attributes while an entity is unavailable.
+        # Detailed rejection reasons are checked in configuration and unit tests.
+        hass.states.async_set("sensor.sim_energy", "3250", {"unit_of_measurement": "Wh"})
+        await hass.async_block_till_done()
+        assert float(hass.states.get(energy_id).state) == 3.25
 
         # Real source events must propagate, including unavailable and recovery.
         hass.states.async_set("sensor.sim_solar", "unavailable", {"unit_of_measurement": "kW"})
