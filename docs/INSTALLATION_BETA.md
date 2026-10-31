@@ -1,10 +1,10 @@
-# eHome EMS 0.2.0b7 — installation et retour arrière
+# eHome EMS 0.2.0b8 — installation et retour arrière
 
 Première bêta en observation. Le périmètre produit « V2 » n'est pas encore livré
 en totalité. La bêta contient l'assistant, les mesures normalisées, le suivi
 multi-batteries et l'export manuel d'un dashboard natif.
 
-La bêta 0.2.0b7 ajoute des explications dans chaque étape et une aide par champ
+La bêta 0.2.0b8 ajoute des explications dans chaque étape et une aide par champ
 pour les batteries. Une consommation maison déjà calculée est acceptée si elle
 décrit les usages réels. L'énergie restante doit être un stock, pas un compteur
 cumulatif. Les compteurs déclarés total/total_increasing sont refusés ; au-delà
@@ -13,6 +13,13 @@ tel stock devient indisponible plutôt que d'être affiché comme valide.
 Le champ reste facultatif : laissez-le vide si aucune source ne convient.
 La vue automatique et la copie native sont disponibles depuis 0.2.0b5 ;
 un synoptique animé est disponible dans la vue gérée depuis 0.2.0b7.
+
+La bêta 0.2.0b8 organise le dashboard avec une navigation haute : Vue d’ensemble,
+Historique, Stockage, Usages, Stratégie et Configuration. Les mesures principales
+sont en haut, le flux au centre, les usages en bas et la situation EMS à droite
+sur PC. Sur mobile, la colonne de droite passe sous le flux et les usages.
+La stratégie reste en observation : aucun moteur de décision ni pilotage actif.
+La page Configuration montre les sources et les versions chargées.
 
 À l'étape Maison, choisir entre une source existante et le calcul automatique EMS.
 Ce dernier demande les capteurs séparés import/injection, les mesures AC des modules
@@ -23,14 +30,14 @@ rendent le résultat indisponible. Voir CONSOMMATION_MAISON.md avant activation.
 
 Dans GitHub → Actions → Home Assistant beta package, ouvrir une exécution réussie
 correspondant au dernier commit de la proposition de code puis télécharger
-l'artefact ehome-ems-0.2.0b7. Il contient le ZIP installable, son SHA-256 et ce guide.
+l'artefact ehome-ems-0.2.0b8. Il contient le ZIP installable, son SHA-256 et ce guide.
 Le paquet est produit seulement après succès de la validation backend HA réelle.
 Les artefacts GitHub sont conservés 90 jours et peuvent être reconstruits avec
 scripts/build_test_package.py ou en relançant le workflow.
 
 Le ZIP installable contient custom_components/ehome_ems uniquement. L'archive
 d'artefact GitHub est une enveloppe : extraire d'abord le fichier
-ehome-ems-0.2.0b7.zip qu'elle contient.
+ehome-ems-0.2.0b8.zip qu'elle contient.
 
 La cible actuelle est Home Assistant Core 2026.11.0b0 et Python 3.14.
 La CI vérifie aussi 2026.9.1 comme point de comparaison.
@@ -51,11 +58,11 @@ propre environnement. Aucune autre version HA n'est déclarée validée ici.
 Le dépôt reste privé. Ce guide ne suppose pas un téléchargement direct par HACS
 et ne demande aucun changement de visibilité du dépôt.
 
-1. Extraire ehome-ems-0.2.0b7.zip sur le PC.
+1. Extraire ehome-ems-0.2.0b8.zip sur le PC.
 2. Copier son dossier custom_components/ehome_ems dans
    /config/custom_components/ehome_ems sur HA, en remplaçant le code précédent.
    Vérifier qu'il n'y a pas de niveau ehome_ems/ehome_ems imbriqué.
-3. Vérifier la présence de manifest.json avec version 0.2.0b7.
+3. Vérifier la présence de manifest.json avec version 0.2.0b8.
    Copier aussi les sous-dossiers frontend et brand, avec tous leurs fichiers.
 4. Redémarrer Home Assistant une fois pour charger le nouveau code.
 5. Si l'intégration existe déjà : Paramètres → Appareils et services → eHome EMS
@@ -74,6 +81,27 @@ dashboard natif indépendant, sans YAML. Voir DASHBOARD_AUTOMATIQUE.md.
 Après mise à jour du code, actualiser également la page ou l'application HA.
 Le premier chargement du code et ses mises à jour nécessitent un redémarrage.
 Aucune commande d'équipement n'est envoyée par cette bêta.
+
+## Si le flux est absent après une mise à jour
+
+Ouvrir la vue eHome EMS de la barre latérale : son chemin commence par
+`/ehome-ems-`. Une copie native indépendante (`/ehome-ems-copy-…` ou un dashboard
+créé manuellement) conserve ses cartes : elle n'ajoute pas le flux animé.
+Les nouvelles copies comportent un lien vers la vue automatique ; les anciennes
+copies ne sont pas modifiées.
+
+La b7 pouvait aussi laisser une ancienne classe d'interface chargée dans une
+session HA déjà ouverte : le composant gardait le même nom entre versions.
+La b8 utilise un fichier JS et un nom de composant propres à la version.
+Cela couvre ce cas de coexistence sans supprimer de copie personnalisée.
+La cause sur une instance donnée demande de vérifier la vue réellement ouverte
+et la version chargée : ne pas conclure automatiquement à un problème de cache.
+
+Après remplacement complet du dossier, redémarrer HA une fois puis recharger
+complètement la page ou fermer/réouvrir l'application HA. Dans Configuration,
+les versions Interface et Intégration doivent toutes deux indiquer 0.2.0b8.
+Un serveur ne fournissant pas le flux déclenche maintenant une explication visible,
+au lieu de masquer silencieusement le composant.
 
 ## Premier essai
 

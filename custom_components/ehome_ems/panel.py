@@ -7,10 +7,11 @@ from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 
 from .dashboard_service import dashboard_snapshot, power_scale
-from .const import DOMAIN
+from .const import DOMAIN, VERSION
 from .source_editor import remap_source
 
-PANEL_URL = "/ehome_ems_panel.js"
+PANEL_URL = f"/ehome_ems_panel_{VERSION}.js"
+PANEL_TAG = f"ehome-ems-panel-{VERSION.replace('.', '-')}"
 
 
 def panel_path(entry_id):
@@ -66,9 +67,9 @@ async def async_setup_entry_panel(hass, entry):
     if frontend.async_panel_exists(hass, path):
         raise HomeAssistantError("The eHome EMS panel path is already in use.")
     await panel_custom.async_register_panel(
-        hass, frontend_url_path=path, webcomponent_name="ehome-ems-panel",
+        hass, frontend_url_path=path, webcomponent_name=PANEL_TAG,
         sidebar_title="eHome EMS", sidebar_icon="mdi:home-lightning-bolt",
-        module_url=f"{PANEL_URL}?v=0.2.0b7",
+        module_url=PANEL_URL,
         config={"entry_id": entry.entry_id, "revision": entry.modified_at.isoformat()},
     )
     entry.async_on_unload(lambda: frontend.async_remove_panel(hass, path))

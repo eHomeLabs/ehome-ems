@@ -12,6 +12,8 @@ def main():
     manifest = json.loads((INTEGRATION / "manifest.json").read_text())
     assert manifest["domain"] == "ehome_ems"
     version = manifest["version"]
+    assert f'VERSION = "{version}"' in (INTEGRATION / "const.py").read_text()
+    assert f'UI_VERSION = "{version}"' in (INTEGRATION / "frontend/ehome-panel.mjs").read_text()
     output = ROOT / "dist"
     output.mkdir(exist_ok=True)
     archive = output / f"ehome-ems-{version}.zip"

@@ -31,10 +31,14 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       page.on("pageerror", error => errors.push(error.message));
       await page.goto("http://127.0.0.1:" + server.address().port + "/tests/fixtures/panel.html");
       await page.getByRole("heading", { name: "eHome EMS", exact: true }).waitFor();
-      await page.getByRole("button", { name: "Synthèse", exact: true }).waitFor();
+      await page.getByRole("button", { name: "Vue d’ensemble", exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => customElements.get("ehome-ems-panel") !== fixturePanel.constructor), true);
+      const navBox = await page.getByRole("navigation", { name: "Vues énergie" }).boundingBox();
+      const flowBox = await page.locator(".flow").boundingBox();
+      assert.ok(navBox.y < flowBox.y);
       await page.locator(".flow-house img").evaluate(img => img.decode());
       assert.equal(await page.locator(".flow-links path.active").count(), 4);
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b8").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -59,7 +63,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
         fixturePanel.hass = { ...fixtureHass };
       });
       assert.ok(await page.getByText("Indisponible", { exact: true }).count());
-      assert.equal(await page.locator(".nested-grid progress").first().isHidden(), true);
+      assert.equal(await page.locator(".flow-solar").getByText("Indisponible", { exact: true }).count(), 1);
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       await page.emulateMedia({ reducedMotion: "reduce" });
       assert.equal(await page.locator(".flow-links path.active").first().evaluate(el => getComputedStyle(el).animationName), "none");
@@ -78,6 +82,17 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(calls.filter(call => call.type === "lovelace/dashboards/create").length, 1);
       assert.equal(calls.filter(call => call.type === "lovelace/config/save").length, 1);
       assert.equal(calls.filter(call => call.type === "call_service").length, 0);
+      await page.getByRole("button", { name: "Stratégie", exact: true }).click();
+      assert.equal(await page.getByText("Aucune commande envoyée", { exact: true }).count(), 1);
+      await page.getByRole("button", { name: "Configuration", exact: true }).click();
+      assert.ok(await page.getByText("Interface 0.2.0b8 · Intégration 0.2.0b8", { exact: true }).count());
+      await page.getByRole("button", { name: "Changer la source", exact: true }).first().click();
+      await page.getByRole("dialog").waitFor();
+      await page.getByRole("button", { name: "Annuler", exact: true }).click();
+      await page.evaluate(() => { window.omitFlow = true; });
+      await page.getByRole("button", { name: "Actualiser", exact: true }).click();
+      await page.getByRole("button", { name: "Vue d’ensemble", exact: true }).click();
+      await page.getByRole("alert").getByText("Flux indisponible dans cette version chargée").waitFor();
       await page.evaluate(() => { fixtureHass.user = { is_admin: false }; fixturePanel.hass = { ...fixtureHass }; });
       assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(), 0);
       assert.deepEqual(errors, []);

@@ -1,4 +1,6 @@
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
+export const UI_VERSION = "0.2.0b8";
+export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export function newCopyToken(source = globalThis.crypto) {
   if (typeof source.randomUUID === "function") return source.randomUUID();
   return Array.from(source.getRandomValues(new Uint32Array(4)),
@@ -84,7 +86,7 @@ export class EhomeEmsPanel extends BaseElement {
       if (request !== this._request) return;
       this._snapshotData = snapshot;
       this._error = null;
-      this._tab = Math.min(this._tab, snapshot.dashboard.views.length - 1);
+      this._tab = Math.min(this._tab, 5);
     } catch (error) {
       if (request !== this._request) return;
       this._error = this._t("Vue momentanément indisponible. Actualisez après le chargement de l’intégration.",
@@ -116,7 +118,7 @@ export class EhomeEmsPanel extends BaseElement {
     const style = this._node("style");
     style.textContent = `
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f6f8);color:var(--primary-text-color,#18232e);font:15px/1.5 system-ui,sans-serif}
-      *{box-sizing:border-box}main{max-width:1240px;margin:auto;padding:24px}
+      *{box-sizing:border-box}main{max-width:1700px;margin:auto;padding:24px}
       header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
       h1{margin:0;font-size:30px;letter-spacing:-.7px}h2{margin:0 0 16px;font-size:18px}h1,h2,.note{overflow-wrap:anywhere}
       .subtitle,.note{color:color-mix(in srgb,var(--primary-text-color,#18232e) 78%,var(--card-background-color,#fff))}.subtitle{margin:4px 0 0}
@@ -137,6 +139,17 @@ export class EhomeEmsPanel extends BaseElement {
       dialog::backdrop{background:#0008}dialog input,dialog select{display:block;width:100%;font:inherit;padding:12px;margin:12px 0;background:var(--card-background-color,#fff);color:inherit;border:1px solid var(--divider-color,#aaa);border-radius:8px}
       dialog .actions{justify-content:flex-end}
       a{color:var(--primary-color,#007b83);overflow-wrap:anywhere}
+      .top-nav{position:sticky;top:0;z-index:2;padding:12px 0;background:var(--primary-background-color,#f4f6f8);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}.top-nav button{white-space:nowrap;flex:none}
+      .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:16px 0}
+      .kpi{border:1px solid var(--divider-color,#3b536b);border-radius:14px;padding:16px;background:var(--card-background-color,#14212d);min-width:0}
+      .kpi ha-icon{display:inline-block;margin-right:8px;--mdc-icon-size:28px}.kpi .value{display:block;text-align:left;font-size:clamp(21px,2.4vw,32px);margin:6px 0;line-height:1.2}.kpi-label{display:block;font-size:14px;color:var(--primary-text-color,#e9f1fc)}
+      .overview-grid{display:grid;grid-template-columns:minmax(0,2.5fr) minmax(280px,1fr);gap:16px;align-items:start}.overview-grid>.flow{margin:0;grid-column:1;grid-row:1}.overview-grid>.strategy{grid-column:2;grid-row:1}.overview-grid>.secondary{grid-column:1;grid-row:2}.overview-grid>.quality-panel{grid-column:2;grid-row:2}
+      .observation{display:inline-block;border:1px solid var(--primary-color,#70a246);border-radius:20px;padding:3px 10px;font-size:13px;margin-bottom:12px}.strategy .row{align-items:center}.strategy .row .value{white-space:nowrap}.strategy .row>span:first-child{font-size:14px}.strategy button{margin-top:12px}
+      .load-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}.load-grid .kpi{padding:12px}.load-grid .value{font-size:24px}
+      .source-list{display:grid;gap:12px}.source-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;border-bottom:1px solid var(--divider-color,#3b536b);padding:12px 0}.source-item code{display:block;overflow-wrap:anywhere;font-size:12px}.config-links{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0}
+      @media(min-width:1051px){.overview-grid .flow-stage{aspect-ratio:1000/500}.overview-grid .flow-house{left:29%;top:26%;width:54%}.overview-grid .flow-solar,.overview-grid .flow-grid{width:36%}.overview-grid .flow-battery{top:55%}}
+      @media(max-width:1050px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.overview-grid{grid-template-columns:1fr}.overview-grid>.strategy{grid-column:1;grid-row:3}.overview-grid>.secondary{grid-row:2}.overview-grid>.quality-panel{grid-column:1;grid-row:4}}
+      @media(max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpi{padding:12px}.top-nav{margin:12px 0}.top-nav button{flex:none}.source-item{grid-template-columns:1fr}.source-item button{justify-self:start}}
       .flow{background:#101923;color:#e9f1fc;border:1px solid #30475c;border-radius:20px;padding:clamp(12px,3vw,28px);margin:20px 0;overflow:hidden}
       .flow h2{font-size:22px;margin:0}.flow .flow-note{color:#aabbd0;font-size:13px;margin:6px 0 14px}
       .flow-stage{position:relative;aspect-ratio:1000/830;max-width:900px;margin:auto}
@@ -197,22 +210,127 @@ export class EhomeEmsPanel extends BaseElement {
       if (snapshot.missing_entities?.length) main.append(this._node("p", this._t(
         "Certaines mesures sont manquantes ou désactivées. Vérifiez les associations dans l’intégration.",
         "Some readings are missing or disabled. Check integration mappings."), "note warn"));
-      const nav = this._node("nav"); nav.setAttribute("aria-label", this._t("Vues énergie", "Energy views"));
-      snapshot.dashboard.views.forEach((view, index) => {
-        const button = this._button(view.title, () => { this._tab = index; this._render(); });
+      const nav = this._node("nav", undefined, "top-nav"); nav.setAttribute("aria-label", this._t("Vues énergie", "Energy views"));
+      const sections = [[this._t("Vue d’ensemble", "Overview"), "summary"], [this._t("Historique", "History"), "history"],
+        [this._t("Stockage", "Storage"), "storage"], [this._t("Usages", "Loads"), "usages"],
+        [this._t("Stratégie", "Strategy"), "strategy"], [this._t("Configuration", "Configuration"), "configuration"]];
+      sections.forEach(([title], index) => {
+        const button = this._button(title, () => { this._tab = index; this._render(); });
         if (index === this._tab) button.setAttribute("aria-current", "page");
         nav.append(button);
       });
       main.append(nav);
-      if (this._tab === 0 && snapshot.flow) main.append(this._flow(snapshot.flow));
-      const content = this._node("section", undefined, "cards");
-      for (const card of snapshot.dashboard.views[this._tab]?.cards || []) content.append(this._card(card));
-      main.append(content);
+      if (this._tab === 0) main.append(this._overview(snapshot));
+      else if (this._tab === 4) main.append(this._strategy(snapshot.flow, true));
+      else if (this._tab === 5) main.append(this._configuration(snapshot));
+      else {
+        const path = sections[this._tab][1];
+        const view = snapshot.dashboard.views.find(view => view.path === path);
+        const content = this._node("section", undefined, "cards");
+        for (const card of view?.cards || []) content.append(this._card(card));
+        if (!view) content.append(this._node("p", this._t("Aucune mesure configurée pour cette vue.", "No readings configured for this view."), "note"));
+        main.append(content);
+      }
     }
     this.shadowRoot.append(main); this._refresh();
   }
   _bind(element, entity, attribute, gauge) {
     this._bindings.push({ element, entity, attribute, gauge });
+  }
+  _icon(name) { const el = this._node("ha-icon"); el.setAttribute("icon", name); return el; }
+  _metricTile(label, entity, icon, color) {
+    const tile = this._node("div", undefined, "kpi");
+    tile.append(this._icon(icon), this._node("span", label, "kpi-label"));
+    const value = this._node("span", undefined, "value");
+    if (color) { value.style.color = color; tile.firstChild.style.color = color; }
+    this._bind(value, entity); tile.append(value); if (entity) this._editable(tile, entity);
+    return tile;
+  }
+  _overview(snapshot) {
+    const root = this._node("div");
+    if (!snapshot.flow) {
+      const notice = this._node("div", undefined, "card warn");
+      notice.setAttribute("role", "alert");
+      notice.append(this._node("h2", this._t("Flux indisponible dans cette version chargée", "Flow unavailable in the loaded version")),
+        this._node("p", this._t("Le serveur n’a pas fourni le flux. Vérifiez que tout le dossier ehome_ems a été remplacé, puis redémarrez Home Assistant et rechargez l’application.",
+        "The server did not provide flow data. Check the complete ehome_ems folder was replaced, restart Home Assistant and reload the app.")));
+      root.append(notice); return root;
+    }
+    const flow = snapshot.flow, entities = flow.entities || {};
+    const primary = flow.batteries?.find(b => b.role === "active" && b.coupling === "ac");
+    const kpis = this._node("section", undefined, "kpis"); kpis.setAttribute("aria-label", this._t("Mesures principales", "Main readings"));
+    for (const args of [
+      [this._t("Solaire", "Solar"), entities.solar_power, "mdi:white-balance-sunny", "#e9af22"],
+      [flow.home_calculated ? this._t("Maison totale", "Total home") : this._t("Maison · source existante", "Home · existing source"), entities.home_power, "mdi:home", "#6eafff"],
+      [this._t("Injection réseau", "Grid export"), entities.grid_export, "mdi:transmission-tower", "#24afc6"],
+      [this._t("Charge batterie", "Battery charge"), primary?.charge_power, "mdi:battery-charging", "#28b482"],
+      [this._t("État de charge", "State of charge"), primary?.soc, "mdi:battery-high", "#28b482"],
+    ]) kpis.append(this._metricTile(...args));
+    root.append(kpis);
+    const grid = this._node("div", undefined, "overview-grid");
+    grid.append(this._flow(flow), this._strategy(flow));
+    const secondary = this._node("section", undefined, "card secondary");
+    secondary.append(this._node("h2", this._t("Usages et équipements", "Loads and equipment")));
+    const loads = this._node("div", undefined, "load-grid");
+    for (const usage of flow.usages || []) loads.append(this._metricTile(usage.name, usage.power,
+      usage.kind === "solar_router" ? "mdi:water-boiler" : usage.kind === "ev_charger" ? "mdi:car-electric" : "mdi:power-plug",
+      usage.kind === "solar_router" ? "#e9a23d" : usage.kind === "ev_charger" ? "#ab78e2" : "#6eafff"));
+    if (!flow.usages?.length) loads.append(this._node("p", this._t("Ajoutez des usages dans la configuration de l’intégration.", "Add loads in integration configuration."), "note"));
+    secondary.append(loads); grid.append(secondary);
+    const quality = this._node("section", undefined, "card quality-panel");
+    quality.append(this._node("h2", this._t("Qualité des données", "Data quality")),
+      this._node("p", flow.home_calculated ? this._t("Périmètre maison : total calculé EMS.", "Home boundary: EMS calculated total.") :
+        this._t("Périmètre maison : celui de la source. Vérifiez si le cumulus est inclus.", "Home boundary: source boundary. Check whether the water heater is included."), "note"),
+      this._button(this._t("Vérifier les associations", "Check mappings"), () => { this._tab = 5; this._render(); }));
+    const available = this._node("p", undefined, "note"); quality.append(available);
+    this._flowUpdates.push(() => {
+      const ids = Object.keys(snapshot.bindings || {});
+      const missing = ids.filter(id => !this._hass?.states[id] || ["unknown", "unavailable"].includes(this._hass.states[id].state));
+      available.textContent = this._t("Mesures indisponibles : ", "Unavailable readings: ") + missing.length;
+    });
+    grid.append(quality); root.append(grid); return root;
+  }
+  _strategy(flow, expanded = false) {
+    const panel = this._node("section", undefined, "card strategy");
+    panel.append(this._node("h2", this._t("Stratégie EMS", "EMS strategy")), this._node("span", this._t("Observation", "Observation"), "observation"));
+    panel.append(this._node("h3", this._t("Situation actuelle", "Current situation")));
+    const entities = flow?.entities || {};
+    for (const [label, entity] of [[this._t("Import réseau", "Grid import"), entities.grid_import],
+      [this._t("Injection réseau", "Grid export"), entities.grid_export],
+      ...(flow?.batteries || []).filter(b => b.role === "active").map(b => [b.name + this._t(" · charge", " · charge"), b.charge_power])]) {
+      const row = this._node("div", undefined, "row"), value = this._node("span", undefined, "value");
+      this._bind(value, entity); row.append(this._node("span", label), value); panel.append(row);
+    }
+    panel.append(this._node("h3", this._t("Décisions et priorités", "Decisions and priorities")),
+      this._node("p", this._t("Aucune stratégie de pilotage active. Les mesures sont observées sans modifier les régulations de vos équipements.",
+        "No active control strategy. Readings are monitored without changing device regulation."), "note"));
+    if (expanded) panel.append(this._node("p", this._t("L’édition des priorités, la simulation et les conseils seront ajoutés dans une prochaine étape. Une injection mesurée n’est pas, à elle seule, une puissance disponible pour un autre usage.",
+      "Priority editing, simulation and advice will be added in a later step. Measured export alone does not establish power available to another load."), "note"));
+    else panel.append(this._button(this._t("Ouvrir Stratégie", "Open Strategy"), () => { this._tab = 4; this._render(); }));
+    panel.append(this._node("p", this._t("Aucune commande envoyée", "No commands sent"), "note")); return panel;
+  }
+  _configuration(snapshot) {
+    const root = this._node("section", undefined, "card");
+    root.append(this._node("h2", this._t("Configuration et associations", "Configuration and mappings")),
+      this._node("p", this._t("Modifiez une source ici ou par appui prolongé sur une mesure. Pour ajouter un équipement ou changer le mode de calcul maison, utilisez Configurer dans l’intégration.",
+        "Change a source here or by holding a reading. To add equipment or change home calculation mode, use Configure in the integration."), "note"));
+    const links = this._node("div", undefined, "config-links");
+    const integration = this._node("a", this._t("Ouvrir l’intégration eHome EMS", "Open eHome EMS integration"));
+    integration.href = "/config/integrations/integration/ehome_ems"; links.append(integration); root.append(links);
+    root.append(this._node("p", this._t("Interface ", "Interface ") + UI_VERSION + this._t(" · Intégration ", " · Integration ") + (snapshot.version || this._t("ancienne ou inconnue", "old or unknown")), "note"));
+    const list = this._node("div", undefined, "source-list");
+    for (const [entity, binding] of Object.entries(snapshot.bindings || {})) {
+      const item = this._node("div", undefined, "source-item"), text = this._node("div");
+      text.append(this._node("strong", this._hass?.states[entity]?.attributes?.friendly_name || entity),
+        this._node("code", binding.calculated_home ? this._t("Calcul automatique EMS", "EMS automatic calculation") : binding.source || this._t("Source absente", "Missing source")));
+      item.append(text);
+      if (this._hass?.user?.is_admin) item.append(this._button(this._t("Changer la source", "Change source"), () => this._edit(entity)));
+      list.append(item);
+    }
+    root.append(list);
+    const view = snapshot.dashboard.views.find(view => view.path === "quality");
+    for (const card of view?.cards || []) root.append(this._card(card));
+    return root;
   }
   _card(config) {
     const card = this._node("div", undefined, config.type === "vertical-stack" ? "stack" :
@@ -284,7 +402,7 @@ export class EhomeEmsPanel extends BaseElement {
     link("M230 140 V210 Q230 245 280 245 H480 Q520 245 520 290", "#ffce45", entities.solar_power);
     link("M730 360 Q800 350 800 290 V150", "#52d7ee", entities.grid_export);
     link("M850 150 V300 Q850 380 750 400", "#52d7ee", entities.grid_import);
-    if (config.usages?.length) link("M560 620 V810", "#edf4ff", entities.home_power);
+    if (config.usages?.length) link("M560 700 V810", "#edf4ff", entities.home_power);
     const primary = config.batteries?.find(battery => battery.role === "active" && battery.coupling === "ac");
     if (primary) {
       link("M460 480 H230 Q180 480 180 530", "#50e49b", primary.charge_power);
@@ -478,6 +596,6 @@ export class EhomeEmsPanel extends BaseElement {
     }
   }
 }
-if (globalThis.customElements && !customElements.get("ehome-ems-panel")) {
-  customElements.define("ehome-ems-panel", EhomeEmsPanel);
+if (globalThis.customElements && !customElements.get(PANEL_TAG)) {
+  customElements.define(PANEL_TAG, EhomeEmsPanel);
 }

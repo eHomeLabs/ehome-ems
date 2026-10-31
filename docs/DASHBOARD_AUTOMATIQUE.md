@@ -1,4 +1,4 @@
-# Vue automatique et copie modifiable — 0.2.0b7
+# Vue automatique et copie modifiable — 0.2.0b8
 
 Après confirmation de l'assistant et chargement de l'intégration, une entrée
 eHome EMS apparaît dans la barre latérale. Aucune copie de YAML ni ajout manuel
@@ -11,6 +11,22 @@ La vue automatique est un panneau personnalisé Home Assistant, en observation.
 Elle affiche les mesures, jauges, batteries, usages et qualité issus du même
 générateur que l'export natif. Les valeurs suivent les états HA sans commande.
 Les mesures indisponibles restent explicitement indisponibles, sans zéro inventé.
+
+Depuis b8, la navigation est horizontale en haut : Vue d’ensemble, Historique,
+Stockage, Usages, Stratégie, Configuration. La vue d'ensemble place les mesures
+principales en haut, le flux au centre, les usages en dessous, la situation EMS
+et la qualité à droite. Les colonnes se replient sur mobile. Configuration permet
+de relire les sources, de les réassocier avec les droits administrateur et de
+vérifier les versions du serveur et de l'interface. Les pages Stockage et Usages
+restent présentes même lorsqu'aucun équipement n'y est associé.
+
+Le panneau Stratégie décrit uniquement la situation observée. L'édition des
+priorités, la simulation, les conseils et le pilotage ne sont pas encore livrés.
+Les chiffres fictifs de la maquette ne sont jamais fournis à la vue réelle.
+
+Le module et le composant web ont un nom propre à la version pour éviter de
+réutiliser une ancienne classe déjà chargée dans une session HA ouverte.
+Si le serveur n'envoie pas le flux, un message de diagnostic est affiché.
 
 L'onglet Historique de cette première vue ouvre la fiche historique native de
 chaque mesure. Il ne rend pas encore une courbe synchronisée directement dans

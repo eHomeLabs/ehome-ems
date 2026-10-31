@@ -1,5 +1,6 @@
 """Constants for eHome EMS."""
 DOMAIN = "ehome_ems"
+VERSION = "0.2.0b8"
 CONF_GRID_POWER = "grid_power"
 CONF_GRID_IMPORT = "grid_import"
 CONF_GRID_EXPORT = "grid_export"

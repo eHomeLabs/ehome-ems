@@ -34,10 +34,10 @@ jobs:
       - run: python scripts/build_test_package.py
       - uses: actions/upload-artifact@v4
         with:
-          name: ehome-ems-0.2.0b7
+          name: ehome-ems-0.2.0b8
           path: |
-            dist/ehome-ems-0.2.0b7.zip
-            dist/ehome-ems-0.2.0b7.zip.sha256
+            dist/ehome-ems-0.2.0b8.zip
+            dist/ehome-ems-0.2.0b8.zip.sha256
             docs/INSTALLATION_BETA.md
             docs/CONSOMMATION_MAISON.md
             docs/USAGES_OBSERVATION.md

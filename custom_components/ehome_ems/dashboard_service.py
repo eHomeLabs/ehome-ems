@@ -6,7 +6,7 @@ from homeassistant.core import SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 
-from .const import DOMAIN, SOURCES, CONF_BATTERIES, BATTERY_SOURCES
+from .const import DOMAIN, VERSION, SOURCES, CONF_BATTERIES, BATTERY_SOURCES
 from .const import CONF_USAGES, USAGE_SOURCES
 from .dashboard import build_dashboard
 from .source_editor import binding_metadata
@@ -50,6 +50,19 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
             entities[suffix] = entity_id
     language = (language or hass.config.language or "fr").split("-")[0]
     result = build_dashboard(mapping, entities, language=language, max_power_w=max_power_w)
+    result["version"] = VERSION
+    result["managed_url"] = f"/ehome-ems-{entry.entry_id.lower()}"
+    if result["dashboard"]["views"]:
+        fr = language == "fr"
+        result["dashboard"]["views"][0]["cards"].insert(0, {
+            "type": "markdown", "content": (
+                "Le flux animé est disponible dans la [vue eHome EMS automatique]"
+                if fr else "The animated flow is available in the [automatic eHome EMS view]"
+            ) + f"({result['managed_url']}). " + (
+                "Cette copie conserve ses cartes natives indépendantes."
+                if fr else "This copy keeps its independent native cards."
+            ),
+        })
     result["bindings"] = binding_metadata(mapping, entities)
     result["flow"] = {
         "entities": {key: entities.get(key) for key in SOURCES},

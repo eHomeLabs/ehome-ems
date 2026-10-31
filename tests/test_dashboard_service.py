@@ -59,6 +59,9 @@ class DashboardServiceTests(IsolatedAsyncioTestCase):
         self.assertIn("sensor.renamed", str(result))
         self.assertEqual(result["dashboard"]["views"][0]["title"], "Overview")
         self.assertEqual(self.entry.data, {"home_power": "sensor.source"})
+        self.assertEqual(result["version"], "0.2.0b8")
+        self.assertEqual(result["managed_url"], "/ehome-ems-entry")
+        self.assertIn("/ehome-ems-entry", result["dashboard"]["views"][0]["cards"][0]["content"])
 
     async def test_disabled_or_other_entry_entities_are_reported_missing(self):
         for disabled, entry_id in (("user", "entry"), (None, "other")):

@@ -8,4 +8,6 @@ fs.writeFileSync("tests/fixtures/mdi.json", JSON.stringify({
   "mdi:water-boiler": mdi.mdiWaterBoiler,
   "mdi:car-electric": mdi.mdiCarElectric,
   "mdi:power-plug": mdi.mdiPowerPlug,
+  "mdi:home": mdi.mdiHome,
+  "mdi:battery-charging": mdi.mdiBatteryCharging,
 }));
