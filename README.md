@@ -29,6 +29,28 @@ eHome EMS vise à transformer les données déjà présentes dans Home Assistant
 
 Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour la suite du développement, les références sont le cahier des charges V2 et la feuille de route.
 
+## Premier incrément du lot A — en développement
+
+Cette branche prépare la normalisation des puissances avant le nouvel assistant
+et le dashboard. Elle ne constitue pas une livraison complète du lot A.
+
+- Conversion W/kW vers W.
+- Capteur réseau global signé conservé ; export présenté comme une magnitude
+  positive, y compris si le compteur source le publie en négatif.
+- Valeur négative sur import, solaire ou maison signalée indisponible.
+- Attributs `data_quality`, `source_unit` et `value_origin` sur les capteurs.
+- Donnée absente, unité incorrecte ou valeur non finie : aucune substitution par zéro.
+
+La fraîcheur des sources, le bilan multi-équipements, le parcours pas à pas,
+le stockage et le dashboard restent à développer. Les identifiants uniques
+existants sont conservés. Les automatismes utilisant le signe du miroir
+d'export doivent tenir compte de sa nouvelle convention positive.
+
+Tests de calcul indépendants de Home Assistant :
+`python -m unittest discover -s tests -v`.
+La CI vérifie aussi la syntaxe Python ; ces vérifications ne remplacent pas
+un test de chargement/rechargement dans Home Assistant.
+
 ## Documentation de référence
 
 - **[Cahier des charges complet V2](docs/CAHIER_DES_CHARGES.md)**
