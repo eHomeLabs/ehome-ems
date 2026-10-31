@@ -1,55 +1,84 @@
-# Validation visuelle et mise à jour du panneau — 0.2.0b8
+# Validation du flux — 0.2.0b9
 
 final result: passed
 
 ## Référence et preuves
 
-- Source : maquette d'ensemble validée, `generated_images/exec-f13f025c-7b57-4a86-adef-ef9e1745b156.png`, 1536 × 1024.
-- Modification explicite de la référence : navigation en haut, demandée après validation ; la barre latérale de la maquette n'est pas reproduite.
-- Code inspecté : `ece48f34f4ebd129f194cc8076a0c324814f2731`.
-- Rendu Chromium : https://github.com/eHomeLabs/ehome-ems/actions/runs/41242809849 ; artefact `panel-preview-simulated`.
-- Captures : desktop.png (1440 × 1600), mobile.png (390 × 844), flow-desktop.png (983 × 890), flow-mobile.png (358 × 702), editor-desktop.png et editor-mobile.png.
-- Viewports CSS : 1440 × 1600 et 390 × 844, densité 1. La hauteur desktop permet de capturer tout le dashboard ; le défilement reste normal sur un écran plus court.
-- Source et capture desktop juxtaposées à largeur commune 768 px, sans étirement, puis inspection du flux et des valeurs à leur résolution native.
-- État : français, sombre, administrateur ; données simulées cohérentes : solaire 1500 W, import 0 W, injection 75 W, charge 1000 W, maison 425 W, SOC 18 %, cumulus 200 W, véhicule 0 W.
+Source : capture appareil fournie par l'utilisateur, `upload/01-1000021476.jpg`,
+691 × 1536. Le problème est visible sous la batterie Zendure : la carte cache
+le texte et une borne à 1 W a une branche animée.
 
-## Contrôle visuel
+Code vérifié : `5f19b8217abadfd38b36cf9d85ed0dc74c8e3aba`.
+Exécution : https://github.com/eHomeLabs/ehome-ems/actions/runs/41245666096.
+Artefact : `panel-preview-simulated`, captures `idle-mobile.png`,
+`idle-desktop.png`, `flow-mobile.png`, `flow-desktop.png`, `desktop.png`,
+`mobile.png` et captures du sélecteur de source.
 
-- Typographie : police système HA, valeurs principales hiérarchisées, chiffres tabulaires ; libellés et unités lisibles à la résolution native. Les valeurs W viennent des miroirs, sans chiffres de démonstration embarqués en production.
-- Espacement : navigation horizontale au-dessus des mesures principales ; flux dans la colonne centrale/gauche, situation à droite, usages et qualité en bas. Repli sur une colonne et navigation défilante horizontalement sur mobile.
-- Couleurs : ambre solaire, bleu maison, cyan réseau, vert batterie, orange ECS et violet VE ; le sens reste explicite par les libellés Import/Injection et Charge/Décharge.
-- Images : maison locale transparente générée pour la maquette précédente, conservée ; icônes MDI via ha-icon natif, vrais tracés MDI dans le banc de test.
-- Texte : mode Observation explicite, aucun pilotage présenté comme actif. Sources existantes distinguées du total calculé EMS. Compteur de mesures indisponibles incluant les miroirs absents du registre.
+Viewports CSS : 390 × 844 et 1440 × 1600, densité 1. Capture mobile du composant
+au repos : 358 × 823. La région de flux de la capture appareil a été recadrée
+puis ramenée à 358 px de large, sans étirement, et juxtaposée à la capture
+Chromium native. Le nom batterie plus long dans la fixture est volontaire.
+La navigation sticky peut apparaître en haut de la capture isolée lors du
+scroll ; elle ne fait pas partie du défaut du texte sous Zendure.
 
-La vue réelle ajoute un indicateur Import distinct de l'Injection pour éviter de masquer un échange réseau important. Le nombre d'usages suit la configuration (deux dans la fixture, quatre dans la maquette). Aucun appareil, gain, taux d'autonomie, conseil ou ordre de priorité n'est inventé pour remplir l'écran. La densité du flux reste plus aérée que l'image de présentation afin de conserver la lisibilité des états et des deux directions réseau.
+## Cas de régression
 
-## Historique des corrections visuelles
+- Solaire 0 W, import 731 W, injection 0 W, maison source existante 731 W.
+- Batterie Zendure : charge 0 W ET décharge 0 W visibles, SOC 10 %.
+- Cumulus 0 W ; véhicule 1 W, valeur conservée.
+- Cas limite véhicule : 9,99 W non animé, 10 W animé, retour à 1 W non animé.
+- Tests unitaires complémentaires : conversion 0,009/0,010 kW et disponibilité.
 
-1. Premier rendu b8 : carte batterie trop basse dans la scène desktop, masquant une partie de la note sur les usages, et trait blanc passant derrière la valeur maison.
-2. Correction : scène desktop de ratio 1000/600, batterie à 50 % de sa hauteur, origine du trait maison à y=700 ; retrait des paragraphes de présentation au-dessus des mesures et alignement de la marque à gauche.
-3. Recapture : les captures finales desktop et mobile montrent les valeurs, cartes et notes sans recouvrement. Le flux reste centré autour de la maison ; aucune barre traversante jaune-bleue ni éclair central.
+## Corrections et comparaison visuelle
 
-Les captures natives du flux et du sélecteur ont été ouvertes séparément pour le contrôle régional des valeurs, icônes, raccordements et champs. La comparaison d'ensemble a été faite en juxtaposition ; elle ne repose pas sur le code seul.
+1. La scène de hauteur supposée ne réservait pas la hauteur réelle d'une carte
+   affichant deux puissances à zéro et un nom sur plusieurs lignes. Un wrapper
+   réserve désormais la borne inférieure réelle des cartes et du libellé maison.
+   La scène garde sa géométrie propre : sa hauteur ne dépend pas du wrapper,
+   pour éviter une boucle de redimensionnement.
+2. Un ResizeObserver suit la scène et les cartes ; il est retiré au changement
+   de vue et à la déconnexion, puis recréé si nécessaire. La réserve suit les
+   changements de contenu, le chargement de l'image et les redimensionnements.
+3. Le premier rendu corrigé a révélé un trait passant derrière la valeur maison.
+   Le départ du trait est maintenant calculé sous le bas réel de cette valeur,
+   et son extrémité est incluse dans l'espace réservé.
+4. Recapture finale : la note est entièrement sous la carte Zendure sur mobile
+   et desktop, même avec le nom long et les deux lignes à zéro. Le trait maison
+   démarre sous le texte. Les assertions géométriques vérifient un écart de 8 px
+   minimum pour ces deux points.
 
-## Tests des interactions et de mise à jour
+La comparaison juxtaposée et l'inspection des captures natives ont porté sur la
+zone batterie/note, la valeur maison/trait et les branches d'usages. La branche
+véhicule est grisée ; l'absence d'animation est confirmée par le test DOM,
+pas déduite d'une image statique.
 
-- Le banc navigateur enregistre volontairement une ancienne classe `ehome-ems-panel` avant de charger le nouveau module : le composant versionné b8 est distinct et affiche le flux.
-- Navigation haute et présence des six rubriques ; parcours Stockage/Historique/Stratégie/Configuration, ouverture d'historique, recherche et changement de source par appui prolongé ou bouton explicite, annulation et copie native indépendante.
-- Versions Interface et Intégration affichées dans Configuration.
-- Serveur simulé sans champ flow : message de diagnostic visible, pas de disparition silencieuse.
-- Absence de débordement horizontal du dashboard, image décodée, traitement des mesures indisponibles, réduction des animations et absence d'erreurs JavaScript observées.
-- Lecteur : bouton de copie absent ; droits d'écriture toujours contrôlés côté serveur.
-- Moteurs HA : endpoint versionné, nom du composant, version du snapshot, image locale, permissions et rechargements couverts par le scénario de validation.
+## Surfaces vérifiées
 
-## Diagnostic de l'absence de flux signalée sur b7
+- Typographie : styles HA conservés, valeurs et unités inchangées ; nom batterie
+  long et libellé source existante ne masquent plus la note.
+- Espacement : hauteur adaptée au contenu ; navigation haute et disposition
+  centrale/droite conservées. Pas de débordement horizontal du dashboard.
+- Couleurs : palette précédente conservée ; sous 10 W le trait est inactif,
+  sans griser ou effacer la mesure numérique.
+- Image : maison WebP locale inchangée, transparence et cadrage conservés ;
+  icônes MDI natives.
+- Texte : seuil expliqué comme un seuil visuel, sans prétendre qu'une faible
+  valeur prouve l'arrêt d'un équipement. Configuration présente valeur source,
+  valeur EMS et raisons de qualité disponibles ; qualité manquante non inventée.
 
-Le ZIP réellement livré a été téléchargé et inspecté : il contient le code frontend du flux, le snapshot backend et la maison WebP. Un défaut de coexistence est identifié dans la b7 : nom de composant identique et enregistrement ignoré si une ancienne classe est déjà présente. La b8 versionne à la fois l'URL du module et le nom de composant.
+## Validation et limites
 
-Ce mécanisme ne prouve pas la cause sur l'installation de l'utilisateur. Une copie Lovelace indépendante ne contient pas non plus le synoptique. Les nouvelles copies incluent donc un lien vers la vue automatique ; les anciennes copies personnalisées restent intactes. Le diagnostic utilisateur doit distinguer vue ouverte, version chargée et éventuel remplacement partiel du dossier.
+Tous les jobs réussissent : tests Python, 9 tests JavaScript, scénarios sur HA
+2026.9.1 et 2026.11.0b0, Chromium mobile/desktop, paquet ZIP contrôlé.
+Les interactions existantes (navigation, historique, changement de source,
+annulation, copie indépendante), réduction des animations et contrôles de droits
+restent vérifiés. Aucune erreur JavaScript observée.
 
-## Limites et suivi
+Le seuil est global à 10 W inclus pour toutes les branches. Il ne modifie pas
+les capteurs, le calcul maison, les compteurs ni les automatismes. Les mesures
+absentes ne deviennent pas zéro. Stratégie reste en observation.
 
-- Rendu dans le shell Android HA et fluidité sur RPi4 à confirmer sur appareil physique.
-- Stratégie reste un état des lieux : édition des priorités, simulation, conseils et commandes non livrés.
-- P3 : affiner la densité du synoptique après retour d'usage sur tablette.
-- Aucun P0/P1/P2 restant dans le périmètre des captures et tests.
+Le rendu dans le shell Android et la fluidité sur RPi4 demandent encore le retour
+sur appareil. Aucun P0/P1/P2 restant dans les cas capturés ; P3 : ajuster la densité
+visuelle selon les prochains retours, sans remplacer la réserve dynamique par
+une hauteur supposée.
