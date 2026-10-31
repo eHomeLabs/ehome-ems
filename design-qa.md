@@ -1,72 +1,55 @@
-# Validation visuelle — flux maison centrale, 0.2.0b7
+# Validation visuelle et mise à jour du panneau — 0.2.0b8
 
 final result: passed
 
 ## Référence et preuves
 
-- Source visuelle : maquette à maison centrale validée dans la conversation,
-  `generated_images/exec-db9b87b4-1505-4284-8bda-9563b068f21f.png` (1024 × 1536).
-- Code vérifié : `16c5bc2174522f063935ea026649021ccf78f7e1`.
-- Captures Chromium : [exécution de validation](https://github.com/eHomeLabs/ehome-ems/actions/runs/41238867023),
-  artefact `panel-preview-simulated`, `flow-mobile.png` (358 × 701),
-  `flow-desktop.png` (1192 × 1097), `editor-mobile.png`, `editor-desktop.png`.
-- Viewports CSS : 390 × 844 et 1440 × 1600, densité 1.
-- Comparaison effectuée en juxtaposition : source ramenée à 390 px de large,
-  composant mobile à sa résolution native 358 px, sans étirement.
-  L'en-tête et les onglets HA sont hors du composant de flux ; le cadrage
-  n'est donc pas une reproduction pixel à pixel de l'écran de présentation.
-- État : français, thème sombre, administrateur, données simulées cohérentes :
-  PV 1500 W, injection 75 W, charge 1000 W, maison 425 W ; usages suivis
-  cumulus 200 W et véhicule 0 W. Aucun reste de consommation n'est inventé.
+- Source : maquette d'ensemble validée, `generated_images/exec-f13f025c-7b57-4a86-adef-ef9e1745b156.png`, 1536 × 1024.
+- Modification explicite de la référence : navigation en haut, demandée après validation ; la barre latérale de la maquette n'est pas reproduite.
+- Code inspecté : `ece48f34f4ebd129f194cc8076a0c324814f2731`.
+- Rendu Chromium : https://github.com/eHomeLabs/ehome-ems/actions/runs/41242809849 ; artefact `panel-preview-simulated`.
+- Captures : desktop.png (1440 × 1600), mobile.png (390 × 844), flow-desktop.png (983 × 890), flow-mobile.png (358 × 702), editor-desktop.png et editor-mobile.png.
+- Viewports CSS : 1440 × 1600 et 390 × 844, densité 1. La hauteur desktop permet de capturer tout le dashboard ; le défilement reste normal sur un écran plus court.
+- Source et capture desktop juxtaposées à largeur commune 768 px, sans étirement, puis inspection du flux et des valeurs à leur résolution native.
+- État : français, sombre, administrateur ; données simulées cohérentes : solaire 1500 W, import 0 W, injection 75 W, charge 1000 W, maison 425 W, SOC 18 %, cumulus 200 W, véhicule 0 W.
 
-## Comparaison et corrections
+## Contrôle visuel
 
-1. Premier rendu : la capture du viewport ne montrait pas le bas du flux et
-   les icônes HA manquaient dans le banc de test isolé. Correction : captures
-   du composant complet, viewport desktop plus haut, adaptateur de test utilisant
-   les vrais tracés Material Design Icons. La production utilise `ha-icon` natif.
-2. La maison était trop déportée à droite et l'espace vertical mobile excessif.
-   Correction : centre de la maison à 56 % de la scène, hauteur mobile 350 px,
-   raccordement direct aux usages. Les dernières captures montrent les cartes
-   complètes et aucun recouvrement de leurs valeurs.
+- Typographie : police système HA, valeurs principales hiérarchisées, chiffres tabulaires ; libellés et unités lisibles à la résolution native. Les valeurs W viennent des miroirs, sans chiffres de démonstration embarqués en production.
+- Espacement : navigation horizontale au-dessus des mesures principales ; flux dans la colonne centrale/gauche, situation à droite, usages et qualité en bas. Repli sur une colonne et navigation défilante horizontalement sur mobile.
+- Couleurs : ambre solaire, bleu maison, cyan réseau, vert batterie, orange ECS et violet VE ; le sens reste explicite par les libellés Import/Injection et Charge/Décharge.
+- Images : maison locale transparente générée pour la maquette précédente, conservée ; icônes MDI via ha-icon natif, vrais tracés MDI dans le banc de test.
+- Texte : mode Observation explicite, aucun pilotage présenté comme actif. Sources existantes distinguées du total calculé EMS. Compteur de mesures indisponibles incluant les miroirs absents du registre.
 
-## Surfaces vérifiées
+La vue réelle ajoute un indicateur Import distinct de l'Injection pour éviter de masquer un échange réseau important. Le nombre d'usages suit la configuration (deux dans la fixture, quatre dans la maquette). Aucun appareil, gain, taux d'autonomie, conseil ou ordre de priorité n'est inventé pour remplir l'écran. La densité du flux reste plus aérée que l'image de présentation afin de conserver la lisibilité des états et des deux directions réseau.
 
-- Typographie : police système cohérente avec HA, valeurs hiérarchisées et
-  chiffres tabulaires ; les libellés et unités sont lisibles sur mobile.
-- Espacement : sources en haut, maison centrale, batterie latérale, usages
-  en dessous ; absence de barre traversante jaune-bleue et d'éclair central.
-  La grille d'usages s'adapte au nombre de mesures configurées.
-- Couleurs : ambre solaire, cyan réseau, vert stockage, orange ECS, violet VE,
-  sur fond bleu nuit ; les libellés expriment aussi le sens et le type du flux.
-- Images : maison générée séparément à partir de la direction validée,
-  transparence propre, ressource WebP locale ; icônes MDI, sans substitut emoji.
-- Texte : total maison calculé distingué d'une source maison existante dont
-  le périmètre peut exclure le cumulus. Import et injection sont affichés
-  séparément, sans convention de signe implicite. Pas d'autonomie inventée.
+## Historique des corrections visuelles
 
-Les nombres et le nombre d'usages diffèrent volontairement de la maquette :
-ils viennent de la fixture. L'import reste affiché même à zéro pour rendre la
-convention explicite. Les batteries de secours et DC sont présentées séparément
-et ne sont pas dessinées comme une branche AC quotidienne.
-Les détails typographiques et les valeurs sont lisibles dans les captures
-natives ouvertes ; aucun agrandissement régional supplémentaire n'était requis.
+1. Premier rendu b8 : carte batterie trop basse dans la scène desktop, masquant une partie de la note sur les usages, et trait blanc passant derrière la valeur maison.
+2. Correction : scène desktop de ratio 1000/600, batterie à 50 % de sa hauteur, origine du trait maison à y=700 ; retrait des paragraphes de présentation au-dessus des mesures et alignement de la marque à gauche.
+3. Recapture : les captures finales desktop et mobile montrent les valeurs, cartes et notes sans recouvrement. Le flux reste centré autour de la maison ; aucune barre traversante jaune-bleue ni éclair central.
 
-## Interactions et limites
+Les captures natives du flux et du sélecteur ont été ouvertes séparément pour le contrôle régional des valeurs, icônes, raccordements et champs. La comparaison d'ensemble a été faite en juxtaposition ; elle ne repose pas sur le code seul.
 
-Tests Chromium réussis : absence de débordement horizontal, image décodée,
-flux actifs selon les états, arrêt du flux solaire indisponible, réduction des
-animations, appui prolongé, recherche et sauvegarde de source, onglets,
-historique et copie indépendante ; aucune erreur JavaScript observée.
-Tests HA réels : snapshot des identifiants miroirs, image servie avec type WebP,
-authentification, permissions, rechargement et conservation des personnalisations.
+## Tests des interactions et de mise à jour
 
-Reste à confirmer sur l'appareil physique : rendu dans le shell Android HA et
-fluidité sur RPi4. La copie Lovelace indépendante garde les cartes natives et
-n'inclut pas ce composant. Les animations ne certifient ni synchronisation des
-mesures ni origine solaire de l'énergie stockée.
+- Le banc navigateur enregistre volontairement une ancienne classe `ehome-ems-panel` avant de charger le nouveau module : le composant versionné b8 est distinct et affiche le flux.
+- Navigation haute et présence des six rubriques ; parcours Stockage/Historique/Stratégie/Configuration, ouverture d'historique, recherche et changement de source par appui prolongé ou bouton explicite, annulation et copie native indépendante.
+- Versions Interface et Intégration affichées dans Configuration.
+- Serveur simulé sans champ flow : message de diagnostic visible, pas de disparition silencieuse.
+- Absence de débordement horizontal du dashboard, image décodée, traitement des mesures indisponibles, réduction des animations et absence d'erreurs JavaScript observées.
+- Lecteur : bouton de copie absent ; droits d'écriture toujours contrôlés côté serveur.
+- Moteurs HA : endpoint versionné, nom du composant, version du snapshot, image locale, permissions et rechargements couverts par le scénario de validation.
 
-## Suivi mineur
+## Diagnostic de l'absence de flux signalée sur b7
 
-- P3 : ajuster la luminosité des traits selon les retours en situation réelle.
-- Aucun défaut P0/P1/P2 restant dans le périmètre des captures et tests ci-dessus.
+Le ZIP réellement livré a été téléchargé et inspecté : il contient le code frontend du flux, le snapshot backend et la maison WebP. Un défaut de coexistence est identifié dans la b7 : nom de composant identique et enregistrement ignoré si une ancienne classe est déjà présente. La b8 versionne à la fois l'URL du module et le nom de composant.
+
+Ce mécanisme ne prouve pas la cause sur l'installation de l'utilisateur. Une copie Lovelace indépendante ne contient pas non plus le synoptique. Les nouvelles copies incluent donc un lien vers la vue automatique ; les anciennes copies personnalisées restent intactes. Le diagnostic utilisateur doit distinguer vue ouverte, version chargée et éventuel remplacement partiel du dossier.
+
+## Limites et suivi
+
+- Rendu dans le shell Android HA et fluidité sur RPi4 à confirmer sur appareil physique.
+- Stratégie reste un état des lieux : édition des priorités, simulation, conseils et commandes non livrés.
+- P3 : affiner la densité du synoptique après retour d'usage sur tablette.
+- Aucun P0/P1/P2 restant dans le périmètre des captures et tests.
