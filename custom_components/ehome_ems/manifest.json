@@ -1,7 +1,7 @@
 {
   "domain": "ehome_ems",
   "name": "eHome EMS — Universal Energy Manager",
-  "version": "0.2.0b8",
+  "version": "0.2.0b9",
   "documentation": "https://github.com/eHomeLabs/ehome-ems",
   "issue_tracker": "https://github.com/eHomeLabs/ehome-ems/issues",
   "codeowners": ["@eHomeLabs"],

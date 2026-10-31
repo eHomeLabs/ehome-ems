@@ -1,6 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createIndependentCopy, reading, newCopyToken, flowPower } from "../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+import { createIndependentCopy, reading, newCopyToken, flowPower, flowActive } from "../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+
+test("10 W animation threshold preserves low readings and handles kW", () => {
+  for (const [value, unit, active] of [[0,"W",false],[1,"W",false],[9.99,"W",false],[10,"W",true],[11,"W",true],[0.009,"kW",false],[0.01,"kW",true],["unavailable","W",false]]) {
+    const states={a:{state:String(value),attributes:{unit_of_measurement:unit}}};
+    assert.equal(flowActive(states,"a"),active);
+    assert.equal(reading(states,"a").text,value==="unavailable"?"Indisponible":`${value} ${unit}`);
+  }
+});
 
 test("flow rejects unknown units, missing and negative power without inventing zero", () => {
   assert.equal(flowPower({a:{state:"1.5",attributes:{unit_of_measurement:"kW"}}},"a"),1500);

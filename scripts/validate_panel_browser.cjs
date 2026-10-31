@@ -38,12 +38,40 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.ok(navBox.y < flowBox.y);
       await page.locator(".flow-house img").evaluate(img => img.decode());
       assert.equal(await page.locator(".flow-links path.active").count(), 4);
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b8").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b9").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
       await page.screenshot({ path: path.join(output, viewport.width < 600 ? "mobile.png" : "desktop.png"), fullPage: true });
       await page.locator(".flow").screenshot({ path: path.join(output, viewport.width < 600 ? "flow-mobile.png" : "flow-desktop.png") });
+      // Reproduce the hardware report: idle storage has two visible zero rows,
+      // an existing home source and an EV consuming 1 W without charging.
+      await page.evaluate(() => {
+        window.beforeNight={states:structuredClone(fixtureHass.states),flow:structuredClone(fixtureFlow)};
+        fixtureFlow.home_calculated=false;
+        fixtureFlow.batteries[0].name="Zendure SolarFlow 2400 AC+";
+        for(const [id,value] of Object.entries({pv:0,import:731,export:0,home:731,charge:0,discharge:0,soc:10,cumulus:0,ev:1}))
+          fixtureHass.states["sensor."+id]={...fixtureHass.states["sensor."+id],state:String(value)};
+        fixturePanel.hass={...fixtureHass};
+      });
+      await page.getByRole("button",{name:"Actualiser",exact:true}).click();
+      await page.getByText("Maison · source existante",{exact:true}).first().waitFor();
+      await page.waitForFunction(() => {
+        const shadow=fixturePanel.shadowRoot;
+        return shadow.querySelector(".flow-usage-title").getBoundingClientRect().top >=
+          shadow.querySelector(".flow-battery").getBoundingClientRect().bottom + 8;
+      });
+      assert.equal(await page.locator(".flow-links path.active").count(),2);
+      assert.equal(await page.locator(".flow-branches path.active").count(),0);
+      assert.ok(await page.locator(".flow-usages").getByText("1 W",{exact:true}).count());
+      await page.locator(".flow").screenshot({path:path.join(output,viewport.width<600?"idle-mobile.png":"idle-desktop.png")});
+      for(const value of [9.99,10,1]) {
+        await page.evaluate(value => {fixtureHass.states["sensor.ev"].state=String(value);fixturePanel.hass={...fixtureHass};},value);
+        assert.equal(await page.locator(".flow-branches path.active").count(),value>=10?1:0);
+      }
+      await page.evaluate(() => {fixtureHass.states=beforeNight.states;Object.assign(fixtureFlow,beforeNight.flow);fixturePanel.hass={...fixtureHass};});
+      await page.getByRole("button",{name:"Actualiser",exact:true}).click();
+      await page.waitForFunction(() => fixturePanel.shadowRoot.querySelectorAll(".flow-links path.active").length===4);
       const editable = page.getByRole("button", { name: "Modifier la source de Production solaire", exact: true }).first();
       await editable.dispatchEvent("pointerdown", { button: 0, clientX: 20, clientY: 20, pointerType: "touch" });
       await page.getByRole("dialog", { name: "Changer la source", exact: true }).waitFor();
@@ -85,7 +113,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
       assert.equal(await page.getByText("Aucune commande envoyée", { exact: true }).count(), 1);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.0b8 · Intégration 0.2.0b8", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.0b9 · Intégration 0.2.0b9", { exact: true }).count());
       await page.getByRole("button", { name: "Changer la source", exact: true }).first().click();
       await page.getByRole("dialog").waitFor();
       await page.getByRole("button", { name: "Annuler", exact: true }).click();

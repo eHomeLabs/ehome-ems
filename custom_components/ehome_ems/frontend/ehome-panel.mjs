@@ -1,6 +1,11 @@
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.0b8";
+export const UI_VERSION = "0.2.0b9";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
+export const FLOW_MIN_WATTS = 10;
+export function flowActive(states, entity) {
+  const power = flowPower(states, entity);
+  return power !== null && power >= FLOW_MIN_WATTS;
+}
 export function newCopyToken(source = globalThis.crypto) {
   if (typeof source.randomUUID === "function") return source.randomUUID();
   return Array.from(source.getRandomValues(new Uint32Array(4)),
@@ -53,6 +58,7 @@ export class EhomeEmsPanel extends BaseElement {
     this._bindings = [];
     this._flowUpdates = [];
     this._request = 0;
+    this._layoutObservers = [];
     this._holdCancels = [];
   }
   set hass(value) {
@@ -64,6 +70,11 @@ export class EhomeEmsPanel extends BaseElement {
   }
   set narrow(value) { this._narrow = value; if (this._menu) this._menu.narrow = value; }
   get narrow() { return !!this._narrow; }
+  disconnectedCallback() {
+    for (const observer of this._layoutObservers || []) observer.disconnect();
+    for (const cancel of this._holdCancels || []) cancel();
+  }
+  connectedCallback() { if (this._snapshotData) this._render(); }
   set panel(value) {
     this._panel = value;
     if (this._hass && this._loadedKey !== this._key()) this._load();
@@ -107,6 +118,8 @@ export class EhomeEmsPanel extends BaseElement {
     return button;
   }
   _render() {
+    for (const observer of this._layoutObservers || []) observer.disconnect();
+    this._layoutObservers = [];
     for (const cancel of this._holdCancels) cancel();
     this._holdCancels = [];
     if (this._dialog?.open) this._dialog.close();
@@ -153,6 +166,7 @@ export class EhomeEmsPanel extends BaseElement {
       .flow{background:#101923;color:#e9f1fc;border:1px solid #30475c;border-radius:20px;padding:clamp(12px,3vw,28px);margin:20px 0;overflow:hidden}
       .flow h2{font-size:22px;margin:0}.flow .flow-note{color:#aabbd0;font-size:13px;margin:6px 0 14px}
       .flow-stage{position:relative;aspect-ratio:1000/830;max-width:900px;margin:auto}
+      .flow-scene-wrap{position:relative}.flow-scene-wrap .flow-stage{width:100%}
       .flow-tile{position:absolute;border:1px solid #3b536b;border-radius:14px;background:#14212d;padding:clamp(8px,2vw,20px);min-width:0;overflow-wrap:anywhere}
       .flow-tile ha-icon{--mdc-icon-size:clamp(22px,4vw,42px);display:inline-block;margin-right:8px}
       .flow-title{font-size:clamp(12px,2.3vw,20px);font-weight:500}.flow-number{display:block;font-size:clamp(18px,4vw,34px);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3}
@@ -315,11 +329,36 @@ export class EhomeEmsPanel extends BaseElement {
     const integration = this._node("a", this._t("Ouvrir l’intégration eHome EMS", "Open eHome EMS integration"));
     integration.href = "/config/integrations/integration/ehome_ems"; links.append(integration); root.append(links);
     root.append(this._node("p", this._t("Interface ", "Interface ") + UI_VERSION + this._t(" · Intégration ", " · Integration ") + (snapshot.version || this._t("ancienne ou inconnue", "old or unknown")), "note"));
+    root.append(this._node("p", this._t("Seuil d’animation : 10 W. Ce seuil visuel ne modifie ni les mesures ni les calculs. Une valeur sous ce seuil ne prouve pas qu’un équipement est arrêté.",
+      "Animation threshold: 10 W. This visual threshold changes neither readings nor calculations. A reading below this threshold does not prove a device is off."), "note"));
     const list = this._node("div", undefined, "source-list");
     for (const [entity, binding] of Object.entries(snapshot.bindings || {})) {
       const item = this._node("div", undefined, "source-item"), text = this._node("div");
       text.append(this._node("strong", this._hass?.states[entity]?.attributes?.friendly_name || entity),
         this._node("code", binding.calculated_home ? this._t("Calcul automatique EMS", "EMS automatic calculation") : binding.source || this._t("Source absente", "Missing source")));
+      const diagnostic = this._node("p", undefined, "note"); text.append(diagnostic);
+      this._flowUpdates.push(() => {
+        const state = this._hass?.states?.[entity];
+        const quality = state?.attributes?.data_quality;
+        const labels = {
+          valid: this._t("Valeur et unité valides", "Valid value and unit"),
+          unavailable: this._t("Indisponible", "Unavailable"),
+          unsupported_unit: this._t("Unité incompatible", "Unsupported unit"),
+          invalid_value: this._t("Valeur non numérique ou invalide", "Invalid or non-numeric value"),
+          unexpected_direction: this._t("Signe inattendu", "Unexpected direction"),
+          out_of_range: this._t("Valeur hors limites", "Out of range"),
+          cumulative_energy: this._t("Compteur cumulé utilisé comme stock", "Cumulative counter used as stored energy"),
+          exceeds_capacity: this._t("Stock supérieur à la capacité déclarée", "Stored energy exceeds declared capacity"),
+          stale_source: this._t("Source périmée", "Stale source"),
+          negative_balance: this._t("Bilan négatif incohérent", "Inconsistent negative balance"),
+        };
+        const available = state && !["unknown", "unavailable"].includes(state.state);
+        const reason = labels[quality] || (!available ? this._t("Indisponible", "Unavailable") :
+          this._t("Qualité non renseignée", "Quality not reported"));
+        diagnostic.textContent = this._t("Mesure EMS : ", "EMS reading: ") + reading(this._hass?.states, entity, undefined, this._hass?.language).text + " · " + reason;
+        if (binding.source) diagnostic.textContent += this._t(" · Source : ", " · Source: ") + reading(this._hass?.states, binding.source, undefined, this._hass?.language).text;
+        diagnostic.title = quality || "";
+      });
       item.append(text);
       if (this._hass?.user?.is_admin) item.append(this._button(this._t("Changer la source", "Change source"), () => this._edit(entity)));
       list.append(item);
@@ -379,8 +418,8 @@ export class EhomeEmsPanel extends BaseElement {
     const root = this._node("section", undefined, "flow");
     root.setAttribute("aria-label", this._t("Flux d’énergie", "Energy flow"));
     root.append(this._node("h2", this._t("Flux en direct", "Live energy flow")));
-    root.append(this._node("p", this._t("Observation · flèches actives uniquement pour les puissances disponibles.",
-      "Observation · active arrows only for available power readings."), "flow-note"));
+    root.append(this._node("p", this._t("Observation · animation à partir de 10 W. Les faibles consommations restent affichées.",
+      "Observation · animation from 10 W. Low readings remain visible."), "flow-note"));
     const stage = this._node("div", undefined, "flow-stage");
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 1000 830"); svg.classList.add("flow-links"); svg.setAttribute("aria-hidden", "true");
@@ -390,7 +429,7 @@ export class EhomeEmsPanel extends BaseElement {
       path.setAttribute("d", d); path.style.color = color; svg.append(path);
       this._flowUpdates.push(() => {
         const power = flowPower(this._hass?.states, entity);
-        path.classList.toggle("active", power !== null && power > 0);
+        path.classList.toggle("active", flowActive(this._hass?.states, entity));
         path.classList.toggle("unknown", power === null);
         path.classList.toggle("reverse", reverse);
       });
@@ -448,7 +487,20 @@ export class EhomeEmsPanel extends BaseElement {
       return el;
     };
     if (primary) stage.append(batteryTile(primary, "flow-tile flow-battery"));
-    root.append(stage);
+    const sceneWrap = this._node("div", undefined, "flow-scene-wrap"); sceneWrap.append(stage); root.append(sceneWrap);
+    // The wrapper reserves the real card bounds while the scene geometry stays
+    // fixed, avoiding feedback from percentage-positioned cards on resize.
+    const reserveScene = () => {
+      if (!stage.isConnected) return;
+      const bounds = stage.getBoundingClientRect();
+      const bottom = Math.max(bounds.bottom, ...Array.from(stage.children)
+        .filter(child => child !== svg).map(child => child.getBoundingClientRect().bottom));
+      sceneWrap.style.minHeight = Math.ceil(bottom - bounds.top + 16) + "px";
+    };
+    const observer = new ResizeObserver(reserveScene);
+    observer.observe(stage);
+    for (const child of stage.children) if (child !== svg) observer.observe(child);
+    this._layoutObservers.push(observer); this._flowUpdates.push(reserveScene);
     root.append(this._node("p", config.home_calculated ?
       this._t("Usages suivis · inclus dans le total maison, sans ajout supplémentaire.", "Tracked loads · included in home total, not added again.") :
       this._t("Usages suivis · vérifiez le périmètre de votre capteur Maison (cumulus inclus ou exclu).", "Tracked loads · check your Home source boundary (water heater included or excluded)."), "flow-usage-title"));
@@ -463,7 +515,7 @@ export class EhomeEmsPanel extends BaseElement {
         paths.forEach((p, index) => {
           p.style.display = index >= columns ? "none" : "";
           p.setAttribute("d", `M500 0 V12 H${(index + .5) * 1000 / Math.min(columns, config.usages.length)} V40`);
-          p.classList.toggle("active", flowPower(this._hass?.states, config.usages[index].power) > 0);
+          p.classList.toggle("active", flowActive(this._hass?.states, config.usages[index].power));
         });
       });
       root.append(branches);

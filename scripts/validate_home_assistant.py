@@ -247,7 +247,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b8.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b9.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -262,9 +262,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.0b8"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-0b8"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.0b8.js"
+                assert snapshot["version"] == "0.2.0b9"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-0b9"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.0b9.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]

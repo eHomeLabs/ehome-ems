@@ -1,4 +1,4 @@
-# Vue automatique et copie modifiable — 0.2.0b8
+# Vue automatique et copie modifiable — 0.2.0b9
 
 Après confirmation de l'assistant et chargement de l'intégration, une entrée
 eHome EMS apparaît dans la barre latérale. Aucune copie de YAML ni ajout manuel
@@ -11,6 +11,24 @@ La vue automatique est un panneau personnalisé Home Assistant, en observation.
 Elle affiche les mesures, jauges, batteries, usages et qualité issus du même
 générateur que l'export natif. Les valeurs suivent les états HA sans commande.
 Les mesures indisponibles restent explicitement indisponibles, sans zéro inventé.
+
+Depuis b9, tous les flux s'animent uniquement à partir de 10 W (10 W inclus).
+Une borne à 1 W garde sa valeur mesurée mais sa branche ne s'anime pas.
+Ce seuil est visuel : il ne modifie ni les capteurs, ni le bilan maison, ni
+les statistiques. Il ne permet pas de conclure qu'un équipement est arrêté.
+Les unités kW sont converties pour appliquer le même seuil. Les sources
+indisponibles ne sont jamais assimilées à une puissance nulle.
+
+La scène réserve la hauteur réelle des cartes et du libellé maison, même
+lorsque la batterie affiche charge ET décharge à zéro. Cette réserve se
+réajuste après changement de mesure, chargement de l'image et redimensionnement.
+Les observateurs de taille sont retirés au changement de vue/déchargement.
+
+Configuration affiche désormais la valeur source, la valeur EMS et les raisons
+de qualité disponibles en français : unité incompatible, signe inattendu,
+stock supérieur à la capacité, etc. Un attribut de qualité absent reste
+« Qualité non renseignée », sans lui inventer un statut valide. Une qualité
+valide atteste une lecture numérique et une unité, pas le câblage physique.
 
 Depuis b8, la navigation est horizontale en haut : Vue d’ensemble, Historique,
 Stockage, Usages, Stratégie, Configuration. La vue d'ensemble place les mesures

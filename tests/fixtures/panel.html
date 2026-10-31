@@ -2,7 +2,7 @@
 <html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>eHome EMS — fixture simulée</title><style>html,body{margin:0;height:100%;--primary-background-color:#101820;--primary-text-color:#eef4fa;--card-background-color:#15222d;--divider-color:#3b536b;--primary-color:#70a246;--text-primary-color:#fff}</style>
 <script>customElements.define("ehome-ems-panel",class extends HTMLElement{});</script>
-<ehome-ems-panel-0-2-0b8></ehome-ems-panel-0-2-0b8>
+<ehome-ems-panel-0-2-0b9></ehome-ems-panel-0-2-0b9>
 <script type="module">
 import "../../custom_components/ehome_ems/frontend/ehome-panel.mjs";
 const icons=await (await fetch("./mdi.json")).json();
@@ -27,7 +27,7 @@ const dashboard = {title:"eHome EMS",views:[
 window.calls=[];
 const bindings={"sensor.pv":{source:"sensor.pv_source",domains:["sensor"],units:["W","kW"],calculated_home:false}};
 let revision="one";
-const flow={entities:{solar_power:"sensor.pv",home_power:"sensor.home",grid_import:"sensor.import",grid_export:"sensor.export"},
+const flow=window.fixtureFlow={entities:{solar_power:"sensor.pv",home_power:"sensor.home",grid_import:"sensor.import",grid_export:"sensor.export"},
  home_calculated:true,batteries:[{name:"Zendure",role:"active",coupling:"ac",charge_power:"sensor.charge",discharge_power:"sensor.discharge",soc:"sensor.soc"}],
  usages:[{name:"Cumulus",kind:"solar_router",power:"sensor.cumulus"},{name:"Véhicule",kind:"ev_charger",power:"sensor.ev"}]};
 window.fixtureHass={
@@ -41,7 +41,7 @@ window.fixtureHass={
  callWS:async message=>{
   window.calls.push(message);
   if(message.type==="ehome_ems/dashboard")return {
-    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.0b8"};
+    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.0b9"};
   if(message.type==="ehome_ems/remap_source"){
     bindings[message.entity_id].source=message.source_id; revision="two";
     const source=fixtureHass.states[message.source_id];
@@ -56,6 +56,6 @@ fixtureHass.states["sensor.pv_source"]={state:"1500",attributes:{unit_of_measure
 fixtureHass.states["sensor.pv_alternative"]={state:"2000",attributes:{unit_of_measurement:"W",friendly_name:"Source alternative"}};
 for(const [id,value] of Object.entries({import:0,export:75,charge:1000,discharge:0,cumulus:200}))
  fixtureHass.states["sensor."+id]={state:String(value),attributes:{unit_of_measurement:"W"}};
-window.fixturePanel=document.querySelector("ehome-ems-panel-0-2-0b8");
+window.fixturePanel=document.querySelector("ehome-ems-panel-0-2-0b9");
 fixturePanel.hass=fixtureHass;fixturePanel.panel={config:{entry_id:"simulated",revision:"one"}};
 </script></html>
