@@ -56,7 +56,7 @@
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\n\nEn confirmant, vous enregistrez seulement les associations en observation. Aucun équipement n’est commandé et aucun dashboard n’est ajouté automatiquement dans cette bêta. Pour obtenir la première vue native, utilisez ensuite Outils de développement → Actions → ehome_ems.generate_dashboard, puis copiez la configuration dans un NOUVEAU dashboard. Les flux animés et la création automatique restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
+        "description": "{summary}\n\nEn confirmant, vous enregistrez les associations en observation. La vue eHome EMS est ajoutée automatiquement dans la barre latérale après le chargement de l’intégration ; elle suit ensuite vos réglages. Depuis cette vue, un administrateur peut créer une copie indépendante modifiable sans YAML. Les copies existantes ne sont jamais écrasées. Aucun équipement n’est commandé. Les flux animés et les bilans journaliers EMS restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
         }
@@ -278,7 +278,7 @@
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\n\nEn confirmant, vous enregistrez seulement les associations en observation. Aucun équipement n’est commandé et aucun dashboard n’est ajouté automatiquement dans cette bêta. Pour obtenir la première vue native, utilisez ensuite Outils de développement → Actions → ehome_ems.generate_dashboard, puis copiez la configuration dans un NOUVEAU dashboard. Les flux animés et la création automatique restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
+        "description": "{summary}\n\nEn confirmant, vous enregistrez les associations en observation. La vue eHome EMS est ajoutée automatiquement dans la barre latérale après le chargement de l’intégration ; elle suit ensuite vos réglages. Depuis cette vue, un administrateur peut créer une copie indépendante modifiable sans YAML. Les copies existantes ne sont jamais écrasées. Aucun équipement n’est commandé. Les flux animés et les bilans journaliers EMS restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
         }

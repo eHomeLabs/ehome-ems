@@ -1,17 +1,18 @@
-# eHome EMS 0.2.0b4 — installation et retour arrière
+# eHome EMS 0.2.0b5 — installation et retour arrière
 
 Première bêta en observation. Le périmètre produit « V2 » n'est pas encore livré
 en totalité. La bêta contient l'assistant, les mesures normalisées, le suivi
 multi-batteries et l'export manuel d'un dashboard natif.
 
-La bêta 0.2.0b4 ajoute des explications dans chaque étape et une aide par champ
+La bêta 0.2.0b5 ajoute des explications dans chaque étape et une aide par champ
 pour les batteries. Une consommation maison déjà calculée est acceptée si elle
 décrit les usages réels. L'énergie restante doit être un stock, pas un compteur
 cumulatif. Les compteurs déclarés total/total_increasing sont refusés ; au-delà
 de capacité × 1,10, l'association est signalée incohérente. Pendant le suivi, un
 tel stock devient indisponible plutôt que d'être affiché comme valide.
 Le champ reste facultatif : laissez-le vide si aucune source ne convient.
-La création automatique du dashboard et les flux animés restent à développer.
+La vue automatique et la copie native sont disponibles depuis 0.2.0b5 ;
+les flux animés restent à développer.
 
 À l'étape Maison, choisir entre une source existante et le calcul automatique EMS.
 Ce dernier demande les capteurs séparés import/injection, les mesures AC des modules
@@ -22,14 +23,14 @@ rendent le résultat indisponible. Voir CONSOMMATION_MAISON.md avant activation.
 
 Dans GitHub → Actions → Home Assistant beta package, ouvrir une exécution réussie
 correspondant au dernier commit de la proposition de code puis télécharger
-l'artefact ehome-ems-0.2.0b4. Il contient le ZIP installable, son SHA-256 et ce guide.
+l'artefact ehome-ems-0.2.0b5. Il contient le ZIP installable, son SHA-256 et ce guide.
 Le paquet est produit seulement après succès de la validation backend HA réelle.
 Les artefacts GitHub sont conservés 90 jours et peuvent être reconstruits avec
 scripts/build_test_package.py ou en relançant le workflow.
 
 Le ZIP installable contient custom_components/ehome_ems uniquement. L'archive
 d'artefact GitHub est une enveloppe : extraire d'abord le fichier
-ehome-ems-0.2.0b4.zip qu'elle contient.
+ehome-ems-0.2.0b5.zip qu'elle contient.
 
 La cible actuelle est Home Assistant Core 2026.11.0b0 et Python 3.14.
 La CI vérifie aussi 2026.9.1 comme point de comparaison.
@@ -50,11 +51,12 @@ propre environnement. Aucune autre version HA n'est déclarée validée ici.
 Le dépôt reste privé. Ce guide ne suppose pas un téléchargement direct par HACS
 et ne demande aucun changement de visibilité du dépôt.
 
-1. Extraire ehome-ems-0.2.0b4.zip sur le PC.
+1. Extraire ehome-ems-0.2.0b5.zip sur le PC.
 2. Copier son dossier custom_components/ehome_ems dans
    /config/custom_components/ehome_ems sur HA, en remplaçant le code précédent.
    Vérifier qu'il n'y a pas de niveau ehome_ems/ehome_ems imbriqué.
-3. Vérifier la présence de manifest.json avec version 0.2.0b4.
+3. Vérifier la présence de manifest.json avec version 0.2.0b5.
+   Copier aussi le nouveau sous-dossier frontend contenant ehome-panel.mjs.
 4. Redémarrer Home Assistant une fois pour charger le nouveau code.
 5. Si l'intégration existe déjà : Paramètres → Appareils et services → eHome EMS
    → Configurer. Les associations V0.1 sont reprises.
@@ -66,6 +68,10 @@ et ne demande aucun changement de visibilité du dépôt.
    Le rôle secours est proposé par défaut ; l'Aferiy peut rester en secours.
 
 Les changements d'associations se rechargent ensuite sans redémarrage complet de HA.
+Une entrée eHome EMS apparaît automatiquement dans la barre latérale. Depuis
+cette vue, Créer une copie modifiable permet aux administrateurs d'obtenir un
+dashboard natif indépendant, sans YAML. Voir DASHBOARD_AUTOMATIQUE.md.
+Après mise à jour du code, actualiser également la page ou l'application HA.
 Le premier chargement du code et ses mises à jour nécessitent un redémarrage.
 Aucune commande d'équipement n'est envoyée par cette bêta.
 

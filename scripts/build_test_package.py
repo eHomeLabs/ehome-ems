@@ -18,7 +18,7 @@ def main():
     sources = sorted(path for path in INTEGRATION.rglob("*")
                      if path.is_file() and not path.is_symlink()
                      and "__pycache__" not in path.parts
-                     and path.suffix in {".py", ".json", ".yaml", ".png", ".svg"})
+                     and path.suffix in {".py", ".json", ".yaml", ".png", ".svg", ".mjs"})
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
         for path in sources:
             name = path.relative_to(ROOT).as_posix()
@@ -34,6 +34,7 @@ def main():
         packaged = json.loads(zipped.read("custom_components/ehome_ems/manifest.json"))
         assert packaged == manifest
         for required in ("__init__.py", "config_flow.py", "sensor.py", "dashboard.py", "home_balance.py", "usage.py",
+                         "panel.py", "frontend/ehome-panel.mjs",
                          "dashboard_service.py", "services.yaml", "strings.json",
                          "translations/fr.json", "translations/en.json"):
             assert f"custom_components/ehome_ems/{required}" in zipped.namelist(), required

@@ -4,6 +4,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from .const import DOMAIN
 from .dashboard_service import register_dashboard_service
+from .panel import async_setup_panel_domain, async_setup_entry_panel
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -11,12 +12,18 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the integration domain."""
     register_dashboard_service(hass)
+    await async_setup_panel_domain(hass)
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up an entry and its mapped sensors."""
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
+    try:
+        await async_setup_entry_panel(hass, entry)
+    except Exception:
+        await hass.config_entries.async_unload_platforms(entry, ["sensor"])
+        raise
     entry.async_on_unload(entry.add_update_listener(async_update_options))
     return True
 

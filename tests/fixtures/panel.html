@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>eHome EMS — fixture simulée</title><style>html,body{margin:0;height:100%}</style>
+<ehome-ems-panel></ehome-ems-panel>
+<script type="module">
+import "../../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+const dashboard = {title:"eHome EMS",views:[
+ {title:"Synthèse",cards:[
+  {type:"markdown",content:"Observation · aucune commande. Mesures simulées pour vérifier le rendu."},
+  {type:"entities",title:"Puissances",entities:[
+   {entity:"sensor.pv",name:"Production solaire"},{entity:"sensor.home",name:"Maison"},{entity:"sensor.grid",name:"Réseau signé"}]},
+  {type:"grid",cards:[{type:"gauge",entity:"sensor.pv",name:"Production solaire",min:0,max:3000},
+    {type:"gauge",entity:"sensor.home",name:"Maison",min:0,max:3000}]}]},
+ {title:"Stockage",cards:[{type:"entities",title:"Batterie principale · Active · AC",
+   entities:[{entity:"sensor.soc",name:"État de charge"}]}]},
+ {title:"Usages",cards:[{type:"entities",title:"Recharge véhicule",entities:[{entity:"sensor.ev",name:"Puissance"}]}]},
+ {title:"Historique",cards:[{type:"history-graph",title:"Puissances",entities:["sensor.pv","sensor.home"]}]},
+ {title:"Qualité des données",cards:[{type:"entities",entities:[{type:"attribute",entity:"sensor.pv",attribute:"data_quality",name:"Solaire"}]}]}
+]};
+window.calls=[];
+window.fixtureHass={
+ language:"fr",user:{is_admin:true},states:{
+  "sensor.pv":{state:"1500",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}},
+  "sensor.home":{state:"425",attributes:{unit_of_measurement:"W",friendly_name:"Maison"}},
+  "sensor.grid":{state:"-47",attributes:{unit_of_measurement:"W"}},
+  "sensor.soc":{state:"18",attributes:{unit_of_measurement:"%"}},
+  "sensor.ev":{state:"0",attributes:{unit_of_measurement:"W"}}
+ },
+ callWS:async message=>{
+  window.calls.push(message);
+  if(message.type==="ehome_ems/dashboard")return {dashboard:structuredClone(dashboard),missing_entities:[]};
+  return {id:"simulated-copy"};
+ }
+};
+window.fixturePanel=document.querySelector("ehome-ems-panel");
+fixturePanel.hass=fixtureHass;fixturePanel.panel={config:{entry_id:"simulated",revision:"one"}};
+</script></html>

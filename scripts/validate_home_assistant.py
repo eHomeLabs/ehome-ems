@@ -9,6 +9,9 @@ from importlib.metadata import version
 from pathlib import Path
 import shutil
 import tempfile
+import socket
+from unittest.mock import patch
+import aiohttp
 
 from homeassistant import loader, bootstrap
 from homeassistant.core import HomeAssistant
@@ -16,6 +19,7 @@ from homeassistant.setup import async_setup_component
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import config_validation as cv
 from probatio import to_field_list
+from homeassistant.components import frontend
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,7 +29,11 @@ async def validate(config_dir):
     hass.config.skip_pip = True
     loader.async_setup(hass)
     try:
-        assert await bootstrap.async_from_config_dict({}, hass) is hass
+        with socket.socket() as port_socket:
+            port_socket.bind(("127.0.0.1", 0))
+            port = port_socket.getsockname()[1]
+        config = {"http": {"server_host": "127.0.0.1", "server_port": port}}
+        assert await bootstrap.async_from_config_dict(config, hass) is hass
         assert await async_setup_component(hass, "ehome_ems", {})
         hass.states.async_set("sensor.sim_grid", "-250", {"unit_of_measurement": "W", "device_class": "power"})
         hass.states.async_set("sensor.sim_solar", "1.5", {"unit_of_measurement": "kW", "device_class": "power"})
@@ -81,6 +89,9 @@ async def validate(config_dir):
         entry = result["result"]
         await hass.async_block_till_done()
         assert entry.state.value == "loaded", entry.state
+        from custom_components.ehome_ems.panel import panel_path
+        automatic_path = panel_path(entry.entry_id)
+        assert frontend.async_panel_exists(hass, automatic_path)
         registry = er.async_get(hass)
 
         def mirror(suffix):
@@ -206,8 +217,55 @@ async def validate(config_dir):
         )
         assert home_id in json.dumps(response)
 
+        # Exercise authenticated WS and native dashboard creation/storage, not internals.
+        user = await hass.auth.async_create_user("Simulated admin", group_ids=["system-admin"])
+        refresh = await hass.auth.async_create_refresh_token(user, client_id="https://example.local")
+        token = hass.auth.async_create_access_token(refresh)
+        async with aiohttp.ClientSession() as session:
+            async with session.ws_connect(f"http://127.0.0.1:{port}/api/websocket") as ws:
+                assert (await ws.receive_json())["type"] == "auth_required"
+                await ws.send_json({"type": "auth", "access_token": token})
+                assert (await ws.receive_json())["type"] == "auth_ok"
+                command_id = 0
+                async def command(payload, success=True):
+                    nonlocal command_id
+                    command_id += 1
+                    await ws.send_json({"id": command_id, **payload})
+                    while (answer := await ws.receive_json()).get("id") != command_id:
+                        pass
+                    assert answer["success"] is success, answer
+                    return answer.get("result")
+                snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
+                copy_path = "ehome-test-copy-" + entry.entry_id.lower()
+                await command({"type": "lovelace/dashboards/create", "title": "Independent copy",
+                               "url_path": copy_path, "require_admin": True})
+                await command({"type": "lovelace/config/save", "url_path": copy_path,
+                               "config": {**snapshot["dashboard"], "title": "Preserved custom title"}})
+                await command({"type": "lovelace/dashboards/create", "title": "Must not replace",
+                               "url_path": copy_path}, success=False)
+                assert await hass.config_entries.async_reload(entry.entry_id)
+                await hass.async_block_till_done()
+                preserved = await command({"type": "lovelace/config", "url_path": copy_path})
+                assert preserved["title"] == "Preserved custom title"
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel.js")
+                assert asset.status == 200
+                assert "javascript" in asset.headers.get("Content-Type", "")
+                assert "ehome-ems-panel" in await asset.text()
+            ordinary = await hass.auth.async_create_user("Simulated reader", group_ids=["system-users"])
+            refresh = await hass.auth.async_create_refresh_token(ordinary, client_id="https://example.local")
+            access = hass.auth.async_create_access_token(refresh)
+            async with session.ws_connect(f"http://127.0.0.1:{port}/api/websocket") as ws:
+                await ws.receive_json()
+                await ws.send_json({"type": "auth", "access_token": access})
+                assert (await ws.receive_json())["type"] == "auth_ok"
+                await ws.send_json({"id": 1, "type": "lovelace/dashboards/create",
+                                   "title": "Denied copy", "url_path": "ehome-denied-copy"})
+                denied = await ws.receive_json()
+                assert not denied["success"], denied
+
         assert await hass.config_entries.async_unload(entry.entry_id)
         await hass.async_block_till_done()
+        assert not frontend.async_panel_exists(hass, automatic_path)
         unloaded = hass.states.get(renamed_id)
         assert unloaded is None or unloaded.state == "unavailable", unloaded
         hass.states.async_set("sensor.sim_grid", "500", {"unit_of_measurement": "W"})
@@ -216,6 +274,7 @@ async def validate(config_dir):
         assert unloaded is None or unloaded.state == "unavailable", unloaded
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
+        assert frontend.async_panel_exists(hass, automatic_path)
         assert float(mirror("grid_power")[1].state) == 500
 
         # Original V0.1-shaped data remains accepted by the real platform.
@@ -237,7 +296,11 @@ def main():
         shutil.copytree(ROOT / "custom_components/ehome_ems",
                         Path(config_dir) / "custom_components/ehome_ems",
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        asyncio.run(validate(config_dir))
+        # Test host only: no real adapters or outbound source-IP probing.
+        with patch("ifaddr.get_adapters", return_value=[]), patch(
+            "homeassistant.components.network.util.async_get_source_ip", return_value="127.0.0.1"
+        ):
+            asyncio.run(validate(config_dir))
 
 
 if __name__ == "__main__":

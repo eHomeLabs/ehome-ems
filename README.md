@@ -6,7 +6,7 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : première bêta 0.2.0b4 en observation, préparée pour les essais.**
+**Statut : première bêta 0.2.0b5 en observation, préparée pour les essais.**
 Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
 et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
 en développement, et non une release logicielle 2.0.
@@ -15,12 +15,12 @@ en développement, et non une release logicielle 2.0.
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible sur cette branche | Bêta 0.2.0b4 en lecture seule, compatible avec les associations V0.1 |
+| Code disponible sur cette branche | Bêta 0.2.0b5 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
 | Usages | Routeur solaire/ECS, borne VE et autres charges : puissance, énergie avec période déclarée et état en lecture seule |
-| Dashboard | Première configuration native exportable : synthèse, batteries, historique et qualité ; rendu HA à valider |
+| Dashboard | Vue automatique en barre latérale et copie native modifiable sans YAML ; rendu en application HA à valider |
 | Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
 | Prochaine étape | Installer la bêta au moment choisi puis valider les écrans et mesures sur l'installation réelle |
 | Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
@@ -31,7 +31,7 @@ les prévisions, conseils et commandes ne sont pas encore disponibles.**
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
-- **Installer ou revenir en arrière :** [guide bêta 0.2.0b4](docs/INSTALLATION_BETA.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b5](docs/INSTALLATION_BETA.md).
 - **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
@@ -40,7 +40,14 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-### Retour des premiers essais — 0.2.0b4
+### Retour des premiers essais — 0.2.0b5
+
+Une [vue eHome EMS automatique](docs/DASHBOARD_AUTOMATIQUE.md) est ajoutée à la
+barre latérale après configuration. Elle suit les réglages, sans YAML, avec
+mesures, jauges, stockage et usages. Un administrateur peut créer une copie
+native indépendante modifiable en un clic, sans écraser les dashboards existants.
+L'historique du panneau ouvre les fiches natives ; la copie native contient
+la carte d'historique. Les flux animés restent à développer.
 
 Une étape [Usages](docs/USAGES_OBSERVATION.md) suit les batteries : routeur
 solaire/ECS, recharge VE et autres charges facultatives. Elle associe puissance
@@ -58,7 +65,7 @@ Voir [la définition de la consommation maison et les conditions du calcul](docs
 Les écrans expliquent maintenant le choix entre réseau signé et import/injection,
 l'utilisation d'une consommation maison déjà calculée et la distinction entre
 énergie restante, capacité et compteurs cumulatifs. Une aide par champ accompagne
-les batteries. La confirmation précise que la création du dashboard reste manuelle.
+les batteries. La confirmation explique la vue automatique et la copie indépendante.
 
 Le statut valid signifie valeur et unité lisibles, pas association physique garantie.
 Pour l'énergie restante, les sources déclarées total/total_increasing sont refusées.
@@ -102,7 +109,7 @@ l'énergie stockée reste inconnue : décharger ne signifie pas produire du sola
 Les bilans énergétiques journaliers, la fraîcheur des autres miroirs
 et les flux animés restent à développer. Un premier [dashboard natif exportable](docs/DASHBOARD_OBSERVATION.md)
 est généré par l'action `ehome_ems.generate_dashboard`, sans écrire ni écraser de
-dashboard. Son installation reste manuelle dans un nouveau dashboard ; les copies
+dashboard. Cet export reste une alternative à la vue automatique et au bouton de copie ; les copies
 personnalisées ne sont pas modifiées par une génération ultérieure. Les identifiants uniques
 existants sont conservés. Les automatismes utilisant le signe du miroir
 d'export doivent tenir compte de sa nouvelle convention positive.

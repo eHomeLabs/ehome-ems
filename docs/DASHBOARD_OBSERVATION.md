@@ -48,7 +48,9 @@ ni dashboard, et n'écrase aucun dashboard existant. Une nouvelle génération
 renvoie une nouvelle copie ; elle ne met pas à jour la copie personnalisée.
 L'ajout/retrait d'une batterie nécessite donc de générer une nouvelle configuration
 et de reporter les changements choisis. La génération gérée et la stratégie
-frontend restent à développer.
+frontend Lovelace restent des pistes pour la suite. Depuis 0.2.0b5, une vue
+automatique et un bouton de copie native sont disponibles sans YAML :
+voir DASHBOARD_AUTOMATIQUE.md. Le présent guide décrit l'export manuel alternatif.
 
 Les identifiants des miroirs sont résolus depuis le registre : un capteur renommé
 est retrouvé à partir de son identifiant unique. Les entités désactivées ou

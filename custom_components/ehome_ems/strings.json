@@ -56,7 +56,7 @@
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\n\nConfirming only saves observation mappings. No equipment is commanded and no dashboard is automatically added in this beta. For the initial native view, use Developer tools → Actions → ehome_ems.generate_dashboard, then copy the configuration into a NEW dashboard. Animated flows and automatic creation remain to be developed. Settings reload without a full HA restart.",
+        "description": "{summary}\n\nConfirming saves observation mappings. The eHome EMS view is added automatically to the sidebar once the integration loads and follows its settings. An administrator can create an independent editable copy from that view without YAML. Existing copies are never overwritten. No equipment is commanded. Animated flows and EMS daily balances remain to be developed. Settings reload without a full HA restart.",
         "data": {
           "back_to_review": "Return to review without saving"
         }
@@ -278,7 +278,7 @@
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\n\nConfirming only saves observation mappings. No equipment is commanded and no dashboard is automatically added in this beta. For the initial native view, use Developer tools → Actions → ehome_ems.generate_dashboard, then copy the configuration into a NEW dashboard. Animated flows and automatic creation remain to be developed. Settings reload without a full HA restart.",
+        "description": "{summary}\n\nConfirming saves observation mappings. The eHome EMS view is added automatically to the sidebar once the integration loads and follows its settings. An administrator can create an independent editable copy from that view without YAML. Existing copies are never overwritten. No equipment is commanded. Animated flows and EMS daily balances remain to be developed. Settings reload without a full HA restart.",
         "data": {
           "back_to_review": "Return to review without saving"
         }
