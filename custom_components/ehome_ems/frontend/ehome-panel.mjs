@@ -140,7 +140,7 @@ export class EhomeEmsPanel extends BaseElement {
       dialog .actions{justify-content:flex-end}
       a{color:var(--primary-color,#007b83);overflow-wrap:anywhere}
       .top-nav{position:sticky;top:0;z-index:2;padding:12px 0;background:var(--primary-background-color,#f4f6f8);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}.top-nav button{white-space:nowrap;flex:none}
-      .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:16px 0}
+      .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:16px 0}
       .kpi{border:1px solid var(--divider-color,#3b536b);border-radius:14px;padding:16px;background:var(--card-background-color,#14212d);min-width:0}
       .kpi ha-icon{display:inline-block;margin-right:8px;--mdc-icon-size:28px}.kpi .value{display:block;text-align:left;font-size:clamp(21px,2.4vw,32px);margin:6px 0;line-height:1.2}.kpi-label{display:block;font-size:14px;color:var(--primary-text-color,#e9f1fc)}
       .overview-grid{display:grid;grid-template-columns:minmax(0,2.5fr) minmax(280px,1fr);gap:16px;align-items:start}.overview-grid>.flow{margin:0;grid-column:1;grid-row:1}.overview-grid>.strategy{grid-column:2;grid-row:1}.overview-grid>.secondary{grid-column:1;grid-row:2}.overview-grid>.quality-panel{grid-column:2;grid-row:2}
@@ -262,6 +262,7 @@ export class EhomeEmsPanel extends BaseElement {
     for (const args of [
       [this._t("Solaire", "Solar"), entities.solar_power, "mdi:white-balance-sunny", "#e9af22"],
       [flow.home_calculated ? this._t("Maison totale", "Total home") : this._t("Maison · source existante", "Home · existing source"), entities.home_power, "mdi:home", "#6eafff"],
+      [this._t("Import réseau", "Grid import"), entities.grid_import, "mdi:transmission-tower", "#24afc6"],
       [this._t("Injection réseau", "Grid export"), entities.grid_export, "mdi:transmission-tower", "#24afc6"],
       [this._t("Charge batterie", "Battery charge"), primary?.charge_power, "mdi:battery-charging", "#28b482"],
       [this._t("État de charge", "State of charge"), primary?.soc, "mdi:battery-high", "#28b482"],
@@ -286,7 +287,7 @@ export class EhomeEmsPanel extends BaseElement {
     this._flowUpdates.push(() => {
       const ids = Object.keys(snapshot.bindings || {});
       const missing = ids.filter(id => !this._hass?.states[id] || ["unknown", "unavailable"].includes(this._hass.states[id].state));
-      available.textContent = this._t("Mesures indisponibles : ", "Unavailable readings: ") + missing.length;
+      available.textContent = this._t("Mesures indisponibles : ", "Unavailable readings: ") + (missing.length + (snapshot.missing_entities?.length || 0));
     });
     grid.append(quality); root.append(grid); return root;
   }
