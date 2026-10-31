@@ -1,16 +1,20 @@
-# eHome EMS — Codex instructions
+# eHome EMS — Instructions de développement V2
 
-Develop a local-first, vendor-neutral residential energy management system.
+La référence produit est [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md), complétée par [docs/ROADMAP.md](docs/ROADMAP.md).
 
-- Home Assistant is an optional source adapter, not the core.
-- V1 is read-only: no commands to real devices.
-- Never commit credentials, access tokens, private URLs or actual entity inventories.
-- Develop with simulated data and automated tests.
-- Normalize power (W), energy (Wh), SOC (%), timestamps, source and data quality.
-- Explicitly distinguish grid import/export and battery charge/discharge.
-- Prevent double-counting overlapping measurements.
-- Indicate stale and unavailable measurements in the UI.
-- Keep the interface responsive, accessible, and in French.
-- Proposed stack: Python/FastAPI backend, React/TypeScript frontend, SQLite initially.
-- Prefer small changes, tests, documentation, and pull requests.
-- Never alter a real Home Assistant instance without explicit authorization.
+- Développer exclusivement une intégration Home Assistant distribuable via HACS / Marketplace ; réutiliser les intégrations HA existantes.
+- Le serveur autonome RPi5, FastAPI, React et SQLite comme pile imposée sont abandonnés.
+- Le code existant reste le prototype V0.1 ; ne pas présenter la V2 comme livrée et ne pas changer sa version pour une modification documentaire.
+- Priorité au lot A en lecture seule : assistant, normalisation, flux, jauges et statistiques.
+- Aucun pilotage en observation ou simulation. Activation explicite par équipement pour le futur mode automatique.
+- Ne jamais modifier une instance HA réelle sans autorisation explicite.
+- Ne jamais committer de secrets, jetons, URL privées ni inventaires réels d'identifiants d'entités.
+- Distinguer W/kW, Wh/kWh, SOC, import/export, charge/décharge, mesure/calcul/estimation et qualité des données.
+- Prévenir les doubles comptes, respecter les topologies AC/DC et afficher les valeurs indisponibles ou périmées.
+- Ne pas assimiler toute décharge batterie à du solaire. Séparer surplus exporté et puissance réallouable.
+- Préserver les personnalisations du dashboard, les automatismes existants et les régulations natives.
+- Backend Python asynchrone, frontend adapté à HA, interfaces publiques, reload/unload propres et identifiants stables.
+- Fonctionnement local de base, aucun solveur lourd ni IA distante obligatoire ; cible de validation RPi4 avec SSD.
+- Interface responsive et accessible, français prioritaire et structure de traduction anglaise.
+- Utiliser des données simulées pour les tests significatifs : signes, unités, bilans, statistiques, arbitrage, migrations et repli.
+- Vérifier les liens et la cohérence pour les modifications documentaires ; ne pas lancer des tests matériels pour celles-ci.
