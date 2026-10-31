@@ -8,6 +8,27 @@ eHome EMS vise à transformer les données déjà présentes dans Home Assistant
 
 **Statut : cadrage V2, développement à poursuivre.** Cette documentation remplace le cadrage V0.1. Le code présent dans `custom_components/ehome_ems` reste le prototype V0.1 de lecture seule ; les fonctions V2 décrites ici ne sont pas encore livrées. V2 désigne le périmètre produit, pas une release logicielle 2.0.
 
+## Où en est le projet ? — Repères au 31 octobre 2026
+
+| Élément | État actuel |
+| --- | --- |
+| Code disponible | Prototype V0.1 en lecture seule, conservé dans `custom_components/ehome_ems` |
+| Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
+| Assistant pas à pas et dashboard V2 | Prévus ; pas encore livrés |
+| Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
+| Prochaine étape | Développer et valider le lot A : assistant, mesures fiables, flux, jauges et statistiques |
+| Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
+
+**V2 est la vision produit en préparation. Elle n'est pas une version installable du logiciel à ce stade.**
+
+### Quel document consulter ?
+
+- **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
+- **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
+- **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
+
+Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour la suite du développement, les références sont le cahier des charges V2 et la feuille de route.
+
 ## Documentation de référence
 
 - **[Cahier des charges complet V2](docs/CAHIER_DES_CHARGES.md)**
