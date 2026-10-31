@@ -119,10 +119,10 @@ export class EhomeEmsPanel extends BaseElement {
     style.textContent = `
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f6f8);color:var(--primary-text-color,#18232e);font:15px/1.5 system-ui,sans-serif}
       *{box-sizing:border-box}main{max-width:1700px;margin:auto;padding:24px}
-      header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+      header{display:flex;align-items:center;justify-content:flex-start;gap:16px;flex-wrap:wrap}
       h1{margin:0;font-size:30px;letter-spacing:-.7px}h2{margin:0 0 16px;font-size:18px}h1,h2,.note{overflow-wrap:anywhere}
       .subtitle,.note{color:color-mix(in srgb,var(--primary-text-color,#18232e) 78%,var(--card-background-color,#fff))}.subtitle{margin:4px 0 0}
-      .actions,nav{display:flex;gap:8px;flex-wrap:wrap}nav{margin:24px 0}
+      .actions,nav{display:flex;gap:8px;flex-wrap:wrap}.actions{margin-left:auto}nav{margin:24px 0}
       button,a{font:inherit}button{min-height:44px;padding:8px 16px;border:1px solid var(--divider-color,#c7d0d8);border-radius:10px;background:var(--card-background-color,#fff);color:inherit;cursor:pointer}
       button:focus-visible,a:focus-visible{outline:3px solid var(--primary-color,#007b83);outline-offset:3px}
       button[aria-current="page"]{background:var(--primary-color,#007b83);color:var(--text-primary-color,#fff);border-color:transparent}
@@ -147,7 +147,7 @@ export class EhomeEmsPanel extends BaseElement {
       .observation{display:inline-block;border:1px solid var(--primary-color,#70a246);border-radius:20px;padding:3px 10px;font-size:13px;margin-bottom:12px}.strategy .row{align-items:center}.strategy .row .value{white-space:nowrap}.strategy .row>span:first-child{font-size:14px}.strategy button{margin-top:12px}
       .load-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}.load-grid .kpi{padding:12px}.load-grid .value{font-size:24px}
       .source-list{display:grid;gap:12px}.source-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;border-bottom:1px solid var(--divider-color,#3b536b);padding:12px 0}.source-item code{display:block;overflow-wrap:anywhere;font-size:12px}.config-links{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0}
-      @media(min-width:1051px){.overview-grid .flow-stage{aspect-ratio:1000/500}.overview-grid .flow-house{left:29%;top:26%;width:54%}.overview-grid .flow-solar,.overview-grid .flow-grid{width:36%}.overview-grid .flow-battery{top:55%}}
+      @media(min-width:1051px){.overview-grid .flow-stage{aspect-ratio:1000/600}.overview-grid .flow-house{left:29%;top:26%;width:54%}.overview-grid .flow-solar,.overview-grid .flow-grid{width:36%}.overview-grid .flow-battery{top:50%}}
       @media(max-width:1050px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.overview-grid{grid-template-columns:1fr}.overview-grid>.strategy{grid-column:1;grid-row:3}.overview-grid>.secondary{grid-row:2}.overview-grid>.quality-panel{grid-column:1;grid-row:4}}
       @media(max-width:600px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpi{padding:12px}.top-nav{margin:12px 0}.top-nav button{flex:none}.source-item{grid-template-columns:1fr}.source-item button{justify-self:start}}
       .flow{background:#101923;color:#e9f1fc;border:1px solid #30475c;border-radius:20px;padding:clamp(12px,3vw,28px);margin:20px 0;overflow:hidden}
@@ -193,15 +193,10 @@ export class EhomeEmsPanel extends BaseElement {
     if (this._hass?.user?.is_admin && this._snapshotData) {
       this._copyButton = this._button(this._t("Créer une copie modifiable", "Create editable copy"), () => this._copy());
       this._copyButton.disabled = !!this._copying;
+      this._copyButton.title = this._t("La copie conserve ses cartes natives indépendantes. Le flux animé reste dans cette vue automatique.", "The copy keeps its independent native cards. The animated flow stays in this automatic view.");
       actions.append(this._copyButton);
     }
     header.append(title, actions); main.append(header);
-    main.append(this._node("p", this._t(
-      "Cette vue suit les réglages de l’intégration. Une copie modifiable reste indépendante des mises à jour.",
-      "This view follows integration settings. An editable copy stays independent of updates."), "note"));
-    if (this._hass?.user?.is_admin) main.append(this._node("p", this._t(
-      "Appui prolongé sur une mesure pour changer sa source, ou Entrée au clavier.",
-      "Hold a reading to change its source, or press Enter on the keyboard."), "note"));
     if (this._error) main.append(this._node("p", this._error, "status warn"));
     this._message = this._node("div", undefined, "status");
     this._message.setAttribute("role", "status"); main.append(this._message);
@@ -232,6 +227,7 @@ export class EhomeEmsPanel extends BaseElement {
         main.append(content);
       }
     }
+    if (this._hass?.user?.is_admin) main.append(this._node("p", this._t("Appui prolongé ou Entrée sur une mesure pour changer sa source.", "Hold a reading or press Enter to change its source."), "note"));
     this.shadowRoot.append(main); this._refresh();
   }
   _bind(element, entity, attribute, gauge) {
