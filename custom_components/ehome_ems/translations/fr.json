@@ -1,37 +1,109 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Configurer les sources énergétiques",
-        "description": "Sélectionnez les capteurs de puissance existants. Les valeurs et signes sont conservés.",
+      "grid": {
+        "title": "1 — Réseau électrique",
+        "description": "Associez les mesures réseau disponibles, ou laissez vide. Le capteur global conserve son signe ; l’injection est affichée en valeur positive. Ces mesures ne seront pas additionnées. Aucune commande ne sera envoyée.",
         "data": {
           "grid_power": "Puissance réseau signée",
-          "grid_import": "Import réseau",
-          "grid_export": "Injection réseau",
-          "solar_power": "Production photovoltaïque",
-          "home_power": "Consommation maison"
+          "grid_import": "Puissance importée du réseau",
+          "grid_export": "Puissance injectée sur le réseau"
+        }
+      },
+      "solar": {
+        "title": "2 — Production photovoltaïque",
+        "description": "Choisissez une mesure de production totale en W ou kW, ou laissez vide si vous n’avez pas de photovoltaïque.",
+        "data": {
+          "solar_power": "Production photovoltaïque"
+        }
+      },
+      "home": {
+        "title": "3 — Consommation de la maison",
+        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape.",
+        "data": {
+          "home_power": "Consommation de la maison"
+        }
+      },
+      "review": {
+        "title": "4 — Vérifier les mesures",
+        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer.",
+        "menu_options": {
+          "confirm": "Continuer vers la confirmation",
+          "grid": "Modifier le réseau",
+          "solar": "Modifier le photovoltaïque",
+          "home": "Modifier la maison"
+        }
+      },
+      "confirm": {
+        "title": "Enregistrer en mode observation",
+        "description": "{summary}\\n\\nValidez pour enregistrer les associations. Les mesures indisponibles restent indisponibles. Les réglages se rechargent sans redémarrage complet de HA. Le dashboard et le stockage ne font pas encore partie de cet assistant. Pour corriger une erreur, cochez le retour à la vérification.",
+        "data": {
+          "back_to_review": "Retourner à la vérification sans enregistrer"
         }
       }
     },
     "error": {
-      "select_source": "Sélectionnez au moins un capteur."
+      "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
+      "duplicate_source": "Ce capteur est déjà associé à une autre mesure.",
+      "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
+      "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
+      "unsupported_unit": "L’unité de ce capteur doit être W ou kW.",
+      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations."
+    },
+    "abort": {
+      "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
     }
   },
   "options": {
     "step": {
-      "init": {
-        "title": "Modifier les sources",
+      "grid": {
+        "title": "1 — Réseau électrique",
+        "description": "Associez les mesures réseau disponibles, ou laissez vide. Le capteur global conserve son signe ; l’injection est affichée en valeur positive. Ces mesures ne seront pas additionnées. Aucune commande ne sera envoyée.",
         "data": {
           "grid_power": "Puissance réseau signée",
-          "grid_import": "Import réseau",
-          "grid_export": "Injection réseau",
-          "solar_power": "Production photovoltaïque",
-          "home_power": "Consommation maison"
+          "grid_import": "Puissance importée du réseau",
+          "grid_export": "Puissance injectée sur le réseau"
+        }
+      },
+      "solar": {
+        "title": "2 — Production photovoltaïque",
+        "description": "Choisissez une mesure de production totale en W ou kW, ou laissez vide si vous n’avez pas de photovoltaïque.",
+        "data": {
+          "solar_power": "Production photovoltaïque"
+        }
+      },
+      "home": {
+        "title": "3 — Consommation de la maison",
+        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape.",
+        "data": {
+          "home_power": "Consommation de la maison"
+        }
+      },
+      "review": {
+        "title": "4 — Vérifier les mesures",
+        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer.",
+        "menu_options": {
+          "confirm": "Continuer vers la confirmation",
+          "grid": "Modifier le réseau",
+          "solar": "Modifier le photovoltaïque",
+          "home": "Modifier la maison"
+        }
+      },
+      "confirm": {
+        "title": "Enregistrer en mode observation",
+        "description": "{summary}\\n\\nValidez pour enregistrer les associations. Les mesures indisponibles restent indisponibles. Les réglages se rechargent sans redémarrage complet de HA. Le dashboard et le stockage ne font pas encore partie de cet assistant. Pour corriger une erreur, cochez le retour à la vérification.",
+        "data": {
+          "back_to_review": "Retourner à la vérification sans enregistrer"
         }
       }
     },
     "error": {
-      "select_source": "Sélectionnez au moins un capteur."
+      "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
+      "duplicate_source": "Ce capteur est déjà associé à une autre mesure.",
+      "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
+      "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
+      "unsupported_unit": "L’unité de ce capteur doit être W ou kW.",
+      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations."
     }
   }
 }

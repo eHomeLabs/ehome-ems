@@ -14,7 +14,8 @@ eHome EMS vise à transformer les données déjà présentes dans Home Assistant
 | --- | --- |
 | Code disponible | Prototype V0.1 en lecture seule, conservé dans `custom_components/ehome_ems` |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
-| Assistant pas à pas et dashboard V2 | Prévus ; pas encore livrés |
+| Assistant pas à pas | Réseau, solaire, maison et vérification codés sur cette branche de développement ; validation HA réelle à faire |
+| Dashboard V2 et stockage | À développer |
 | Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
 | Prochaine étape | Développer et valider le lot A : assistant, mesures fiables, flux, jauges et statistiques |
 | Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
@@ -31,8 +32,8 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-Cette branche prépare la normalisation des puissances avant le nouvel assistant
-et le dashboard. Elle ne constitue pas une livraison complète du lot A.
+Cette branche prépare la normalisation des puissances et le premier assistant.
+Elle ne constitue pas une livraison complète du lot A ni une release HACS.
 
 - Conversion W/kW vers W.
 - Capteur réseau global signé conservé ; export présenté comme une magnitude
@@ -41,15 +42,26 @@ et le dashboard. Elle ne constitue pas une livraison complète du lot A.
 - Attributs `data_quality`, `source_unit` et `value_origin` sur les capteurs.
 - Donnée absente, unité incorrecte ou valeur non finie : aucune substitution par zéro.
 
-La fraîcheur des sources, le bilan multi-équipements, le parcours pas à pas,
+L'assistant sépare réseau, solaire, maison, aperçu et confirmation. Depuis
+l'aperçu, chaque étape peut être corrigée. Les réglages V0.1 sont proposés
+à nouveau dans les options ; un champ effacé reste effacé. Aucun changement
+n'est enregistré avant la validation finale. Les sources absentes, les unités
+autres que W/kW, les doublons et les capteurs miroirs eHome EMS sont refusés.
+Une source temporairement indisponible avec une unité valide reste configurable,
+avec un avertissement dans l'aperçu.
+
+La fraîcheur des sources, le bilan multi-équipements,
 le stockage et le dashboard restent à développer. Les identifiants uniques
 existants sont conservés. Les automatismes utilisant le signe du miroir
 d'export doivent tenir compte de sa nouvelle convention positive.
 
-Tests de calcul indépendants de Home Assistant :
+Installation des dépendances de test : `python -m pip install -r requirements-test.txt`.
+Tests de calcul et de parcours :
 `python -m unittest discover -s tests -v`.
-La CI vérifie aussi la syntaxe Python ; ces vérifications ne remplacent pas
+La CI vérifie aussi la syntaxe Python. Les tests du parcours utilisent les
+vrais schémas Voluptuous et des doubles des API HA ; ils ne remplacent pas
 un test de chargement/rechargement dans Home Assistant.
+Voir le [plan de validation de l'assistant](docs/VALIDATION_ASSISTANT.md).
 
 ## Documentation de référence
 
@@ -140,4 +152,5 @@ Le [guide V0.1](docs/INSTALLATION_V0_1.md) et le [plan de validation V0.1](docs/
 
 Les pages numérotées de l'ancien guide RPi5 sont historiques et obsolètes. Le serveur autonome est abandonné ; consulter la [note correspondante](docs/DEPLOIEMENT_RPI5.md).
 
-Cette mise à jour porte sur le cahier des charges et la documentation ; elle ne modifie aucune installation Home Assistant.
+Cette branche contient du code en développement. Aucune installation Home Assistant
+réelle n'a été modifiée pendant son développement.
