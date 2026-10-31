@@ -9,6 +9,7 @@ from homeassistant.helpers import entity_registry as er
 from .const import DOMAIN, SOURCES, CONF_BATTERIES, BATTERY_SOURCES
 from .const import CONF_USAGES, USAGE_SOURCES
 from .dashboard import build_dashboard
+from .source_editor import binding_metadata
 
 SERVICE_GENERATE = "generate_dashboard"
 
@@ -48,8 +49,10 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
         if registered and not registered.disabled_by and registered.config_entry_id == entry.entry_id:
             entities[suffix] = entity_id
     language = (language or hass.config.language or "fr").split("-")[0]
-    return build_dashboard(mapping, entities, language=language,
-                           max_power_w=max_power_w)
+    result = build_dashboard(mapping, entities, language=language, max_power_w=max_power_w)
+    result["bindings"] = binding_metadata(mapping, entities)
+    result["revision"] = entry.modified_at.isoformat() if hasattr(entry, "modified_at") else ""
+    return result
 
 
 

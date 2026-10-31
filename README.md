@@ -6,7 +6,7 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : première bêta 0.2.0b5 en observation, préparée pour les essais.**
+**Statut : première bêta 0.2.0b6 en observation, préparée pour les essais.**
 Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
 et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
 en développement, et non une release logicielle 2.0.
@@ -15,7 +15,7 @@ en développement, et non une release logicielle 2.0.
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible sur cette branche | Bêta 0.2.0b5 en lecture seule, compatible avec les associations V0.1 |
+| Code disponible sur cette branche | Bêta 0.2.0b6 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
@@ -31,7 +31,7 @@ les prévisions, conseils et commandes ne sont pas encore disponibles.**
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
-- **Installer ou revenir en arrière :** [guide bêta 0.2.0b5](docs/INSTALLATION_BETA.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b6](docs/INSTALLATION_BETA.md).
 - **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
@@ -40,7 +40,11 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-### Retour des premiers essais — 0.2.0b5
+### Retour des premiers essais — 0.2.0b6
+
+Appui prolongé sur les mesures de la vue gérée pour changer leur source
+(administrateur, enregistrement explicite, identifiants EMS conservés).
+Une icône locale accompagne désormais l’intégration.
 
 Une [vue eHome EMS automatique](docs/DASHBOARD_AUTOMATIQUE.md) est ajoutée à la
 barre latérale après configuration. Elle suit les réglages, sans YAML, avec

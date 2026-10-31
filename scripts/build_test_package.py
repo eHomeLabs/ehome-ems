@@ -34,7 +34,8 @@ def main():
         packaged = json.loads(zipped.read("custom_components/ehome_ems/manifest.json"))
         assert packaged == manifest
         for required in ("__init__.py", "config_flow.py", "sensor.py", "dashboard.py", "home_balance.py", "usage.py",
-                         "panel.py", "frontend/ehome-panel.mjs",
+                         "panel.py", "source_editor.py", "frontend/ehome-panel.mjs",
+                         "brand/icon.png", "brand/icon@2x.png",
                          "dashboard_service.py", "services.yaml", "strings.json",
                          "translations/fr.json", "translations/en.json"):
             assert f"custom_components/ehome_ems/{required}" in zipped.namelist(), required

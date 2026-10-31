@@ -251,6 +251,25 @@ async def validate(config_dir):
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
+                brand = await session.get(
+                    f"http://127.0.0.1:{port}/api/brands/integration/ehome_ems/icon.png?placeholder=no",
+                    headers={"Authorization": "Bearer " + token})
+                assert brand.status == 200
+                assert await brand.read() == (ROOT / "custom_components/ehome_ems/brand/icon.png").read_bytes()
+                snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
+                assert solar_id in snapshot["bindings"]
+                hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
+                old_revision = snapshot["revision"]
+                await command({"type": "ehome_ems/remap_source", "entry_id": entry.entry_id,
+                               "entity_id": solar_id, "source_id": "sensor.sim_pv_new",
+                               "expected_source": "sensor.sim_solar", "revision": old_revision})
+                await hass.async_block_till_done()
+                assert float(hass.states.get(solar_id).state) == 2100
+                assert float(mirror("home_power")[1].state) == 1550
+                await command({"type": "ehome_ems/remap_source", "entry_id": entry.entry_id,
+                               "entity_id": solar_id, "source_id": "sensor.sim_solar",
+                               "expected_source": "sensor.sim_solar", "revision": old_revision}, success=False)
+                assert entry.options["solar_power"] == "sensor.sim_pv_new"
             ordinary = await hass.auth.async_create_user("Simulated reader", group_ids=["system-users"])
             refresh = await hass.auth.async_create_refresh_token(ordinary, client_id="https://example.local")
             access = hass.auth.async_create_access_token(refresh)
@@ -262,6 +281,10 @@ async def validate(config_dir):
                                    "title": "Denied copy", "url_path": "ehome-denied-copy"})
                 denied = await ws.receive_json()
                 assert not denied["success"], denied
+                await ws.send_json({"id": 2, "type": "ehome_ems/remap_source", "entry_id": entry.entry_id,
+                                   "entity_id": solar_id, "source_id": "sensor.sim_solar",
+                                   "expected_source": "sensor.sim_pv_new", "revision": entry.modified_at.isoformat()})
+                assert not (await ws.receive_json())["success"]
 
         assert await hass.config_entries.async_unload(entry.entry_id)
         await hass.async_block_till_done()

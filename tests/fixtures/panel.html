@@ -18,6 +18,8 @@ const dashboard = {title:"eHome EMS",views:[
  {title:"Qualité des données",cards:[{type:"entities",entities:[{type:"attribute",entity:"sensor.pv",attribute:"data_quality",name:"Solaire"}]}]}
 ]};
 window.calls=[];
+const bindings={"sensor.pv":{source:"sensor.pv_source",domains:["sensor"],units:["W","kW"],calculated_home:false}};
+let revision="one";
 window.fixtureHass={
  language:"fr",user:{is_admin:true},states:{
   "sensor.pv":{state:"1500",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}},
@@ -28,10 +30,20 @@ window.fixtureHass={
  },
  callWS:async message=>{
   window.calls.push(message);
-  if(message.type==="ehome_ems/dashboard")return {dashboard:structuredClone(dashboard),missing_entities:[]};
+  if(message.type==="ehome_ems/dashboard")return {
+    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision};
+  if(message.type==="ehome_ems/remap_source"){
+    bindings[message.entity_id].source=message.source_id; revision="two";
+    const source=fixtureHass.states[message.source_id];
+    fixtureHass.states[message.entity_id]={state:source.state,attributes:{
+      ...source.attributes,friendly_name:"Production solaire",data_quality:"valid"}};
+    fixturePanel.hass={...fixtureHass};return {updated:true};
+  }
   return {id:"simulated-copy"};
  }
 };
+fixtureHass.states["sensor.pv_source"]={state:"1500",attributes:{unit_of_measurement:"W",friendly_name:"Source solaire"}};
+fixtureHass.states["sensor.pv_alternative"]={state:"2000",attributes:{unit_of_measurement:"W",friendly_name:"Source alternative"}};
 window.fixturePanel=document.querySelector("ehome-ems-panel");
 fixturePanel.hass=fixtureHass;fixturePanel.panel={config:{entry_id:"simulated",revision:"one"}};
 </script></html>

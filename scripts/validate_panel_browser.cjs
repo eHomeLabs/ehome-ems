@@ -36,6 +36,18 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
       await page.screenshot({ path: path.join(output, viewport.width < 600 ? "mobile.png" : "desktop.png"), fullPage: true });
+      const editable = page.getByRole("button", { name: "Modifier la source de Production solaire", exact: true }).first();
+      await editable.dispatchEvent("pointerdown", { button: 0, clientX: 20, clientY: 20, pointerType: "touch" });
+      await page.getByRole("dialog", { name: "Changer la source", exact: true }).waitFor();
+      await editable.dispatchEvent("pointerup", { button: 0 });
+      await page.getByRole("searchbox", { name: "Rechercher un capteur", exact: true }).fill("alternative");
+      await page.getByRole("listbox", { name: "Nouvelle source", exact: true }).selectOption("sensor.pv_alternative");
+      await page.getByRole("button", { name: "Enregistrer la source", exact: true }).click();
+      await page.getByRole("dialog").waitFor({ state: "detached" });
+      assert.ok(await page.getByText("2000 W", { exact: true }).count());
+      const remap = await page.evaluate(() => calls.find(call => call.type==="ehome_ems/remap_source"));
+      assert.equal(remap.expected_source, "sensor.pv_source");
+      assert.equal(remap.source_id, "sensor.pv_alternative");
       await page.evaluate(() => {
         fixtureHass.states["sensor.pv"] = { state: "unavailable",
           attributes: { unit_of_measurement: "W", friendly_name: "Production solaire" } };

@@ -26,6 +26,13 @@ Le premier moteur applique un bilan AC :
 
 P maison = P solaire + P import + somme P décharge − P injection − somme P charge.
 
+Le solaire est ajouté : il alimente les usages même lorsque le réseau importe peu.
+Le cumulus, le routeur solaire et la recharge VE font partie du total maison.
+Leurs sous-compteurs décrivent une partie de ce total : ne pas les ajouter.
+Soustraire la puissance réelle du cumulus donne un autre indicateur, « maison
+hors cumulus », et non le total maison. La consigne du routeur ne remplace pas
+une mesure de puissance réellement consommée.
+
 Exemple : 719 W solaire, 0 W import, 47 W injection, 247 W charge et 0 W décharge
 donnent 425 W pour les usages.
 
