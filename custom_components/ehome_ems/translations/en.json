@@ -37,7 +37,7 @@
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. Balances and dashboard are still to be developed. To correct an error, select return to review.",
+        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. An initial dashboard can be exported afterwards using ehome_ems.generate_dashboard. Balances and animated flows are still to be developed. To correct an error, select return to review.",
         "data": {
           "back_to_review": "Return to review without saving"
         }
@@ -145,7 +145,7 @@
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. Balances and dashboard are still to be developed. To correct an error, select return to review.",
+        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. An initial dashboard can be exported afterwards using ehome_ems.generate_dashboard. Balances and animated flows are still to be developed. To correct an error, select return to review.",
         "data": {
           "back_to_review": "Return to review without saving"
         }
@@ -223,6 +223,25 @@
       "options": {
         "ac": "AC — alternating current side",
         "dc": "DC — monitoring only, outside simple AC balance"
+      }
+    }
+  },
+  "services": {
+    "generate_dashboard": {
+      "name": "Generate observation dashboard",
+      "description": "Return an editable native-card configuration without creating or overwriting a dashboard.",
+      "fields": {
+        "entry_id": {
+          "name": "eHome EMS installation",
+          "description": "Optional when exactly one installation is configured."
+        },
+        "language": {
+          "name": "Language"
+        },
+        "max_power_w": {
+          "name": "Power gauge scale",
+          "description": "Indicative scale in watts; does not command equipment limits."
+        }
       }
     }
   }

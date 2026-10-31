@@ -37,7 +37,7 @@
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Les bilans et le dashboard restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
+        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Un premier dashboard peut être exporté ensuite via l’action ehome_ems.generate_dashboard. Les bilans et les flux animés restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
         }
@@ -145,7 +145,7 @@
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Les bilans et le dashboard restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
+        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Un premier dashboard peut être exporté ensuite via l’action ehome_ems.generate_dashboard. Les bilans et les flux animés restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
         }
@@ -223,6 +223,25 @@
       "options": {
         "ac": "AC — côté alternatif",
         "dc": "DC — suivi seul, hors bilan AC simple"
+      }
+    }
+  },
+  "services": {
+    "generate_dashboard": {
+      "name": "Générer le dashboard en observation",
+      "description": "Renvoie une configuration modifiable avec les cartes natives, sans créer ni écraser de dashboard.",
+      "fields": {
+        "entry_id": {
+          "name": "Installation eHome EMS",
+          "description": "Facultatif si une seule installation est configurée."
+        },
+        "language": {
+          "name": "Langue"
+        },
+        "max_power_w": {
+          "name": "Échelle des jauges de puissance",
+          "description": "Échelle indicative en watts ; ne commande aucune limite d’équipement."
+        }
       }
     }
   }

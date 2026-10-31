@@ -1,10 +1,16 @@
 """eHome EMS: read-only Home Assistant energy mapping integration."""
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from .const import DOMAIN
+from .dashboard_service import register_dashboard_service
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the integration domain."""
+    register_dashboard_service(hass)
     return True
 
 

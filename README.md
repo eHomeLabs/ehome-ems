@@ -16,7 +16,7 @@ eHome EMS vise à transformer les données déjà présentes dans Home Assistant
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification codés sur cette branche de développement ; validation HA réelle à faire |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
-| Dashboard V2 | À développer |
+| Dashboard | Première configuration native exportable : synthèse, batteries, historique et qualité ; rendu HA à valider |
 | Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
 | Prochaine étape | Développer et valider le lot A : assistant, mesures fiables, flux, jauges et statistiques |
 | Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
@@ -64,7 +64,10 @@ Aucun bilan n'est encore calculé et aucune commande n'est envoyée. L'origine d
 l'énergie stockée reste inconnue : décharger ne signifie pas produire du solaire.
 
 La fraîcheur des sources, le bilan multi-équipements
-et le dashboard restent à développer. Les identifiants uniques
+et les flux animés restent à développer. Un premier [dashboard natif exportable](docs/DASHBOARD_OBSERVATION.md)
+est généré par l'action `ehome_ems.generate_dashboard`, sans écrire ni écraser de
+dashboard. Son installation reste manuelle dans un nouveau dashboard ; les copies
+personnalisées ne sont pas modifiées par une génération ultérieure. Les identifiants uniques
 existants sont conservés. Les automatismes utilisant le signe du miroir
 d'export doivent tenir compte de sa nouvelle convention positive.
 
