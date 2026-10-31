@@ -14,8 +14,9 @@ eHome EMS vise à transformer les données déjà présentes dans Home Assistant
 | --- | --- |
 | Code disponible | Prototype V0.1 en lecture seule, conservé dans `custom_components/ehome_ems` |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
-| Assistant pas à pas | Réseau, solaire, maison et vérification codés sur cette branche de développement ; validation HA réelle à faire |
-| Dashboard V2 et stockage | À développer |
+| Assistant pas à pas | Réseau, solaire, maison, batteries et vérification codés sur cette branche de développement ; validation HA réelle à faire |
+| Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
+| Dashboard V2 | À développer |
 | Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
 | Prochaine étape | Développer et valider le lot A : assistant, mesures fiables, flux, jauges et statistiques |
 | Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
@@ -42,7 +43,7 @@ Elle ne constitue pas une livraison complète du lot A ni une release HACS.
 - Attributs `data_quality`, `source_unit` et `value_origin` sur les capteurs.
 - Donnée absente, unité incorrecte ou valeur non finie : aucune substitution par zéro.
 
-L'assistant sépare réseau, solaire, maison, aperçu et confirmation. Depuis
+L'assistant sépare réseau, solaire, maison, batteries, aperçu et confirmation. Depuis
 l'aperçu, chaque étape peut être corrigée. Les réglages V0.1 sont proposés
 à nouveau dans les options ; un champ effacé reste effacé. Aucun changement
 n'est enregistré avant la validation finale. Les sources absentes, les unités
@@ -50,8 +51,20 @@ autres que W/kW, les doublons et les capteurs miroirs eHome EMS sont refusés.
 Une source temporairement indisponible avec une unité valide reste configurable,
 avec un avertissement dans l'aperçu.
 
-La fraîcheur des sources, le bilan multi-équipements,
-le stockage et le dashboard restent à développer. Les identifiants uniques
+Les batteries peuvent être ajoutées, modifiées et retirées du suivi avant la
+confirmation finale. Chaque batterie dispose d'un identifiant stable, d'un rôle
+actif ou secours (secours par défaut), d'un couplage AC/DC et d'une capacité utile
+facultative en kWh. Les mesures facultatives sont charge/décharge positives en
+W/kW, SOC en % et énergie restante mesurée en Wh/kWh. Au moins une mesure est
+nécessaire par batterie. Le SOC n'est pas converti artificiellement en énergie.
+
+Le rôle actif indique seulement une candidature au futur bilan. Les batteries
+de secours et les batteries DC ne sont pas éligibles au futur bilan AC simple.
+Aucun bilan n'est encore calculé et aucune commande n'est envoyée. L'origine de
+l'énergie stockée reste inconnue : décharger ne signifie pas produire du solaire.
+
+La fraîcheur des sources, le bilan multi-équipements
+et le dashboard restent à développer. Les identifiants uniques
 existants sont conservés. Les automatismes utilisant le signe du miroir
 d'export doivent tenir compte de sa nouvelle convention positive.
 

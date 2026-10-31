@@ -44,6 +44,31 @@ class PowerNormalizationTests(unittest.TestCase):
     def test_rounding_after_conversion(self):
         self.assertEqual(normalize("1.234567", "kW", "home_power").value, 1234.57)
 
+    def test_battery_soc_range_and_units(self):
+        for raw in ("0", "100", "52.5"):
+            self.assertEqual(measurement.normalize_battery(raw, "%", "soc").value, float(raw))
+        for raw in ("-1", "101"):
+            self.assertEqual(measurement.normalize_battery(raw, "%", "soc").quality, "out_of_range")
+        self.assertEqual(measurement.normalize_battery("50", "W", "soc").quality, "unsupported_unit")
+
+    def test_battery_energy_is_normalized_without_soc_estimation(self):
+        self.assertEqual(measurement.normalize_battery("2500", "Wh", "remaining_energy").value, 2.5)
+        self.assertEqual(measurement.normalize_battery("2.5", "kWh", "remaining_energy").value, 2.5)
+        self.assertEqual(measurement.normalize_battery("-1", "kWh", "remaining_energy").quality, "out_of_range")
+        self.assertEqual(measurement.normalize_battery("unknown", "kWh", "remaining_energy").quality, "unavailable")
+
+    def test_separate_battery_power_never_guesses_negative_direction(self):
+        for role in ("charge_power", "discharge_power"):
+            self.assertEqual(measurement.normalize_battery("1.5", "kW", role).value, 1500)
+            self.assertEqual(measurement.normalize_battery("-1", "W", role).quality, "unexpected_direction")
+
+    def test_battery_invalid_values_are_not_zero(self):
+        for role, unit in (("soc", "%"), ("remaining_energy", "kWh")):
+            for raw in ("nan", "inf", "abc"):
+                reading = measurement.normalize_battery(raw, unit, role)
+                self.assertIsNone(reading.value)
+                self.assertEqual(reading.quality, "invalid_value")
+
 
 if __name__ == "__main__":
     unittest.main()

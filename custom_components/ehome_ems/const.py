@@ -6,3 +6,5 @@ CONF_GRID_EXPORT = "grid_export"
 CONF_SOLAR_POWER = "solar_power"
 CONF_HOME_POWER = "home_power"
 SOURCES = (CONF_GRID_POWER, CONF_GRID_IMPORT, CONF_GRID_EXPORT, CONF_SOLAR_POWER, CONF_HOME_POWER)
+CONF_BATTERIES = "batteries"
+BATTERY_SOURCES = ("charge_power", "discharge_power", "soc", "remaining_energy")

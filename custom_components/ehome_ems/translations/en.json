@@ -19,26 +19,78 @@
       },
       "home": {
         "title": "3 — Home consumption",
-        "description": "Choose measured total home consumption in W or kW. This first increment does not calculate a balance or add submeters.",
+        "description": "Choose measured total home consumption in W or kW. This first increment does not calculate a balance or add submeters. Continue to configure batteries or skip storage.",
         "data": {
           "home_power": "Home consumption power"
         }
       },
       "review": {
-        "title": "4 — Review measurements",
-        "description": "Normalized preview in W:\\n\\n{summary}\\n\\nA missing reading is never replaced by zero. Quality codes indicate valid, unavailable, invalid_value or unexpected_direction. Edit any step before continuing.",
+        "title": "5 — Review measurements",
+        "description": "Normalized preview in W:\\n\\n{summary}\\n\\nA missing reading is never replaced by zero. Quality codes indicate valid, unavailable, invalid_value or unexpected_direction. Edit any step before continuing. Backup batteries are monitored separately and are not eligible for the future active balance.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
           "solar": "Edit solar",
-          "home": "Edit home"
+          "home": "Edit home",
+          "batteries": "Edit batteries"
         }
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\\n\\nSubmit to save mappings. Unavailable measurements stay unavailable. Settings reload without a full HA restart. Dashboard and storage are not yet part of this wizard. To correct an error, select return to review.",
+        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. Balances and dashboard are still to be developed. To correct an error, select return to review.",
         "data": {
           "back_to_review": "Return to review without saving"
+        }
+      },
+      "batteries": {
+        "title": "4 — Storage",
+        "description": "Add your batteries, or continue without storage. Each battery has separate readings. Backup is the default role.\n\n{summary}",
+        "menu_options": {
+          "add_battery": "Add battery",
+          "edit_battery": "Edit battery",
+          "remove_battery": "Remove battery from monitoring",
+          "review": "Continue to review"
+        }
+      },
+      "add_battery": {
+        "title": "Add a battery",
+        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "data": {
+          "name": "Battery name",
+          "role": "Role",
+          "coupling": "Electrical coupling",
+          "capacity_kwh": "Declared usable capacity (kWh, optional)",
+          "charge_power": "Positive charge power (W/kW)",
+          "discharge_power": "Positive discharge power (W/kW)",
+          "soc": "State of charge (%)",
+          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        }
+      },
+      "battery_details": {
+        "title": "Edit battery measurements",
+        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "data": {
+          "name": "Battery name",
+          "role": "Role",
+          "coupling": "Electrical coupling",
+          "capacity_kwh": "Declared usable capacity (kWh, optional)",
+          "charge_power": "Positive charge power (W/kW)",
+          "discharge_power": "Positive discharge power (W/kW)",
+          "soc": "State of charge (%)",
+          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        }
+      },
+      "edit_battery": {
+        "title": "Choose battery to edit",
+        "data": {
+          "battery_id": "Battery"
+        }
+      },
+      "remove_battery": {
+        "title": "Remove battery from monitoring",
+        "description": "Removal is applied at final confirmation. It does not command the device or remove its original integration.",
+        "data": {
+          "battery_id": "Battery to remove"
         }
       }
     },
@@ -47,8 +99,9 @@
       "duplicate_source": "This sensor is already mapped to another reading.",
       "recursive_source": "Select an original source, not an eHome EMS sensor.",
       "missing_source": "This sensor no longer exists. Choose another source.",
-      "unsupported_unit": "The sensor unit must be W or kW.",
-      "sources_changed": "A source is missing, duplicated or has an invalid unit. Return to review to correct the mappings."
+      "unsupported_unit": "Invalid unit: W/kW for power, % for SOC, Wh/kWh for remaining energy.",
+      "sources_changed": "A source is missing, duplicated or has an invalid unit. Return to review to correct the mappings.",
+      "invalid_battery": "Check name, role, coupling and capacity (a finite positive number)."
     },
     "abort": {
       "already_configured": "eHome EMS is already configured. Use Configure to edit its settings."
@@ -74,26 +127,78 @@
       },
       "home": {
         "title": "3 — Home consumption",
-        "description": "Choose measured total home consumption in W or kW. This first increment does not calculate a balance or add submeters.",
+        "description": "Choose measured total home consumption in W or kW. This first increment does not calculate a balance or add submeters. Continue to configure batteries or skip storage.",
         "data": {
           "home_power": "Home consumption power"
         }
       },
       "review": {
-        "title": "4 — Review measurements",
-        "description": "Normalized preview in W:\\n\\n{summary}\\n\\nA missing reading is never replaced by zero. Quality codes indicate valid, unavailable, invalid_value or unexpected_direction. Edit any step before continuing.",
+        "title": "5 — Review measurements",
+        "description": "Normalized preview in W:\\n\\n{summary}\\n\\nA missing reading is never replaced by zero. Quality codes indicate valid, unavailable, invalid_value or unexpected_direction. Edit any step before continuing. Backup batteries are monitored separately and are not eligible for the future active balance.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
           "solar": "Edit solar",
-          "home": "Edit home"
+          "home": "Edit home",
+          "batteries": "Edit batteries"
         }
       },
       "confirm": {
         "title": "Save in observation mode",
-        "description": "{summary}\\n\\nSubmit to save mappings. Unavailable measurements stay unavailable. Settings reload without a full HA restart. Dashboard and storage are not yet part of this wizard. To correct an error, select return to review.",
+        "description": "{summary}\n\nSubmit to save in observation mode, without commands. Settings reload without a full HA restart. Balances and dashboard are still to be developed. To correct an error, select return to review.",
         "data": {
           "back_to_review": "Return to review without saving"
+        }
+      },
+      "batteries": {
+        "title": "4 — Storage",
+        "description": "Add your batteries, or continue without storage. Each battery has separate readings. Backup is the default role.\n\n{summary}",
+        "menu_options": {
+          "add_battery": "Add battery",
+          "edit_battery": "Edit battery",
+          "remove_battery": "Remove battery from monitoring",
+          "review": "Continue to review"
+        }
+      },
+      "add_battery": {
+        "title": "Add a battery",
+        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "data": {
+          "name": "Battery name",
+          "role": "Role",
+          "coupling": "Electrical coupling",
+          "capacity_kwh": "Declared usable capacity (kWh, optional)",
+          "charge_power": "Positive charge power (W/kW)",
+          "discharge_power": "Positive discharge power (W/kW)",
+          "soc": "State of charge (%)",
+          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        }
+      },
+      "battery_details": {
+        "title": "Edit battery measurements",
+        "description": "Map at least one reading. Charge and discharge must be distinct positive sensors. SOC is not an energy counter. Remaining energy is measured, never estimated from SOC. DC storage is monitored but excluded from the future simple AC balance.",
+        "data": {
+          "name": "Battery name",
+          "role": "Role",
+          "coupling": "Electrical coupling",
+          "capacity_kwh": "Declared usable capacity (kWh, optional)",
+          "charge_power": "Positive charge power (W/kW)",
+          "discharge_power": "Positive discharge power (W/kW)",
+          "soc": "State of charge (%)",
+          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+        }
+      },
+      "edit_battery": {
+        "title": "Choose battery to edit",
+        "data": {
+          "battery_id": "Battery"
+        }
+      },
+      "remove_battery": {
+        "title": "Remove battery from monitoring",
+        "description": "Removal is applied at final confirmation. It does not command the device or remove its original integration.",
+        "data": {
+          "battery_id": "Battery to remove"
         }
       }
     },
@@ -102,8 +207,23 @@
       "duplicate_source": "This sensor is already mapped to another reading.",
       "recursive_source": "Select an original source, not an eHome EMS sensor.",
       "missing_source": "This sensor no longer exists. Choose another source.",
-      "unsupported_unit": "The sensor unit must be W or kW.",
-      "sources_changed": "A source is missing, duplicated or has an invalid unit. Return to review to correct the mappings."
+      "unsupported_unit": "Invalid unit: W/kW for power, % for SOC, Wh/kWh for remaining energy.",
+      "sources_changed": "A source is missing, duplicated or has an invalid unit. Return to review to correct the mappings.",
+      "invalid_battery": "Check name, role, coupling and capacity (a finite positive number)."
+    }
+  },
+  "selector": {
+    "battery_role": {
+      "options": {
+        "backup": "Backup — separate monitoring",
+        "active": "Active — balance candidate"
+      }
+    },
+    "battery_coupling": {
+      "options": {
+        "ac": "AC — alternating current side",
+        "dc": "DC — monitoring only, outside simple AC balance"
+      }
     }
   }
 }

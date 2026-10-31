@@ -19,26 +19,78 @@
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape.",
+        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape. Continuez pour configurer les batteries ou ignorer le stockage.",
         "data": {
           "home_power": "Consommation de la maison"
         }
       },
       "review": {
-        "title": "4 — Vérifier les mesures",
-        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer.",
+        "title": "5 — Vérifier les mesures",
+        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer. Les batteries de secours sont suivies séparément et ne sont pas éligibles au futur bilan actif.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
           "solar": "Modifier le photovoltaïque",
-          "home": "Modifier la maison"
+          "home": "Modifier la maison",
+          "batteries": "Modifier les batteries"
         }
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\\n\\nValidez pour enregistrer les associations. Les mesures indisponibles restent indisponibles. Les réglages se rechargent sans redémarrage complet de HA. Le dashboard et le stockage ne font pas encore partie de cet assistant. Pour corriger une erreur, cochez le retour à la vérification.",
+        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Les bilans et le dashboard restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
+        }
+      },
+      "batteries": {
+        "title": "4 — Stockage",
+        "description": "Ajoutez vos batteries, ou continuez sans stockage. Chaque batterie possède ses propres mesures. Le rôle secours est proposé par défaut.\n\n{summary}",
+        "menu_options": {
+          "add_battery": "Ajouter une batterie",
+          "edit_battery": "Modifier une batterie",
+          "remove_battery": "Retirer une batterie du suivi",
+          "review": "Continuer vers la vérification"
+        }
+      },
+      "add_battery": {
+        "title": "Ajouter une batterie",
+        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        }
+      },
+      "battery_details": {
+        "title": "Modifier les mesures de la batterie",
+        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        }
+      },
+      "edit_battery": {
+        "title": "Choisir la batterie à modifier",
+        "data": {
+          "battery_id": "Batterie"
+        }
+      },
+      "remove_battery": {
+        "title": "Retirer une batterie du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne commande pas l’équipement et ne supprime pas son intégration constructeur.",
+        "data": {
+          "battery_id": "Batterie à retirer"
         }
       }
     },
@@ -47,8 +99,9 @@
       "duplicate_source": "Ce capteur est déjà associé à une autre mesure.",
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
       "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
-      "unsupported_unit": "L’unité de ce capteur doit être W ou kW.",
-      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations."
+      "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
+      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations.",
+      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini)."
     },
     "abort": {
       "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
@@ -74,26 +127,78 @@
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape.",
+        "description": "Choisissez la consommation totale mesurée en W ou kW. Aucun bilan calculé ni sous-compteur n’est ajouté dans cette première étape. Continuez pour configurer les batteries ou ignorer le stockage.",
         "data": {
           "home_power": "Consommation de la maison"
         }
       },
       "review": {
-        "title": "4 — Vérifier les mesures",
-        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer.",
+        "title": "5 — Vérifier les mesures",
+        "description": "Aperçu normalisé en W :\\n\\n{summary}\\n\\nvalid : mesure valide ; unavailable : source indisponible ; invalid_value : valeur invalide ; unexpected_direction : signe inattendu. Une donnée indisponible ne sera jamais remplacée par zéro. Vous pouvez modifier chaque étape avant de continuer. Les batteries de secours sont suivies séparément et ne sont pas éligibles au futur bilan actif.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
           "solar": "Modifier le photovoltaïque",
-          "home": "Modifier la maison"
+          "home": "Modifier la maison",
+          "batteries": "Modifier les batteries"
         }
       },
       "confirm": {
         "title": "Enregistrer en mode observation",
-        "description": "{summary}\\n\\nValidez pour enregistrer les associations. Les mesures indisponibles restent indisponibles. Les réglages se rechargent sans redémarrage complet de HA. Le dashboard et le stockage ne font pas encore partie de cet assistant. Pour corriger une erreur, cochez le retour à la vérification.",
+        "description": "{summary}\n\nValidez pour enregistrer les associations en observation, sans commande. Les réglages se rechargent sans redémarrage complet de HA. Les bilans et le dashboard restent à développer. Pour corriger une erreur, cochez le retour à la vérification.",
         "data": {
           "back_to_review": "Retourner à la vérification sans enregistrer"
+        }
+      },
+      "batteries": {
+        "title": "4 — Stockage",
+        "description": "Ajoutez vos batteries, ou continuez sans stockage. Chaque batterie possède ses propres mesures. Le rôle secours est proposé par défaut.\n\n{summary}",
+        "menu_options": {
+          "add_battery": "Ajouter une batterie",
+          "edit_battery": "Modifier une batterie",
+          "remove_battery": "Retirer une batterie du suivi",
+          "review": "Continuer vers la vérification"
+        }
+      },
+      "add_battery": {
+        "title": "Ajouter une batterie",
+        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        }
+      },
+      "battery_details": {
+        "title": "Modifier les mesures de la batterie",
+        "description": "Associez au moins une mesure. Charge et décharge doivent être deux capteurs positifs distincts. Un SOC n’est pas un compteur d’énergie. L’énergie restante reste mesurée, sans estimation depuis le SOC. Le couplage DC est suivi mais exclu du futur bilan AC simple.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        }
+      },
+      "edit_battery": {
+        "title": "Choisir la batterie à modifier",
+        "data": {
+          "battery_id": "Batterie"
+        }
+      },
+      "remove_battery": {
+        "title": "Retirer une batterie du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne commande pas l’équipement et ne supprime pas son intégration constructeur.",
+        "data": {
+          "battery_id": "Batterie à retirer"
         }
       }
     },
@@ -102,8 +207,23 @@
       "duplicate_source": "Ce capteur est déjà associé à une autre mesure.",
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
       "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
-      "unsupported_unit": "L’unité de ce capteur doit être W ou kW.",
-      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations."
+      "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
+      "sources_changed": "Une source est manquante, utilisée deux fois ou possède une unité incorrecte. Retournez à la vérification pour corriger les associations.",
+      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini)."
+    }
+  },
+  "selector": {
+    "battery_role": {
+      "options": {
+        "backup": "Secours — suivi séparé",
+        "active": "Active — candidate au bilan"
+      }
+    },
+    "battery_coupling": {
+      "options": {
+        "ac": "AC — côté alternatif",
+        "dc": "DC — suivi seul, hors bilan AC simple"
+      }
     }
   }
 }

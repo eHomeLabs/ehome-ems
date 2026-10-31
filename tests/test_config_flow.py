@@ -8,6 +8,7 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
+import voluptuous as vol
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,6 +43,15 @@ class SelectorDouble:
         return value
 
 
+class SelectDouble(SelectorDouble):
+    def __call__(self, value):
+        choices = [option["value"] if isinstance(option, dict) else option
+                   for option in self.config["options"]]
+        if value not in choices:
+            raise vol.Invalid("invalid selection")
+        return value
+
+
 def load_flow():
     modules = {}
     for name in (
@@ -58,6 +68,8 @@ def load_flow():
     selectors = modules["homeassistant.helpers.selector"]
     selectors.EntitySelector = SelectorDouble
     selectors.EntitySelectorConfig = lambda **kwargs: kwargs
+    selectors.SelectSelector = SelectDouble
+    selectors.SelectSelectorConfig = lambda **kwargs: kwargs
     with patch.dict(sys.modules, modules):
         return importlib.import_module("ems_flow_test.config_flow")
 
@@ -85,7 +97,8 @@ class WizardTests(IsolatedAsyncioTestCase):
         self.assertEqual((await self.flow.async_step_user())["step_id"], "grid")
         self.assertEqual((await self.flow.async_step_grid({"grid_power": "sensor.grid"}))["step_id"], "solar")
         self.assertEqual((await self.flow.async_step_solar({"solar_power": "sensor.pv"}))["step_id"], "home")
-        return await self.flow.async_step_home({"home_power": "sensor.home"})
+        self.assertEqual((await self.flow.async_step_home({"home_power": "sensor.home"}))["step_id"], "batteries")
+        return await self.flow.async_step_review()
 
     async def test_confirmation_is_the_only_persistence_point(self):
         review = await self.walk_to_review()
@@ -179,3 +192,81 @@ class WizardTests(IsolatedAsyncioTestCase):
         result = await self.flow.async_step_confirm({})
         self.assertEqual(result["data"]["solar_power"], "sensor.pv")
         self.assertIsNone(result["data"]["home_power"])
+
+    async def add_battery(self, **overrides):
+        self.states.update({"sensor.charge": state("0.5", "kW"),
+                            "sensor.soc": state("65", "%")})
+        await self.flow.async_step_add_battery()
+        return await self.flow.async_step_add_battery(
+            {"name": "Test battery", "charge_power": "sensor.charge",
+             "soc": "sensor.soc", **overrides}
+        )
+
+    async def test_multiple_batteries_default_to_backup_with_stable_ids(self):
+        await self.flow.async_step_user()
+        await self.add_battery()
+        first_id = next(iter(self.flow._draft["batteries"]))
+        self.states["sensor.second_soc"] = state("30", "%")
+        await self.flow.async_step_add_battery()
+        result = await self.flow.async_step_add_battery(
+            {"name": "Second battery", "soc": "sensor.second_soc", "role": "active"}
+        )
+        self.assertEqual(result["step_id"], "batteries")
+        self.assertEqual(len(self.flow._draft["batteries"]), 2)
+        self.assertEqual(self.flow._draft["batteries"][first_id]["role"], "backup")
+        await self.flow.async_step_edit_battery({"battery_id": first_id})
+        await self.flow.async_step_battery_details(
+            {"name": "Renamed battery", "soc": "sensor.soc"}
+        )
+        self.assertEqual(self.flow._draft["batteries"][first_id]["name"], "Renamed battery")
+        self.assertNotIn("charge_power", self.flow._draft["batteries"][first_id])
+
+    async def test_battery_only_configuration_and_measured_units(self):
+        await self.flow.async_step_user()
+        self.states["sensor.energy"] = state("2500", "Wh")
+        await self.add_battery(remaining_energy="sensor.energy", capacity_kwh=5.2)
+        preview = (await self.flow.async_step_review())["description_placeholders"]["summary"]
+        self.assertIn("65 %", preview)
+        self.assertIn("2.5 kWh", preview)
+        result = await self.flow.async_step_confirm({})
+        self.assertEqual(result["type"], "create_entry")
+
+    async def test_duplicate_sources_across_batteries_are_rejected(self):
+        await self.flow.async_step_user()
+        await self.add_battery()
+        await self.flow.async_step_add_battery()
+        result = await self.flow.async_step_add_battery({"name": "Duplicate", "soc": "sensor.soc"})
+        self.assertEqual(result["errors"]["soc"], "duplicate_source")
+        self.assertEqual(len(self.flow._draft["batteries"]), 1)
+
+    async def test_battery_duplicate_with_house_and_wrong_soc_unit_rejected(self):
+        await self.flow.async_step_user()
+        await self.flow.async_step_grid({"grid_power": "sensor.grid"})
+        result = await self.add_battery(charge_power="sensor.grid", soc="sensor.home")
+        self.assertEqual(result["errors"]["charge_power"], "duplicate_source")
+        self.assertEqual(result["errors"]["soc"], "unsupported_unit")
+
+    async def test_battery_without_sources_and_invalid_capacity_are_rejected(self):
+        await self.flow.async_step_user()
+        await self.flow.async_step_add_battery()
+        result = await self.flow.async_step_add_battery({"name": "Empty"})
+        self.assertEqual(result["errors"]["base"], "select_source")
+        for value in (0, -1, "nan", "inf", "abc"):
+            result = await self.flow.async_step_add_battery(
+                {"name": "Bad capacity", "capacity_kwh": value}
+            )
+            self.assertEqual(result["errors"]["base"], "invalid_battery")
+
+    async def test_battery_edit_and_removal_do_not_mutate_saved_options(self):
+        await self.flow.async_step_user()
+        await self.add_battery()
+        saved = (await self.flow.async_step_confirm({}))["data"]
+        battery_id = next(iter(saved["batteries"]))
+        options = flow_module.EhomeEmsOptionsFlow()
+        options.hass = self.hass
+        options.config_entry = SimpleNamespace(data={}, options=saved)
+        await options.async_step_init()
+        await options.async_step_remove_battery({"battery_id": battery_id})
+        self.assertIn(battery_id, saved["batteries"])
+        self.assertEqual(options._draft["batteries"], {})
+        self.assertEqual((await options.async_step_confirm({}))["errors"]["base"], "select_source")
