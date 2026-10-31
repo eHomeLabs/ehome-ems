@@ -20,6 +20,9 @@ const dashboard = {title:"eHome EMS",views:[
 window.calls=[];
 const bindings={"sensor.pv":{source:"sensor.pv_source",domains:["sensor"],units:["W","kW"],calculated_home:false}};
 let revision="one";
+const flow={entities:{solar_power:"sensor.pv",home_power:"sensor.home",grid_import:"sensor.import",grid_export:"sensor.export"},
+ home_calculated:true,batteries:[{name:"Zendure",role:"active",coupling:"ac",charge_power:"sensor.charge",discharge_power:"sensor.discharge",soc:"sensor.soc"}],
+ usages:[{name:"Cumulus",kind:"solar_router",power:"sensor.cumulus"},{name:"Véhicule",kind:"ev_charger",power:"sensor.ev"}]};
 window.fixtureHass={
  language:"fr",user:{is_admin:true},states:{
   "sensor.pv":{state:"1500",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}},
@@ -31,7 +34,7 @@ window.fixtureHass={
  callWS:async message=>{
   window.calls.push(message);
   if(message.type==="ehome_ems/dashboard")return {
-    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision};
+    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow};
   if(message.type==="ehome_ems/remap_source"){
     bindings[message.entity_id].source=message.source_id; revision="two";
     const source=fixtureHass.states[message.source_id];
@@ -44,6 +47,8 @@ window.fixtureHass={
 };
 fixtureHass.states["sensor.pv_source"]={state:"1500",attributes:{unit_of_measurement:"W",friendly_name:"Source solaire"}};
 fixtureHass.states["sensor.pv_alternative"]={state:"2000",attributes:{unit_of_measurement:"W",friendly_name:"Source alternative"}};
+for(const [id,value] of Object.entries({import:0,export:75,charge:1000,discharge:0,cumulus:200}))
+ fixtureHass.states["sensor."+id]={state:String(value),attributes:{unit_of_measurement:"W"}};
 window.fixturePanel=document.querySelector("ehome-ems-panel");
 fixturePanel.hass=fixtureHass;fixturePanel.panel={config:{entry_id:"simulated",revision:"one"}};
 </script></html>

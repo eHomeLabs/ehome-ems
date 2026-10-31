@@ -54,7 +54,8 @@ def websocket_remap(hass, connection, msg):
 
 async def async_setup_panel_domain(hass):
     await hass.http.async_register_static_paths([
-        StaticPathConfig(PANEL_URL, str(Path(__file__).parent / "frontend/ehome-panel.mjs"), False)
+        StaticPathConfig(PANEL_URL, str(Path(__file__).parent / "frontend/ehome-panel.mjs"), False),
+        StaticPathConfig("/ehome_ems_assets", str(Path(__file__).parent / "frontend/assets"), False),
     ])
     websocket_api.async_register_command(hass, websocket_dashboard)
     websocket_api.async_register_command(hass, websocket_remap)
@@ -67,7 +68,7 @@ async def async_setup_entry_panel(hass, entry):
     await panel_custom.async_register_panel(
         hass, frontend_url_path=path, webcomponent_name="ehome-ems-panel",
         sidebar_title="eHome EMS", sidebar_icon="mdi:home-lightning-bolt",
-        module_url=f"{PANEL_URL}?v=0.2.0b6",
+        module_url=f"{PANEL_URL}?v=0.2.0b7",
         config={"entry_id": entry.entry_id, "revision": entry.modified_at.isoformat()},
     )
     entry.async_on_unload(lambda: frontend.async_remove_panel(hass, path))

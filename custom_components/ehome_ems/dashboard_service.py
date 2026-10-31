@@ -51,6 +51,17 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
     language = (language or hass.config.language or "fr").split("-")[0]
     result = build_dashboard(mapping, entities, language=language, max_power_w=max_power_w)
     result["bindings"] = binding_metadata(mapping, entities)
+    result["flow"] = {
+        "entities": {key: entities.get(key) for key in SOURCES},
+        "home_calculated": mapping.get("home_power_mode") == "calculated",
+        "batteries": [{"name": battery["name"], "role": battery["role"],
+                       "coupling": battery["coupling"],
+                       **{key: entities.get(f"{identifier}_{key}") for key in BATTERY_SOURCES}}
+                      for identifier, battery in mapping.get(CONF_BATTERIES, {}).items()],
+        "usages": [{"name": usage["name"], "kind": usage.get("kind", "other"),
+                    **{key: entities.get(f"usage_{identifier}_{key}") for key in USAGE_SOURCES}}
+                   for identifier, usage in mapping.get(CONF_USAGES, {}).items()],
+    }
     result["revision"] = entry.modified_at.isoformat() if hasattr(entry, "modified_at") else ""
     return result
 

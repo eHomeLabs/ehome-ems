@@ -256,8 +256,13 @@ async def validate(config_dir):
                     headers={"Authorization": "Bearer " + token})
                 assert brand.status == 200
                 assert await brand.read() == (ROOT / "custom_components/ehome_ems/brand/icon.png").read_bytes()
+                house_asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_assets/house.webp")
+                assert house_asset.status == 200
+                assert house_asset.headers["Content-Type"].startswith("image/webp")
+                assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
+                assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
                 await command({"type": "ehome_ems/remap_source", "entry_id": entry.entry_id,

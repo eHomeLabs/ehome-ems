@@ -85,6 +85,18 @@ class DashboardServiceTests(IsolatedAsyncioTestCase):
         self.entry.options = {"home_power_mode": "calculated", "home_power": None}
         result = await self.handler(SimpleNamespace(data={}))
         self.assertIn("sensor.renamed", str(result))
+        self.assertEqual(result["flow"]["entities"]["home_power"], "sensor.renamed")
+        self.assertTrue(result["flow"]["home_calculated"])
+
+    async def test_flow_uses_mirror_ids_and_keeps_equipment_separate(self):
+        self.entry.options = {"home_power": "sensor.external", "batteries": {
+            "a": {"name": "Storage", "role": "backup", "coupling": "dc", "soc": "sensor.raw_soc"}},
+            "usages": {"b": {"name": "Heater", "kind": "solar_router", "power": "sensor.raw_heater"}}}
+        result = await self.handler(SimpleNamespace(data={}))
+        self.assertFalse(result["flow"]["home_calculated"])
+        self.assertEqual(result["flow"]["batteries"][0]["role"], "backup")
+        self.assertEqual(result["flow"]["usages"][0]["power"], "sensor.renamed")
+        self.assertNotIn("sensor.raw_heater", str(result["flow"]))
 
     async def test_display_scale_and_language_schema(self):
         schema = self.settings["schema"]

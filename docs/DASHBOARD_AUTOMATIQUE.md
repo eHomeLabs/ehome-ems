@@ -1,4 +1,4 @@
-# Vue automatique et copie modifiable — 0.2.0b6
+# Vue automatique et copie modifiable — 0.2.0b7
 
 Après confirmation de l'assistant et chargement de l'intégration, une entrée
 eHome EMS apparaît dans la barre latérale. Aucune copie de YAML ni ajout manuel
@@ -15,7 +15,8 @@ Les mesures indisponibles restent explicitement indisponibles, sans zéro invent
 L'onglet Historique de cette première vue ouvre la fiche historique native de
 chaque mesure. Il ne rend pas encore une courbe synchronisée directement dans
 le panneau. La copie native dispose de la carte history-graph habituelle.
-Les flux animés et bilans journaliers EMS ne font pas partie de cette étape.
+Le synoptique animé est disponible dans la Synthèse de la vue gérée. Les bilans
+journaliers EMS ne font pas partie de cette étape.
 
 Les changements de configuration rechargent ce panneau. Actualiser permet
 aussi de relire les associations, notamment après un renommage d'entité.
@@ -63,7 +64,7 @@ sur l'installation physique.
 
 ## Changer une source depuis le panneau
 
-Depuis la bêta 0.2.0b6, un administrateur peut maintenir un appui sur une
+Depuis la bêta 0.2.0b7, un administrateur peut maintenir un appui sur une
 mesure ou une jauge pendant environ 600 ms ; au clavier, utiliser Entrée ou
 Espace après avoir sélectionné la mesure. Choisir une source compatible puis
 Enregistrer. Annuler conserve la configuration. Un mouvement du doigt annule
@@ -84,3 +85,29 @@ les associations.
 L'icône locale est fournie dans brand/icon.png et brand/icon@2x.png ; copier
 ce dossier lors de la mise à jour. Après redémarrage HA, actualiser l'application
 si l'ancienne image reste en cache.
+
+## Synoptique à maison centrale — bêta 0.2.0b7
+
+La Synthèse affiche le solaire et le réseau en haut, la maison au centre et
+la première batterie sur le côté. Les autres batteries restent présentées
+séparément, avec leur rôle et leur couplage ; elles ne sont pas agrégées.
+Les usages configurés figurent en dessous. Les traits animés indiquent le sens
+des puissances disponibles, sans estimer la provenance solaire de la batterie.
+À zéro, le trait est inactif ; avec une source absente ou indisponible il reste
+pointillé et sans animation. Le réglage système de réduction des animations
+est respecté. L'import et l'injection restent deux lectures distinctes :
+aucune convention du réseau signé n'est supposée.
+
+Le calcul EMS utilise le total maison. Une source existante garde son périmètre
+propre : vérifier si elle exclut déjà le cumulus avant toute interprétation.
+Aucun « autres usages » résiduel n'est inventé : les sous-compteurs peuvent
+être incomplets ou se recouvrir. Ils ne sont pas ajoutés au total une seconde fois.
+Les mesures sont celles de HA, sans synchronisation forcée des équipements.
+
+L'appui prolongé fonctionne sur les mesures de ce synoptique. Les lecteurs
+peuvent consulter le flux mais pas réassocier les capteurs. La copie Lovelace
+indépendante conserve ses cartes natives ; elle n'inclut pas ce synoptique.
+
+L'illustration de maison est un asset local généré avec Image Gen à partir de
+la maquette validée ; elle ne représente pas la maison physique de l'utilisateur.
+Copier frontend/assets/house.webp avec le paquet complet.

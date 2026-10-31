@@ -6,7 +6,7 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : première bêta 0.2.0b6 en observation, préparée pour les essais.**
+**Statut : première bêta 0.2.0b7 en observation, préparée pour les essais.**
 Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
 et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
 en développement, et non une release logicielle 2.0.
@@ -15,7 +15,7 @@ en développement, et non une release logicielle 2.0.
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible sur cette branche | Bêta 0.2.0b6 en lecture seule, compatible avec les associations V0.1 |
+| Code disponible sur cette branche | Bêta 0.2.0b7 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
@@ -25,13 +25,13 @@ en développement, et non une release logicielle 2.0.
 | Prochaine étape | Installer la bêta au moment choisi puis valider les écrans et mesures sur l'installation réelle |
 | Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
 
-**La bêta est une première version de test. Les flux animés, les bilans journaliers,
+**La bêta est une première version de test. Les bilans journaliers,
 les prévisions, conseils et commandes ne sont pas encore disponibles.**
 
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
-- **Installer ou revenir en arrière :** [guide bêta 0.2.0b6](docs/INSTALLATION_BETA.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b7](docs/INSTALLATION_BETA.md).
 - **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
@@ -40,7 +40,7 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-### Retour des premiers essais — 0.2.0b6
+### Retour des premiers essais — 0.2.0b7
 
 Appui prolongé sur les mesures de la vue gérée pour changer leur source
 (administrateur, enregistrement explicite, identifiants EMS conservés).
@@ -51,7 +51,7 @@ barre latérale après configuration. Elle suit les réglages, sans YAML, avec
 mesures, jauges, stockage et usages. Un administrateur peut créer une copie
 native indépendante modifiable en un clic, sans écraser les dashboards existants.
 L'historique du panneau ouvre les fiches natives ; la copie native contient
-la carte d'historique. Les flux animés restent à développer.
+la carte d'historique. La vue gérée contient désormais un synoptique animé à maison centrale.
 
 Une étape [Usages](docs/USAGES_OBSERVATION.md) suit les batteries : routeur
 solaire/ECS, recharge VE et autres charges facultatives. Elle associe puissance

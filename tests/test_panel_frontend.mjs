@@ -1,6 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createIndependentCopy, reading, newCopyToken } from "../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+import { createIndependentCopy, reading, newCopyToken, flowPower, flowDirection } from "../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+
+test("flow rejects unknown units, missing and negative power without inventing zero", () => {
+  assert.equal(flowPower({a:{state:"1.5",attributes:{unit_of_measurement:"kW"}}},"a"),1500);
+  for (const state of ["unknown","unavailable","-20","NaN"]) assert.equal(flowPower({a:{state,attributes:{unit_of_measurement:"W"}}},"a"),null);
+  assert.equal(flowPower({a:{state:"20",attributes:{unit_of_measurement:"kWh"}}},"a"),null);
+  assert.equal(flowPower({},"a"),null);
+  assert.equal(flowDirection(30,0),"forward");
+  assert.equal(flowDirection(0,30),"reverse");
+  assert.equal(flowDirection(30,20),"both");
+  assert.equal(flowDirection(null,0),"unknown");
+});
 
 test("copy creates a new native dashboard then saves only that path", async () => {
   const calls = [];

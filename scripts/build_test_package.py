@@ -18,7 +18,7 @@ def main():
     sources = sorted(path for path in INTEGRATION.rglob("*")
                      if path.is_file() and not path.is_symlink()
                      and "__pycache__" not in path.parts
-                     and path.suffix in {".py", ".json", ".yaml", ".png", ".svg", ".mjs"})
+                     and path.suffix in {".py", ".json", ".yaml", ".png", ".svg", ".mjs", ".webp"})
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
         for path in sources:
             name = path.relative_to(ROOT).as_posix()
@@ -36,6 +36,7 @@ def main():
         for required in ("__init__.py", "config_flow.py", "sensor.py", "dashboard.py", "home_balance.py", "usage.py",
                          "panel.py", "source_editor.py", "frontend/ehome-panel.mjs",
                          "brand/icon.png", "brand/icon@2x.png",
+                         "frontend/assets/house.webp",
                          "dashboard_service.py", "services.yaml", "strings.json",
                          "translations/fr.json", "translations/en.json"):
             assert f"custom_components/ehome_ems/{required}" in zipped.namelist(), required

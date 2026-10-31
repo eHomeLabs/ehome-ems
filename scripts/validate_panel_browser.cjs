@@ -12,10 +12,10 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
   const server = http.createServer(async (request, response) => {
     try {
       const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
-      const filename = path.resolve(root, "." + pathname);
+      const filename = path.resolve(root, "." + pathname.replace("/ehome_ems_assets/", "/custom_components/ehome_ems/frontend/assets/"));
       if (!filename.startsWith(root + path.sep)) throw new Error("outside root");
       const content = await fs.readFile(filename);
-      response.setHeader("Content-Type", filename.endsWith(".html") ? "text/html" : "text/javascript");
+      response.setHeader("Content-Type", filename.endsWith(".webp") ? "image/webp" : filename.endsWith(".html") ? "text/html" : "text/javascript");
       response.end(content);
     } catch {
       response.statusCode = 404; response.end("Not found");
@@ -32,6 +32,9 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.goto("http://127.0.0.1:" + server.address().port + "/tests/fixtures/panel.html");
       await page.getByRole("heading", { name: "eHome EMS", exact: true }).waitFor();
       await page.getByRole("button", { name: "Synthèse", exact: true }).waitFor();
+      await page.locator(".flow-house img").evaluate(img => img.decode());
+      assert.equal(await page.locator(".flow-links path.active").count(), 4);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -39,6 +42,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       const editable = page.getByRole("button", { name: "Modifier la source de Production solaire", exact: true }).first();
       await editable.dispatchEvent("pointerdown", { button: 0, clientX: 20, clientY: 20, pointerType: "touch" });
       await page.getByRole("dialog", { name: "Changer la source", exact: true }).waitFor();
+      await page.screenshot({ path: path.join(output, viewport.width < 600 ? "editor-mobile.png" : "editor-desktop.png"), fullPage: true });
       await editable.dispatchEvent("pointerup", { button: 0 });
       await page.getByRole("searchbox", { name: "Rechercher un capteur", exact: true }).fill("alternative");
       await page.getByRole("listbox", { name: "Nouvelle source", exact: true }).selectOption("sensor.pv_alternative");
@@ -55,6 +59,9 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       });
       assert.ok(await page.getByText("Indisponible", { exact: true }).count());
       assert.equal(await page.locator("progress").first().isHidden(), true);
+      assert.equal(await page.locator(".flow-links path.active").count(), 3);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      assert.equal(await page.locator(".flow-links path.active").first().evaluate(el => getComputedStyle(el).animationName), "none");
       await page.getByRole("button", { name: "Stockage", exact: true }).click();
       assert.equal(await page.getByText("18 %", { exact: true }).count(), 1);
       await page.getByRole("button", { name: "Historique", exact: true }).click();
