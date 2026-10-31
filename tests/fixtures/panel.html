@@ -1,9 +1,15 @@
 <!doctype html>
 <html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>eHome EMS — fixture simulée</title><style>html,body{margin:0;height:100%}</style>
+<title>eHome EMS — fixture simulée</title><style>html,body{margin:0;height:100%;--primary-background-color:#101820;--primary-text-color:#eef4fa;--card-background-color:#15222d;--divider-color:#3b536b;--primary-color:#70a246;--text-primary-color:#fff}</style>
 <ehome-ems-panel></ehome-ems-panel>
 <script type="module">
 import "../../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+const icons=await (await fetch("./mdi.json")).json();
+customElements.define("ha-icon",class extends HTMLElement {
+ connectedCallback(){const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ svg.setAttribute("viewBox","0 0 24 24");svg.style.cssText="width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);fill:currentColor;vertical-align:middle";
+ const path=document.createElementNS(svg.namespaceURI,"path");path.setAttribute("d",icons[this.getAttribute("icon")]||"");svg.append(path);this.replaceChildren(svg);}
+});
 const dashboard = {title:"eHome EMS",views:[
  {title:"Synthèse",cards:[
   {type:"markdown",content:"Observation · aucune commande. Mesures simulées pour vérifier le rendu."},

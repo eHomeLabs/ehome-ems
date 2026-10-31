@@ -43,12 +43,6 @@ export function flowPower(states, entity) {
     value.number * (unit === "kW" ? 1000 : 1);
 }
 
-export function flowDirection(first, second) {
-  if (first === null || second === null) return "unknown";
-  if (first > 0 && second > 0) return "both";
-  return first > 0 ? "forward" : second > 0 ? "reverse" : "idle";
-}
-
 export class EhomeEmsPanel extends BaseElement {
   constructor() {
     super();
@@ -290,7 +284,7 @@ export class EhomeEmsPanel extends BaseElement {
     link("M730 360 Q800 350 800 290 V150", "#52d7ee", entities.grid_export);
     link("M850 150 V300 Q850 380 750 400", "#52d7ee", entities.grid_import);
     if (config.usages?.length) link("M615 620 V810", "#edf4ff", entities.home_power);
-    const primary = config.batteries?.[0];
+    const primary = config.batteries?.find(battery => battery.role === "active" && battery.coupling === "ac");
     if (primary) {
       link("M460 480 H230 Q180 480 180 530", "#50e49b", primary.charge_power);
       link("M180 530 Q180 480 230 480 H460", "#50e49b", primary.discharge_power);
@@ -322,12 +316,19 @@ export class EhomeEmsPanel extends BaseElement {
     const batteryTile = (battery, className) => {
       const el = this._node("div", undefined, className);
       el.append(icon("mdi:battery-high"), this._node("span", battery.name, "flow-title"));
-      for (const [key, label] of [["charge_power", this._t("Charge", "Charge")], ["discharge_power", this._t("Décharge", "Discharge")]]) {
-        el.append(this._node("span", label, "flow-small"));
-        const row = this._node("div"); metric(row, battery[key]); el.append(row);
+      for (const [key, other, label] of [["charge_power", "discharge_power", this._t("Charge", "Charge")], ["discharge_power", "charge_power", this._t("Décharge", "Discharge")]]) {
+        const group = this._node("div"); group.append(this._node("span", label, "flow-small"));
+        const row = this._node("div"); metric(row, battery[key]); group.append(row); el.append(group);
+        this._flowUpdates.push(() => { group.hidden = flowPower(this._hass?.states, battery[key]) === 0 && flowPower(this._hass?.states, battery[other]) > 0; });
       }
+      const progress = this._node("progress"); progress.max = 100;
+      progress.setAttribute("aria-label", this._t("État de charge", "State of charge")); el.append(progress);
+      this._flowUpdates.push(() => { const soc = reading(this._hass?.states, battery.soc).number;
+        progress.hidden = soc === null || soc < 0 || soc > 100;
+        if (!progress.hidden) progress.value = soc;
+      });
       const soc = this._node("div"); metric(soc, battery.soc); el.append(soc);
-      el.append(this._node("span", `${battery.role} · ${battery.coupling.toUpperCase()}`, "flow-small"));
+      el.append(this._node("span", `${battery.role === "active" ? this._t("Active", "Active") : this._t("Secours", "Backup")} · ${battery.coupling.toUpperCase()}`, "flow-small"));
       return el;
     };
     if (primary) stage.append(batteryTile(primary, "flow-tile flow-battery"));
@@ -344,9 +345,9 @@ export class EhomeEmsPanel extends BaseElement {
     }
     if (!config.usages?.length) usages.append(this._node("p", this._t("Aucun usage associé. Ajoutez le cumulus, le routeur ou le véhicule dans Configurer.", "No tracked loads. Add the water heater, router or vehicle in Configure."), "flow-note"));
     root.append(usages);
-    if (config.batteries?.length > 1) {
+    if (config.batteries?.some(battery => battery !== primary)) {
       const extra = this._node("div", undefined, "flow-extra");
-      for (const battery of config.batteries.slice(1)) extra.append(batteryTile(battery, "flow-usage"));
+      for (const battery of config.batteries.filter(battery => battery !== primary)) extra.append(batteryTile(battery, "flow-usage"));
       root.append(extra);
     }
     return root;

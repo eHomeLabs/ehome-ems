@@ -39,6 +39,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
       await page.screenshot({ path: path.join(output, viewport.width < 600 ? "mobile.png" : "desktop.png"), fullPage: true });
+      await page.locator(".flow").screenshot({ path: path.join(output, viewport.width < 600 ? "flow-mobile.png" : "flow-desktop.png") });
       const editable = page.getByRole("button", { name: "Modifier la source de Production solaire", exact: true }).first();
       await editable.dispatchEvent("pointerdown", { button: 0, clientX: 20, clientY: 20, pointerType: "touch" });
       await page.getByRole("dialog", { name: "Changer la source", exact: true }).waitFor();
@@ -58,7 +59,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
         fixturePanel.hass = { ...fixtureHass };
       });
       assert.ok(await page.getByText("Indisponible", { exact: true }).count());
-      assert.equal(await page.locator("progress").first().isHidden(), true);
+      assert.equal(await page.locator(".nested-grid progress").first().isHidden(), true);
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       await page.emulateMedia({ reducedMotion: "reduce" });
       assert.equal(await page.locator(".flow-links path.active").first().evaluate(el => getComputedStyle(el).animationName), "none");

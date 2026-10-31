@@ -89,7 +89,7 @@ si l'ancienne image reste en cache.
 ## Synoptique à maison centrale — bêta 0.2.0b7
 
 La Synthèse affiche le solaire et le réseau en haut, la maison au centre et
-la première batterie sur le côté. Les autres batteries restent présentées
+la première batterie active AC sur le côté. Les autres batteries restent présentées
 séparément, avec leur rôle et leur couplage ; elles ne sont pas agrégées.
 Les usages configurés figurent en dessous. Les traits animés indiquent le sens
 des puissances disponibles, sans estimer la provenance solaire de la batterie.
