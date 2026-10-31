@@ -61,6 +61,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
         return shadow.querySelector(".flow-usage-title").getBoundingClientRect().top >=
           shadow.querySelector(".flow-battery").getBoundingClientRect().bottom + 8;
       });
+      assert.equal(await page.evaluate(() => fixturePanel.shadowRoot.querySelector(".home-outgoing").getBoundingClientRect().top >= fixturePanel.shadowRoot.querySelector(".flow-house").getBoundingClientRect().bottom + 8),true);
       assert.equal(await page.locator(".flow-links path.active").count(),2);
       assert.equal(await page.locator(".flow-branches path.active").count(),0);
       assert.ok(await page.locator(".flow-usages").getByText("1 W",{exact:true}).count());

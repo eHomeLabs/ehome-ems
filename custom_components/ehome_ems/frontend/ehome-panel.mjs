@@ -433,12 +433,14 @@ export class EhomeEmsPanel extends BaseElement {
         path.classList.toggle("unknown", power === null);
         path.classList.toggle("reverse", reverse);
       });
+      return path;
     };
     const entities = config.entities || {};
     link("M230 140 V210 Q230 245 280 245 H480 Q520 245 520 290", "#ffce45", entities.solar_power);
     link("M730 360 Q800 350 800 290 V150", "#52d7ee", entities.grid_export);
     link("M850 150 V300 Q850 380 750 400", "#52d7ee", entities.grid_import);
-    if (config.usages?.length) link("M560 700 V810", "#edf4ff", entities.home_power);
+    const homeLink = config.usages?.length ? link("M560 700 V810", "#edf4ff", entities.home_power) : null;
+    if (homeLink) homeLink.classList.add("home-outgoing");
     const primary = config.batteries?.find(battery => battery.role === "active" && battery.coupling === "ac");
     if (primary) {
       link("M460 480 H230 Q180 480 180 530", "#50e49b", primary.charge_power);
@@ -493,8 +495,16 @@ export class EhomeEmsPanel extends BaseElement {
     const reserveScene = () => {
       if (!stage.isConnected) return;
       const bounds = stage.getBoundingClientRect();
-      const bottom = Math.max(bounds.bottom, ...Array.from(stage.children)
+      let bottom = Math.max(bounds.bottom, ...Array.from(stage.children)
         .filter(child => child !== svg).map(child => child.getBoundingClientRect().bottom));
+      if (homeLink && bounds.width && bounds.height) {
+        const homeBounds = house.getBoundingClientRect();
+        const x = (homeBounds.left + homeBounds.width / 2 - bounds.left) * 1000 / bounds.width;
+        const start = homeBounds.bottom - bounds.top + 12;
+        const end = Math.max(bounds.height - 8, start + 24);
+        homeLink.setAttribute("d", `M${x} ${start * 830 / bounds.height} V${end * 830 / bounds.height}`);
+        bottom = Math.max(bottom, bounds.top + end);
+      }
       sceneWrap.style.minHeight = Math.ceil(bottom - bounds.top + 16) + "px";
     };
     const observer = new ResizeObserver(reserveScene);
