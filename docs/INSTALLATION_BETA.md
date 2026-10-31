@@ -11,7 +11,7 @@ cumulatif. Les compteurs déclarés total/total_increasing sont refusés ; au-de
 de capacité × 1,10, l'association est signalée incohérente. Pendant le suivi, un
 tel stock devient indisponible plutôt que d'être affiché comme valide.
 Le champ reste facultatif : laissez-le vide si aucune source ne convient.
-La vue automatique et la copie native sont disponibles depuis 0.2.0b7 ;
+La vue automatique et la copie native sont disponibles depuis 0.2.0b5 ;
 un synoptique animé est disponible dans la vue gérée depuis 0.2.0b7.
 
 À l'étape Maison, choisir entre une source existante et le calcul automatique EMS.

@@ -160,7 +160,7 @@ export class EhomeEmsPanel extends BaseElement {
       .flow-extra{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}.flow-extra .flow-usage{flex:1;min-width:150px}
       @keyframes flow-dash{to{stroke-dashoffset:-52}}
       @media(prefers-reduced-motion:reduce){.flow-links path.active,.flow-branches path.active{animation:none;stroke-dasharray:none}}
-      @media(max-width:600px){.flow-stage{aspect-ratio:auto;height:420px}.flow-tile{border-radius:10px}.flow-battery{width:34%;top:57%}.flow-house{left:24%;top:32%;width:64%}.flow-grid .flow-number{font-size:18px}.flow-usages{grid-template-columns:repeat(2,minmax(0,1fr))}.flow-usage{padding:12px}}
+      @media(max-width:600px){.flow-stage{aspect-ratio:auto;height:350px}.flow-tile{border-radius:10px}.flow-battery{width:34%;top:57%}.flow-house{left:24%;top:32%;width:64%}.flow-grid .flow-number{font-size:18px}.flow-usages{grid-template-columns:repeat(2,minmax(0,1fr))}.flow-usage{padding:12px}}
       @media(max-width:600px){main{padding:16px}h1{font-size:25px}.actions{width:100%}.actions button{flex:1}nav{gap:6px}nav button{flex:1 0 auto}.nested-grid{grid-template-columns:1fr}}
     `;
     this.shadowRoot.append(style);

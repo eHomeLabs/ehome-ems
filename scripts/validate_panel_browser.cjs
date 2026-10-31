@@ -25,7 +25,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
   let browser;
   try {
     browser = await chromium.launch({ executablePath: chromium.executablePath(), headless: true, args: ["--no-sandbox"] });
-    for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
+    for (const viewport of [{ width: 1440, height: 1600 }, { width: 390, height: 844 }]) {
       const page = await browser.newPage({ viewport });
       const errors = [];
       page.on("pageerror", error => errors.push(error.message));

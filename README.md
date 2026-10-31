@@ -110,8 +110,8 @@ et que ses mesures sont complètes. Les batteries de secours en sont exclues et
 une batterie active DC bloque ce bilan simple. Aucune commande n'est envoyée. L'origine de
 l'énergie stockée reste inconnue : décharger ne signifie pas produire du solaire.
 
-Les bilans énergétiques journaliers, la fraîcheur des autres miroirs
-et les flux animés restent à développer. Un premier [dashboard natif exportable](docs/DASHBOARD_OBSERVATION.md)
+Les bilans énergétiques journaliers et la fraîcheur des autres miroirs
+restent à développer. Le synoptique animé de la vue gérée suit les états HA. Un premier [dashboard natif exportable](docs/DASHBOARD_OBSERVATION.md)
 est généré par l'action `ehome_ems.generate_dashboard`, sans écrire ni écraser de
 dashboard. Cet export reste une alternative à la vue automatique et au bouton de copie ; les copies
 personnalisées ne sont pas modifiées par une génération ultérieure. Les identifiants uniques

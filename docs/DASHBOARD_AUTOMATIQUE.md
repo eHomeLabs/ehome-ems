@@ -64,7 +64,7 @@ sur l'installation physique.
 
 ## Changer une source depuis le panneau
 
-Depuis la bêta 0.2.0b7, un administrateur peut maintenir un appui sur une
+Depuis la bêta 0.2.0b6, un administrateur peut maintenir un appui sur une
 mesure ou une jauge pendant environ 600 ms ; au clavier, utiliser Entrée ou
 Espace après avoir sélectionné la mesure. Choisir une source compatible puis
 Enregistrer. Annuler conserve la configuration. Un mouvement du doigt annule
