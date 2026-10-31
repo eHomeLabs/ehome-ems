@@ -33,7 +33,7 @@ def main():
                    for name in zipped.namelist())
         packaged = json.loads(zipped.read("custom_components/ehome_ems/manifest.json"))
         assert packaged == manifest
-        for required in ("__init__.py", "config_flow.py", "sensor.py", "dashboard.py",
+        for required in ("__init__.py", "config_flow.py", "sensor.py", "dashboard.py", "home_balance.py",
                          "dashboard_service.py", "services.yaml", "strings.json",
                          "translations/fr.json", "translations/en.json"):
             assert f"custom_components/ehome_ems/{required}" in zipped.namelist(), required

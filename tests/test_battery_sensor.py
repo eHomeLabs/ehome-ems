@@ -5,6 +5,7 @@ import sys
 from types import ModuleType, SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
+from datetime import datetime, timedelta, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -35,6 +36,7 @@ def load_sensor():
         return lambda: hass.listeners.remove(callback)
 
     modules["homeassistant.helpers.event"].async_track_state_change_event = subscribe
+    modules["homeassistant.helpers.event"].async_track_time_interval = lambda *args: lambda: None
     with patch.dict(sys.modules, modules):
         return importlib.import_module("ems_sensor_test.sensor")
 
@@ -130,3 +132,28 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
         self.states["sensor.source"].attributes["state_class"] = "total_increasing"
         self.hass.listeners[0](None)
         self.assertEqual(sensor._attr_extra_state_attributes["data_quality"], "cumulative_energy")
+
+    async def test_calculated_home_freshness_and_stable_id(self):
+        now = datetime.now(timezone.utc)
+        self.states = {
+            "sensor.import": SimpleNamespace(state="500", attributes={"unit_of_measurement": "W"}, last_reported=now),
+            "sensor.export": SimpleNamespace(state="0", attributes={"unit_of_measurement": "W"}, last_reported=now),
+        }
+        self.hass.states.get = self.states.get
+        sensor = sensor_module.CalculatedHomePower("entry", {
+            "grid_import": "sensor.import", "grid_export": "sensor.export",
+            "home_boundary_confirmed": True, "home_has_solar": False, "home_has_storage": False,
+        })
+        sensor.hass = self.hass
+        sensor.removers = []
+        sensor.writes = 0
+        await sensor.async_added_to_hass()
+        self.assertEqual(sensor._attr_unique_id, "entry_home_power")
+        self.assertEqual(sensor._attr_native_value, 500)
+        self.states["sensor.import"].last_reported = now - timedelta(seconds=301)
+        self.hass.listeners[0](None)
+        self.assertIsNone(sensor._attr_native_value)
+        self.assertEqual(sensor._attr_extra_state_attributes["data_quality"], "stale_source")
+        for remove in sensor.removers:
+            remove()
+        self.assertEqual(self.hass.listeners, [])

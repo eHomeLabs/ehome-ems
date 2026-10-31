@@ -24,17 +24,27 @@
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "Choisissez la puissance totale réellement consommée par les usages de la maison, en W ou kW, quelle que soit son origine : réseau, solaire ou décharge batterie. Un capteur calculé existant convient s’il représente déjà ce total ; l’EMS reprend sa valeur sans ajouter une seconde fois solaire ou batteries. L’import réseau seul ne représente généralement pas la consommation maison.",
+        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/injection : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et injection séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
         "data": {
-          "home_power": "Consommation de la maison"
+          "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
+          "home_power_mode": "Origine de la consommation maison",
+          "home_has_solar": "Calcul automatique : installation photovoltaïque présente",
+          "home_has_storage": "Calcul automatique : stockage actif présent",
+          "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
+          "home_max_age_seconds": "Calcul automatique : âge maximal des sources (secondes)"
         },
         "data_description": {
-          "home_power": "Exemple cohérent sur un même périmètre AC : 1 000 W solaire + 200 W import + 100 W décharge − 50 W injection − 250 W charge = 1 000 W pour les usages. N’appliquez pas cette formule sans vérifier où vos compteurs sont placés."
+          "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
+          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − injection − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
+          "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
+          "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
+          "home_max_age_seconds": "Défaut 300 s. Si une source nécessaire manque, est indisponible, a une unité invalide ou dépasse cet âge, le résultat reste indisponible. Aucune donnée manquante n’est remplacée par zéro. Le contrôle d’âge est refait toutes les 30 s."
         }
       },
       "review": {
         "title": "5 — Vérifier les mesures",
-        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape.",
+        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape. Pour le calcul Maison, negative_balance indique un bilan négatif : vérifiez périmètre, signes et mesures. Le contrôle de fraîcheur est appliqué au capteur en fonctionnement.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
@@ -124,14 +134,18 @@
     },
     "error": {
       "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
-      "duplicate_source": "Ce capteur est déjà associé à une autre mesure.",
+      "duplicate_source": "Le même capteur est associé à plusieurs mesures du bilan.",
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
-      "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
+      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, injection et toutes les puissances des équipements présents.",
       "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
       "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
       "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",
       "cumulative_energy": "Ce capteur est déclaré comme un cumul d’énergie. Choisissez un stock restant instantané, ou laissez ce champ vide.",
-      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide."
+      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide.",
+      "boundary_unconfirmed": "Confirmez d’abord que les mesures du bilan partagent le même périmètre AC.",
+      "solar_configuration": "Vérifiez la présence déclarée du photovoltaïque et sa mesure à l’étape Solaire.",
+      "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
+      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant."
     },
     "abort": {
       "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
@@ -162,17 +176,27 @@
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "Choisissez la puissance totale réellement consommée par les usages de la maison, en W ou kW, quelle que soit son origine : réseau, solaire ou décharge batterie. Un capteur calculé existant convient s’il représente déjà ce total ; l’EMS reprend sa valeur sans ajouter une seconde fois solaire ou batteries. L’import réseau seul ne représente généralement pas la consommation maison.",
+        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/injection : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et injection séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
         "data": {
-          "home_power": "Consommation de la maison"
+          "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
+          "home_power_mode": "Origine de la consommation maison",
+          "home_has_solar": "Calcul automatique : installation photovoltaïque présente",
+          "home_has_storage": "Calcul automatique : stockage actif présent",
+          "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
+          "home_max_age_seconds": "Calcul automatique : âge maximal des sources (secondes)"
         },
         "data_description": {
-          "home_power": "Exemple cohérent sur un même périmètre AC : 1 000 W solaire + 200 W import + 100 W décharge − 50 W injection − 250 W charge = 1 000 W pour les usages. N’appliquez pas cette formule sans vérifier où vos compteurs sont placés."
+          "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
+          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − injection − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
+          "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
+          "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
+          "home_max_age_seconds": "Défaut 300 s. Si une source nécessaire manque, est indisponible, a une unité invalide ou dépasse cet âge, le résultat reste indisponible. Aucune donnée manquante n’est remplacée par zéro. Le contrôle d’âge est refait toutes les 30 s."
         }
       },
       "review": {
         "title": "5 — Vérifier les mesures",
-        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape.",
+        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape. Pour le calcul Maison, negative_balance indique un bilan négatif : vérifiez périmètre, signes et mesures. Le contrôle de fraîcheur est appliqué au capteur en fonctionnement.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
@@ -262,14 +286,18 @@
     },
     "error": {
       "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
-      "duplicate_source": "Ce capteur est déjà associé à une autre mesure.",
+      "duplicate_source": "Le même capteur est associé à plusieurs mesures du bilan.",
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
-      "missing_source": "Ce capteur n’existe plus. Choisissez une autre source.",
+      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, injection et toutes les puissances des équipements présents.",
       "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
       "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
       "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",
       "cumulative_energy": "Ce capteur est déclaré comme un cumul d’énergie. Choisissez un stock restant instantané, ou laissez ce champ vide.",
-      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide."
+      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide.",
+      "boundary_unconfirmed": "Confirmez d’abord que les mesures du bilan partagent le même périmètre AC.",
+      "solar_configuration": "Vérifiez la présence déclarée du photovoltaïque et sa mesure à l’étape Solaire.",
+      "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
+      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant."
     }
   },
   "selector": {
@@ -283,6 +311,12 @@
       "options": {
         "ac": "AC — côté alternatif",
         "dc": "DC — suivi seul, hors bilan AC simple"
+      }
+    },
+    "home_power_mode": {
+      "options": {
+        "existing": "Utiliser mon capteur existant",
+        "calculated": "Calculer automatiquement dans eHome EMS"
       }
     }
   },

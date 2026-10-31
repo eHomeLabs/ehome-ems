@@ -70,7 +70,7 @@ def build_dashboard(mapping, entities, *, language="fr", max_power_w=10000):
     summary_cards = [{"type": "markdown", "content": labels["notice"]}]
     main_rows, gauges = [], []
     for key in SOURCES:
-        if not mapping.get(key):
+        if not mapping.get(key) and not (key == "home_power" and mapping.get("home_power_mode") == "calculated"):
             continue
         entity = entity_for(key)
         if not entity:

@@ -9,7 +9,8 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import entity_registry as er, selector
 
-from .const import DOMAIN, SOURCES, CONF_BATTERIES, BATTERY_SOURCES
+from .const import DOMAIN, SOURCES, CONF_BATTERIES, BATTERY_SOURCES, HOME_MODE, HOME_SETTINGS
+from .home_balance import home_sources, calculate_home
 from .measurement import normalize_power, normalize_battery
 
 GROUPS = {
@@ -79,6 +80,9 @@ class PowerWizard:
     def _start(self, existing=None):
         self._draft = {key: (existing or {}).get(key) for key in SOURCES}
         self._draft[CONF_BATTERIES] = deepcopy((existing or {}).get(CONF_BATTERIES, {}))
+        for key in HOME_SETTINGS:
+            if key in (existing or {}):
+                self._draft[key] = existing[key]
         self._reviewing = False
         self._editing_battery = None
 
@@ -137,7 +141,38 @@ class PowerWizard:
         return await self._power_step("solar", "home", user_input)
 
     async def async_step_home(self, user_input=None):
-        return await self._power_step("home", "batteries", user_input)
+        existing = self._draft
+        errors = {}
+        if user_input is not None:
+            mode = user_input.get(HOME_MODE, "existing")
+            candidate = {**self._draft, HOME_MODE: mode,
+                         "home_power": user_input.get("home_power") if mode == "existing" else None}
+            for key in HOME_SETTINGS[1:4]:
+                candidate[key] = user_input.get(key, False)
+            candidate["home_max_age_seconds"] = user_input.get("home_max_age_seconds", 300)
+            errors = {key: reason for key, reason in self._errors(candidate).items()
+                      if key == "home_power"}
+            if mode == "calculated" and not candidate["home_boundary_confirmed"]:
+                errors["home_boundary_confirmed"] = "boundary_unconfirmed"
+            if not errors:
+                self._draft = candidate
+                return await (self.async_step_review() if self._reviewing else self.async_step_batteries())
+            existing = candidate
+        schema = source_schema(GROUPS["home"], existing).schema
+        schema[vol.Required(HOME_MODE, default=existing.get(HOME_MODE, "existing"))] = selector.SelectSelector(
+            selector.SelectSelectorConfig(options=["existing", "calculated"], translation_key="home_power_mode")
+        )
+        defaults = {
+            "home_has_solar": bool(existing.get("solar_power")),
+            "home_has_storage": any(b["role"] == "active" for b in existing.get(CONF_BATTERIES, {}).values()),
+            "home_boundary_confirmed": False,
+        }
+        for key, default in defaults.items():
+            schema[vol.Optional(key, default=existing.get(key, default))] = bool
+        schema[vol.Optional("home_max_age_seconds", default=existing.get("home_max_age_seconds", 300))] = vol.All(
+            vol.Coerce(int), vol.Range(min=30, max=3600)
+        )
+        return self.async_show_form(step_id="home", data_schema=vol.Schema(schema), errors=errors)
 
     async def async_step_batteries(self, user_input=None):
         """Add any number of independent batteries or skip storage."""
@@ -240,6 +275,15 @@ class PowerWizard:
                 battery = self._draft[CONF_BATTERIES][key.split(".")[1]]
                 key = f"{battery['name']} ({battery['role']}, {battery['coupling']}) / {role}"
             rows.append(f"- {key}: {entity_id} → {value} [{reading.quality}]")
+        if self._draft.get(HOME_MODE) == "calculated":
+            inputs = {}
+            sources, _ = home_sources(self._draft)
+            for _, source, _ in sources:
+                state = self.hass.states.get(source)
+                inputs[source] = (state.state, state.attributes.get("unit_of_measurement")) if state else (None, None)
+            reading = calculate_home(self._draft, inputs)
+            value = f"{reading.value:g} W" if reading.value is not None else "—"
+            rows.append(f"- Maison / Home (calcul EMS): {value} [{reading.quality}]")
         return "\n".join(rows) or "—"
 
     async def async_step_review(self, user_input=None):
@@ -254,9 +298,13 @@ class PowerWizard:
         if user_input and user_input.get("back_to_review"):
             return await self.async_step_review()
         errors = self._errors(self._draft)
+        if self._draft.get(HOME_MODE) == "calculated":
+            _, reason = home_sources(self._draft)
+            if reason:
+                errors = {"base": reason}
         if not any(entity_id for _, entity_id, _ in source_items(self._draft)):
             errors = {"base": "select_source"}
-        elif errors:
+        elif errors and "base" not in errors:
             errors = {"base": "sources_changed"}
         if user_input is not None and not errors:
             return self.async_create_entry(title=self._entry_title, data=deepcopy(self._draft))

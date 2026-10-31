@@ -6,7 +6,7 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : première bêta 0.2.0b2 en observation, préparée pour les essais.**
+**Statut : première bêta 0.2.0b3 en observation, préparée pour les essais.**
 Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
 et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
 en développement, et non une release logicielle 2.0.
@@ -15,7 +15,7 @@ en développement, et non une release logicielle 2.0.
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible sur cette branche | Bêta 0.2.0b2 en lecture seule, compatible avec les associations V0.1 |
+| Code disponible sur cette branche | Bêta 0.2.0b3 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
@@ -30,7 +30,7 @@ les prévisions, conseils et commandes ne sont pas encore disponibles.**
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
-- **Installer ou revenir en arrière :** [guide bêta 0.2.0b2](docs/INSTALLATION_BETA.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b3](docs/INSTALLATION_BETA.md).
 - **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
@@ -39,7 +39,14 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-### Retour des premiers essais — 0.2.0b2
+### Retour des premiers essais — 0.2.0b3
+
+L'écran Maison permet de choisir une source existante (mesurée ou déjà calculée)
+ou un calcul automatique EMS. Le calcul est limité aux topologies AC confirmées :
+import/injection séparés, PV déclaré et mesures charge/décharge de toutes les
+batteries actives. Il conserve l'identifiant du capteur Maison. Le résultat reste
+indisponible en cas de donnée manquante/périmée ou de bilan négatif.
+Voir [la définition de la consommation maison et les conditions du calcul](docs/CONSOMMATION_MAISON.md).
 
 Les écrans expliquent maintenant le choix entre réseau signé et import/injection,
 l'utilisation d'une consommation maison déjà calculée et la distinction entre
@@ -80,12 +87,12 @@ facultative en kWh. Les mesures facultatives sont charge/décharge positives en
 W/kW, SOC en % et énergie restante mesurée en Wh/kWh. Au moins une mesure est
 nécessaire par batterie. Le SOC n'est pas converti artificiellement en énergie.
 
-Le rôle actif indique seulement une candidature au futur bilan. Les batteries
-de secours et les batteries DC ne sont pas éligibles au futur bilan AC simple.
-Aucun bilan n'est encore calculé et aucune commande n'est envoyée. L'origine de
+Le rôle actif inclut la batterie dans le calcul Maison AC lorsqu'il est choisi
+et que ses mesures sont complètes. Les batteries de secours en sont exclues et
+une batterie active DC bloque ce bilan simple. Aucune commande n'est envoyée. L'origine de
 l'énergie stockée reste inconnue : décharger ne signifie pas produire du solaire.
 
-La fraîcheur des sources, le bilan multi-équipements
+Les bilans énergétiques journaliers, la fraîcheur des autres miroirs
 et les flux animés restent à développer. Un premier [dashboard natif exportable](docs/DASHBOARD_OBSERVATION.md)
 est généré par l'action `ehome_ems.generate_dashboard`, sans écrire ni écraser de
 dashboard. Son installation reste manuelle dans un nouveau dashboard ; les copies

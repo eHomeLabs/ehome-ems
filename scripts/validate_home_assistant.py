@@ -75,6 +75,7 @@ async def validate(config_dir):
         solar_id, solar = mirror("solar_power")
         assert float(solar.state) == 1500, solar
         battery_id = next(iter(entry.data["batteries"]))
+        original_home_id, _ = mirror("home_power")
         _, soc = mirror(f"{battery_id}_soc")
         assert soc.attributes["unit_of_measurement"] == "%"
         _, energy = mirror(f"{battery_id}_remaining_energy")
@@ -125,6 +126,51 @@ async def validate(config_dir):
         assert entry.state.value == "loaded", entry.state
         assert mirror("grid_power")[0] == renamed_id
         assert mirror(f"{battery_id}_soc")[1].state == "65.0"
+
+        # Switch to an EMS-computed balance through real options, preserving the ID.
+        hass.states.async_set("sensor.sim_import", "0", {"unit_of_measurement": "W", "device_class": "power"})
+        hass.states.async_set("sensor.sim_export", "50", {"unit_of_measurement": "W", "device_class": "power"})
+        hass.states.async_set("sensor.sim_discharge", "0", {"unit_of_measurement": "W", "device_class": "power"})
+        options = await hass.config_entries.options.async_init(entry.entry_id)
+        options_id = options["flow_id"]
+        await hass.config_entries.options.async_configure(options_id, {
+            "grid_power": "sensor.sim_grid", "grid_import": "sensor.sim_import", "grid_export": "sensor.sim_export",
+        })
+        form = await hass.config_entries.options.async_configure(options_id, {"solar_power": "sensor.sim_solar"})
+        json.dumps(to_field_list(form["data_schema"], custom_serializer=cv.custom_serializer))
+        await hass.config_entries.options.async_configure(options_id, {
+            "home_power_mode": "calculated", "home_has_solar": True, "home_has_storage": True,
+            "home_boundary_confirmed": True, "home_max_age_seconds": 300,
+        })
+        await hass.config_entries.options.async_configure(options_id, {"next_step_id": "edit_battery"})
+        await hass.config_entries.options.async_configure(options_id, {"battery_id": battery_id})
+        await hass.config_entries.options.async_configure(options_id, {
+            "name": "Simulated battery", "role": "active", "coupling": "ac", "capacity_kwh": 5,
+            "soc": "sensor.sim_soc", "charge_power": "sensor.sim_charge",
+            "discharge_power": "sensor.sim_discharge", "remaining_energy": "sensor.sim_energy",
+        })
+        await hass.config_entries.options.async_configure(options_id, {"next_step_id": "review"})
+        await hass.config_entries.options.async_configure(options_id, {"next_step_id": "confirm"})
+        saved = await hass.config_entries.options.async_configure(options_id, {})
+        assert saved["type"] == "create_entry", saved
+        await hass.async_block_till_done()
+        home_id, home = mirror("home_power")
+        assert home_id == original_home_id
+        assert float(home.state) == 1700, home
+        assert home.attributes["value_origin"] == "calculated"
+        hass.states.async_set("sensor.sim_charge", "500", {"unit_of_measurement": "W"})
+        await hass.async_block_till_done()
+        assert float(hass.states.get(home_id).state) == 1450
+        hass.states.async_set("sensor.sim_solar", "unavailable", {"unit_of_measurement": "kW"})
+        await hass.async_block_till_done()
+        assert hass.states.get(home_id).state == "unavailable"
+        hass.states.async_set("sensor.sim_solar", "2", {"unit_of_measurement": "kW"})
+        await hass.async_block_till_done()
+        assert float(hass.states.get(home_id).state) == 1450
+        response = await hass.services.async_call(
+            "ehome_ems", "generate_dashboard", {"language": "fr"}, blocking=True, return_response=True,
+        )
+        assert home_id in json.dumps(response)
 
         assert await hass.config_entries.async_unload(entry.entry_id)
         await hass.async_block_till_done()

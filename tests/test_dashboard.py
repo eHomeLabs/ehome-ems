@@ -32,6 +32,11 @@ class DashboardTests(TestCase):
         self.assertEqual((gauges[0]["min"], gauges[0]["max"]), (-10000, 10000))
         self.assertNotIn("sensor.original", str(config))
 
+    def test_calculated_home_is_visible_without_external_home_source(self):
+        result = build({"home_power_mode": "calculated", "home_power": None},
+                       {"home_power": "sensor.calculated_home"})
+        self.assertIn("sensor.calculated_home", str(result))
+
     def test_empty_modules_and_missing_mirrors_are_not_invented(self):
         config = build({"solar_power": "sensor.original"}, {})
         self.assertEqual(config["missing_entities"], ["solar_power"])

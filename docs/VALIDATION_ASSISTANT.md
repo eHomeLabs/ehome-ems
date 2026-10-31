@@ -4,7 +4,9 @@ Bêta 0.2.0b1, sans publication HACS ni validation matérielle.
 Le [rapport backend](VALIDATION_0_2_0B1.md) complète les tests à doubles par un
 parcours exécuté dans Home Assistant Core 2026.9.1 et 2026.11.0b0 réels.
 Le périmètre couvre les puissances réseau, solaire et maison et plusieurs
-batteries en suivi seul. Les usages, les énergies journalières, les bilans
+batteries en suivi seul. Depuis 0.2.0b3, le choix d'un bilan de puissance AC pour
+la Maison est disponible (voir CONSOMMATION_MAISON.md).
+Les usages, les énergies journalières, les bilans énergétiques
 et le dashboard restent à développer.
 
 ## Parcours codé
@@ -27,7 +29,8 @@ Une mesure temporairement indisponible peut être associée si son unité W/kW e
 encore connue. Les capteurs absents ou d'unité inconnue doivent être corrigés.
 Le capteur réseau global conserve sa convention de signe ; la sélection de
 convention et la normalisation du réseau vers import positif restent à développer
-avant les calculs de bilan. L'export séparé est une magnitude positive.
+avant son utilisation dans un bilan. Le premier calcul Maison utilise uniquement
+les capteurs séparés import/injection. L'export séparé est une magnitude positive.
 L'aperçu indique les erreurs numériques ou de direction sans inventer un zéro.
 
 ## Vérifications automatisées
@@ -59,7 +62,7 @@ Les sources signées uniques de batterie ne sont pas encore prises en charge.
 Une unité correcte mais une valeur invalide est visible dans l'aperçu.
 
 Les attributs battery_role, coupling et eligible_for_ac_balance sont préparatoires :
-seul active + ac est candidat au futur bilan simple. Aucune agrégation AC/DC ni
+seul active + ac est utilisable pour le bilan Maison simple. Aucune agrégation AC/DC ni
 estimation de l'origine solaire n'est faite. Les batteries DC et de secours restent
 visibles dans le suivi. Aucune réserve ou limite de puissance n'est commandée.
 
@@ -80,7 +83,7 @@ réels, ni le rechargement des entités.
 - Tester une suppression de source entre l'aperçu et la confirmation, puis corriger.
 - Vérifier qu'aucun service d'équipement n'est appelé.
 - Configurer deux batteries simulées : une active AC et une de secours ; vérifier
-  les types de capteurs et leurs attributs, sans bilan ni commande.
+  les types de capteurs et leurs attributs, sans commande.
 - Renommer une batterie puis recharger : conserver ses identifiants uniques.
 - Retirer une batterie du suivi puis annuler le parcours : conserver la configuration.
 - Tester SOC %, Wh/kWh, SOC hors limites et charge/décharge négatives.

@@ -34,6 +34,8 @@ def register_dashboard_service(hass):
         mapping = entry.options or entry.data
         registry = er.async_get(hass)
         suffixes = [key for key in SOURCES if mapping.get(key)]
+        if mapping.get("home_power_mode") == "calculated" and "home_power" not in suffixes:
+            suffixes.append("home_power")
         suffixes += [
             f"{battery_id}_{key}"
             for battery_id, battery in mapping.get(CONF_BATTERIES, {}).items()

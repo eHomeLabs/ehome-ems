@@ -81,6 +81,11 @@ class DashboardServiceTests(IsolatedAsyncioTestCase):
         result = await self.handler(SimpleNamespace(data={}))
         self.assertEqual(result["missing_entities"], ["solar_power"])
 
+    async def test_computed_home_suffix_is_resolved(self):
+        self.entry.options = {"home_power_mode": "calculated", "home_power": None}
+        result = await self.handler(SimpleNamespace(data={}))
+        self.assertIn("sensor.renamed", str(result))
+
     async def test_display_scale_and_language_schema(self):
         schema = self.settings["schema"]
         self.assertEqual(schema({"max_power_w": 5000})["max_power_w"], 5000)

@@ -297,3 +297,22 @@ class WizardTests(IsolatedAsyncioTestCase):
         await self.flow.async_step_edit_battery({"battery_id": battery_id})
         await self.flow.async_step_battery_details({"name": "Corrected", "soc": "sensor.soc"})
         self.assertEqual((await self.flow.async_step_confirm({}))["type"], "create_entry")
+
+    async def test_home_mode_is_opt_in_and_legacy_sensor_is_preserved(self):
+        await self.walk_to_review()
+        result = await self.flow.async_step_confirm({})
+        self.assertEqual(result["data"]["home_power_mode"], "existing")
+        self.assertEqual(result["data"]["home_power"], "sensor.home")
+
+    async def test_calculated_home_requires_boundary_confirmation(self):
+        await self.flow.async_step_user()
+        result = await self.flow.async_step_home({"home_power_mode": "calculated"})
+        self.assertEqual(result["errors"]["home_boundary_confirmed"], "boundary_unconfirmed")
+
+    async def test_calculated_home_preserves_settings_and_checks_missing_grid(self):
+        await self.walk_to_review()
+        await self.flow.async_step_home({"home_power_mode": "calculated", "home_has_solar": True,
+                                        "home_has_storage": False, "home_boundary_confirmed": True})
+        self.assertIsNone(self.flow._draft["home_power"])
+        result = await self.flow.async_step_confirm({})
+        self.assertEqual(result["errors"]["base"], "missing_source")

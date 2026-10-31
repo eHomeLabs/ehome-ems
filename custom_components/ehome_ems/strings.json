@@ -24,17 +24,27 @@
       },
       "home": {
         "title": "3 — Home consumption",
-        "description": "Choose total power actually consumed by home loads in W or kW, regardless of supply: grid, solar or battery discharge. An existing calculated sensor is suitable when it already represents this total; EMS uses it without adding solar or batteries again. Grid import alone usually is not home consumption.",
+        "description": "Home consumption is instantaneous power used by all loads: lighting, appliances, heating, water heating, EV… regardless of electricity source. Battery charging is accounted for separately. It is expressed in W/kW, not kWh.\n\nChoose an existing sensor (measured or already calculated), or let eHome EMS calculate the balance. A meter or CTs covering all loads, or a consistent sum, can provide this measurement. A grid-exchange meter often measures only import/export; with solar and storage, it is not total home load power by itself.\n\nInitial automatic calculation requires consistent AC measurements: separate grid import/export, AC solar production and AC charge/discharge for every active battery. Confirm the equipment and boundary below, then configure batteries in the next step.",
         "data": {
-          "home_power": "Home consumption power"
+          "home_power": "Existing home sensor (measured or already calculated)",
+          "home_power_mode": "Home consumption source",
+          "home_has_solar": "Automatic calculation: solar installation present",
+          "home_has_storage": "Automatic calculation: active storage present",
+          "home_boundary_confirmed": "I confirm the same AC boundary for all balance readings",
+          "home_max_age_seconds": "Automatic calculation: maximum source age (seconds)"
         },
         "data_description": {
-          "home_power": "Example with a consistent AC measurement boundary: 1,000 W solar + 200 W import + 100 W discharge − 50 W export − 250 W charge = 1,000 W for loads. Do not apply this formula without checking meter placement."
+          "home_power": "Existing sensor mode: select your total reading; an existing calculated template is suitable. It must not depend on the EMS home sensor. This field is ignored in automatic calculation mode.",
+          "home_power_mode": "Existing sensor: value is used without a new balance. EMS calculation: home = PV + import + discharge − export − charge. Switching modes preserves the EMS sensor unique ID.",
+          "home_has_solar": "Only for EMS calculation. When checked, solar power must be mapped. Do not uncheck to bypass missing readings on an actual solar installation.",
+          "home_has_storage": "Only for EMS calculation. In the next step, declare every battery participating in daily exchanges as active, with BOTH charge and discharge. Backup means outside this daily balance. Active DC storage blocks the simple AC calculation.",
+          "home_boundary_confirmed": "Check meter placement, double counting and AC-side battery power. Internal pack/DC power is not interchangeable with AC power. EMS calculation cannot be enabled without confirmation.",
+          "home_max_age_seconds": "Default 300 s. If a required source is missing, unavailable, invalid or older than this limit, the result remains unavailable. No missing data is replaced by zero. Age is checked every 30 s."
         }
       },
       "review": {
         "title": "5 — Review measurements",
-        "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings.",
+        "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings. For Home calculation, negative_balance indicates a negative balance: check boundary, signs and readings. Freshness is checked on the running sensor.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
@@ -124,14 +134,18 @@
     },
     "error": {
       "select_source": "Select at least one sensor before saving.",
-      "duplicate_source": "This sensor is already mapped to another reading.",
+      "duplicate_source": "The same sensor is mapped to multiple balance readings.",
       "recursive_source": "Select an original source, not an eHome EMS sensor.",
-      "missing_source": "This sensor no longer exists. Choose another source.",
+      "missing_source": "A required reading is missing. EMS calculation needs import/export and all present equipment power channels.",
       "unsupported_unit": "Invalid unit: W/kW for power, % for SOC, Wh/kWh for remaining energy.",
       "sources_changed": "A mapping is inconsistent: missing source, duplicate, wrong unit, cumulative counter or stock above capacity. Return to review.",
       "invalid_battery": "Check name, role, coupling and capacity (a finite positive number).",
       "cumulative_energy": "This sensor is declared as a cumulative energy counter. Choose current remaining stock, or leave this field empty.",
-      "exceeds_capacity": "This energy is more than 10% above declared capacity. Check sensor, unit and capacity, or leave the field empty."
+      "exceeds_capacity": "This energy is more than 10% above declared capacity. Check sensor, unit and capacity, or leave the field empty.",
+      "boundary_unconfirmed": "First confirm that balance readings share the same AC boundary.",
+      "solar_configuration": "Check declared solar presence and the mapping in the Solar step.",
+      "storage_configuration": "Check declared storage presence and active batteries in the Storage step.",
+      "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor."
     },
     "abort": {
       "already_configured": "eHome EMS is already configured. Use Configure to edit its settings."
@@ -162,17 +176,27 @@
       },
       "home": {
         "title": "3 — Home consumption",
-        "description": "Choose total power actually consumed by home loads in W or kW, regardless of supply: grid, solar or battery discharge. An existing calculated sensor is suitable when it already represents this total; EMS uses it without adding solar or batteries again. Grid import alone usually is not home consumption.",
+        "description": "Home consumption is instantaneous power used by all loads: lighting, appliances, heating, water heating, EV… regardless of electricity source. Battery charging is accounted for separately. It is expressed in W/kW, not kWh.\n\nChoose an existing sensor (measured or already calculated), or let eHome EMS calculate the balance. A meter or CTs covering all loads, or a consistent sum, can provide this measurement. A grid-exchange meter often measures only import/export; with solar and storage, it is not total home load power by itself.\n\nInitial automatic calculation requires consistent AC measurements: separate grid import/export, AC solar production and AC charge/discharge for every active battery. Confirm the equipment and boundary below, then configure batteries in the next step.",
         "data": {
-          "home_power": "Home consumption power"
+          "home_power": "Existing home sensor (measured or already calculated)",
+          "home_power_mode": "Home consumption source",
+          "home_has_solar": "Automatic calculation: solar installation present",
+          "home_has_storage": "Automatic calculation: active storage present",
+          "home_boundary_confirmed": "I confirm the same AC boundary for all balance readings",
+          "home_max_age_seconds": "Automatic calculation: maximum source age (seconds)"
         },
         "data_description": {
-          "home_power": "Example with a consistent AC measurement boundary: 1,000 W solar + 200 W import + 100 W discharge − 50 W export − 250 W charge = 1,000 W for loads. Do not apply this formula without checking meter placement."
+          "home_power": "Existing sensor mode: select your total reading; an existing calculated template is suitable. It must not depend on the EMS home sensor. This field is ignored in automatic calculation mode.",
+          "home_power_mode": "Existing sensor: value is used without a new balance. EMS calculation: home = PV + import + discharge − export − charge. Switching modes preserves the EMS sensor unique ID.",
+          "home_has_solar": "Only for EMS calculation. When checked, solar power must be mapped. Do not uncheck to bypass missing readings on an actual solar installation.",
+          "home_has_storage": "Only for EMS calculation. In the next step, declare every battery participating in daily exchanges as active, with BOTH charge and discharge. Backup means outside this daily balance. Active DC storage blocks the simple AC calculation.",
+          "home_boundary_confirmed": "Check meter placement, double counting and AC-side battery power. Internal pack/DC power is not interchangeable with AC power. EMS calculation cannot be enabled without confirmation.",
+          "home_max_age_seconds": "Default 300 s. If a required source is missing, unavailable, invalid or older than this limit, the result remains unavailable. No missing data is replaced by zero. Age is checked every 30 s."
         }
       },
       "review": {
         "title": "5 — Review measurements",
-        "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings.",
+        "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings. For Home calculation, negative_balance indicates a negative balance: check boundary, signs and readings. Freshness is checked on the running sensor.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
@@ -262,14 +286,18 @@
     },
     "error": {
       "select_source": "Select at least one sensor before saving.",
-      "duplicate_source": "This sensor is already mapped to another reading.",
+      "duplicate_source": "The same sensor is mapped to multiple balance readings.",
       "recursive_source": "Select an original source, not an eHome EMS sensor.",
-      "missing_source": "This sensor no longer exists. Choose another source.",
+      "missing_source": "A required reading is missing. EMS calculation needs import/export and all present equipment power channels.",
       "unsupported_unit": "Invalid unit: W/kW for power, % for SOC, Wh/kWh for remaining energy.",
       "sources_changed": "A mapping is inconsistent: missing source, duplicate, wrong unit, cumulative counter or stock above capacity. Return to review.",
       "invalid_battery": "Check name, role, coupling and capacity (a finite positive number).",
       "cumulative_energy": "This sensor is declared as a cumulative energy counter. Choose current remaining stock, or leave this field empty.",
-      "exceeds_capacity": "This energy is more than 10% above declared capacity. Check sensor, unit and capacity, or leave the field empty."
+      "exceeds_capacity": "This energy is more than 10% above declared capacity. Check sensor, unit and capacity, or leave the field empty.",
+      "boundary_unconfirmed": "First confirm that balance readings share the same AC boundary.",
+      "solar_configuration": "Check declared solar presence and the mapping in the Solar step.",
+      "storage_configuration": "Check declared storage presence and active batteries in the Storage step.",
+      "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor."
     }
   },
   "selector": {
@@ -283,6 +311,12 @@
       "options": {
         "ac": "AC — alternating current side",
         "dc": "DC — monitoring only, outside simple AC balance"
+      }
+    },
+    "home_power_mode": {
+      "options": {
+        "existing": "Use my existing sensor",
+        "calculated": "Calculate automatically in eHome EMS"
       }
     }
   },
