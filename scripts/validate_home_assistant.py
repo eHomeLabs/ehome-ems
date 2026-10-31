@@ -52,6 +52,26 @@ async def validate(config_dir):
             "charge_power": "sensor.sim_charge", "remaining_energy": "sensor.sim_energy",
         })
         assert result["step_id"] == "batteries", result
+        result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "usages"})
+        assert result["step_id"] == "usages", result
+        hass.states.async_set("sensor.sim_router_power", "350", {"unit_of_measurement": "W", "device_class": "power"})
+        hass.states.async_set("sensor.sim_router_energy", "1250", {"unit_of_measurement": "Wh", "device_class": "energy"})
+        hass.states.async_set("switch.sim_router", "on")
+        result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "add_usage"})
+        json.dumps(to_field_list(result["data_schema"], custom_serializer=cv.custom_serializer))
+        result = await hass.config_entries.flow.async_configure(flow_id, {
+            "name": "Simulated router", "kind": "solar_router", "power": "sensor.sim_router_power",
+            "energy": "sensor.sim_router_energy", "energy_period": "today", "status": "switch.sim_router",
+            "included_in_home": True,
+        })
+        assert result["step_id"] == "usages", result
+        hass.states.async_set("sensor.sim_ev_power", "0", {"unit_of_measurement": "W", "device_class": "power"})
+        await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "add_usage"})
+        result = await hass.config_entries.flow.async_configure(flow_id, {
+            "name": "Simulated EV", "kind": "ev_charger", "power": "sensor.sim_ev_power",
+            "included_in_home": True,
+        })
+        assert result["step_id"] == "usages", result
         result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "review"})
         assert result["step_id"] == "review", result
         result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "confirm"})
@@ -76,6 +96,15 @@ async def validate(config_dir):
         assert float(solar.state) == 1500, solar
         battery_id = next(iter(entry.data["batteries"]))
         original_home_id, _ = mirror("home_power")
+        router_id = next(key for key, usage in entry.data["usages"].items() if usage["kind"] == "solar_router")
+        router_energy_id, router_energy = mirror(f"usage_{router_id}_energy")
+        assert float(router_energy.state) == 1.25
+        assert router_energy.attributes["energy_period"] == "today"
+        router_status_id, router_status = mirror(f"usage_{router_id}_status")
+        assert router_status.state == "on"
+        hass.states.async_set("switch.sim_router", "off")
+        await hass.async_block_till_done()
+        assert hass.states.get(router_status_id).state == "off"
         _, soc = mirror(f"{battery_id}_soc")
         assert soc.attributes["unit_of_measurement"] == "%"
         _, energy = mirror(f"{battery_id}_remaining_energy")
@@ -108,7 +137,8 @@ async def validate(config_dir):
         )
         assert renamed_id in json.dumps(response)
         assert response["missing_entities"] == [], response
-        assert len(response["dashboard"]["views"]) == 4
+        assert len(response["dashboard"]["views"]) == 5
+        assert router_energy_id in json.dumps(response)
 
         # Options must use actual HA flow APIs and reload the existing entry.
         options = await hass.config_entries.options.async_init(entry.entry_id)
@@ -117,6 +147,7 @@ async def validate(config_dir):
         await hass.config_entries.options.async_configure(options_id, {"grid_power": "sensor.sim_grid"})
         await hass.config_entries.options.async_configure(options_id, {"solar_power": "sensor.sim_solar"})
         await hass.config_entries.options.async_configure(options_id, {})
+        await hass.config_entries.options.async_configure(options_id, {"next_step_id": "usages"})
         await hass.config_entries.options.async_configure(options_id, {"next_step_id": "review"})
         await hass.config_entries.options.async_configure(options_id, {"next_step_id": "confirm"})
         saved = await hass.config_entries.options.async_configure(options_id, {})
@@ -149,6 +180,7 @@ async def validate(config_dir):
             "soc": "sensor.sim_soc", "charge_power": "sensor.sim_charge",
             "discharge_power": "sensor.sim_discharge", "remaining_energy": "sensor.sim_energy",
         })
+        await hass.config_entries.options.async_configure(options_id, {"next_step_id": "usages"})
         await hass.config_entries.options.async_configure(options_id, {"next_step_id": "review"})
         await hass.config_entries.options.async_configure(options_id, {"next_step_id": "confirm"})
         saved = await hass.config_entries.options.async_configure(options_id, {})
@@ -157,6 +189,8 @@ async def validate(config_dir):
         home_id, home = mirror("home_power")
         assert home_id == original_home_id
         assert float(home.state) == 1700, home
+        # The 350 W router submeter is already part of loads, not added again.
+        assert float(mirror(f"usage_{router_id}_power")[1].state) == 350
         assert home.attributes["value_origin"] == "calculated"
         hass.states.async_set("sensor.sim_charge", "500", {"unit_of_measurement": "W"})
         await hass.async_block_till_done()

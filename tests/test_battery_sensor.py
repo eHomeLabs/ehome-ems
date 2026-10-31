@@ -157,3 +157,20 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
         for remove in sensor.removers:
             remove()
         self.assertEqual(self.hass.listeners, [])
+
+    async def test_usage_mirrors_use_units_and_read_only_status(self):
+        usage = {"name": "Router", "kind": "solar_router", "energy_period": "today",
+                 "energy": "sensor.source", "status": "sensor.source", "included_in_home": True}
+        energy = sensor_module.UsageSensor("entry", "stable", usage, "energy")
+        energy.hass = self.hass
+        energy._update_from_source()
+        self.assertEqual(energy._attr_native_value, 2.5)
+        self.assertEqual(energy._attr_native_unit_of_measurement, "kWh")
+        self.assertEqual(energy._attr_extra_state_attributes["energy_period"], "today")
+        self.states["sensor.source"].state = "on"
+        status = sensor_module.UsageSensor("entry", "stable", usage, "status")
+        status.hass = self.hass
+        status._update_from_source()
+        self.assertEqual(status._attr_native_value, "on")
+        self.assertIsNone(status._attr_state_class)
+        self.assertIsNone(status._attr_native_unit_of_measurement)

@@ -6,7 +6,8 @@ parcours exécuté dans Home Assistant Core 2026.9.1 et 2026.11.0b0 réels.
 Le périmètre couvre les puissances réseau, solaire et maison et plusieurs
 batteries en suivi seul. Depuis 0.2.0b3, le choix d'un bilan de puissance AC pour
 la Maison est disponible (voir CONSOMMATION_MAISON.md).
-Les usages, les énergies journalières, les bilans énergétiques
+Le suivi d'usages routeur/ECS, borne VE et autres charges est disponible depuis
+0.2.0b4 (USAGES_OBSERVATION.md). Les énergies journalières calculées par EMS, les bilans énergétiques
 et le dashboard restent à développer.
 
 ## Parcours codé

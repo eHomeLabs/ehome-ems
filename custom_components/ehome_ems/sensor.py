@@ -1,6 +1,7 @@
 """Read-only Home Assistant power sensor mapping."""
 from .measurement import normalize_power, normalize_battery
 from .home_balance import home_sources, calculate_home
+from .usage import normalize_usage
 from datetime import datetime, timedelta, timezone
 
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
@@ -11,6 +12,7 @@ from .const import (
     SOURCES, CONF_GRID_POWER, CONF_GRID_IMPORT, CONF_GRID_EXPORT,
     CONF_SOLAR_POWER, CONF_HOME_POWER,
     CONF_BATTERIES, BATTERY_SOURCES, HOME_MODE,
+    CONF_USAGES, USAGE_SOURCES,
 )
 
 LABELS = {
@@ -41,6 +43,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
             MappedPowerSensor(entry.entry_id, key, battery[key],
                               battery=battery, battery_id=battery_id)
             for key in BATTERY_SOURCES if battery.get(key)
+        )
+    for usage_id, usage in mapping.get(CONF_USAGES, {}).items():
+        entities.extend(
+            UsageSensor(entry.entry_id, usage_id, usage, key)
+            for key in USAGE_SOURCES if usage.get(key)
         )
     async_add_entities(entities)
 
@@ -173,4 +180,39 @@ class CalculatedHomePower(SensorEntity):
             "source_entity_ids": [source for _, source, _ in self._sources],
             "max_source_age_seconds": max_age,
             "balance_topology": "ac_loads",
+        }
+
+
+class UsageSensor(MappedPowerSensor):
+    """A usage is a breakdown of home loads, never a new balance input."""
+
+    def __init__(self, entry_id, usage_id, usage, key):
+        super().__init__(entry_id, f"usage_{usage_id}_{key}", usage[key])
+        self._usage = usage
+        self._usage_id = usage_id
+        self._usage_key = key
+        self._attr_name = f"eHome EMS {usage['name']} {key}"
+        if key == "energy":
+            self._attr_device_class = SensorDeviceClass.ENERGY
+            self._attr_native_unit_of_measurement = "kWh"
+        elif key == "status":
+            self._attr_device_class = None
+            self._attr_state_class = None
+            self._attr_native_unit_of_measurement = None
+
+    @callback
+    def _update_from_source(self):
+        state = self.hass.states.get(self._source)
+        reading = normalize_usage(
+            state.state if state else None,
+            state.attributes.get("unit_of_measurement") if state else None,
+            self._usage_key,
+        )
+        self._attr_native_value = reading.value
+        self._attr_available = reading.value is not None
+        self._attr_extra_state_attributes = {
+            "source_entity_id": self._source, "data_quality": reading.quality,
+            "value_origin": "external_source", "usage_id": self._usage_id,
+            "usage_kind": self._usage["kind"], "included_in_home": True,
+            "energy_period": self._usage.get("energy_period", "total") if self._usage_key == "energy" else None,
         }

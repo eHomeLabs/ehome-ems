@@ -37,6 +37,18 @@ class DashboardTests(TestCase):
                        {"home_power": "sensor.calculated_home"})
         self.assertIn("sensor.calculated_home", str(result))
 
+    def test_usage_energy_periods_remain_distinct_and_native(self):
+        result = build({"usages": {"load": {"name": "EV", "kind": "ev_charger",
+            "energy_period": "session", "power": "sensor.source", "energy": "sensor.energy",
+            "status": "switch.status", "included_in_home": True}}},
+            {"usage_load_power": "sensor.load_power", "usage_load_energy": "sensor.load_energy",
+             "usage_load_status": "sensor.load_status"})
+        self.assertIn("Énergie de session", str(result))
+        self.assertIn("sensor.load_status", str(result))
+        self.assertNotIn("switch.status", str(result))
+        history = [card for card in cards(result) if card["type"] == "history-graph"][0]
+        self.assertEqual(history["entities"], ["sensor.load_power"])
+
     def test_empty_modules_and_missing_mirrors_are_not_invented(self):
         config = build({"solar_power": "sensor.original"}, {})
         self.assertEqual(config["missing_entities"], ["solar_power"])

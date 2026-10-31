@@ -8,6 +8,8 @@ le dashboard animé de la V2 et ne constitue pas une validation officielle HACS.
 
 - Synthèse : puissances normalisées et jauges réseau/solaire/maison disponibles.
 - Stockage : une section par batterie, avec rôle actif/secours et couplage AC/DC.
+- Usages (0.2.0b4) : une section par routeur/ECS, borne VE ou autre charge, sans
+  addition au total maison. L'énergie affiche sa période déclarée.
 - Historique : courbes de puissance sur 24 h, si Recorder conserve ces entités.
 - Qualité : attribut data_quality des mesures. La fraîcheur n'est pas encore évaluée.
 

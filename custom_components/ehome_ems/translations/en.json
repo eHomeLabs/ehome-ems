@@ -43,14 +43,15 @@
         }
       },
       "review": {
-        "title": "5 — Review measurements",
+        "title": "6 — Review measurements",
         "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings. For Home calculation, negative_balance indicates a negative balance: check boundary, signs and readings. Freshness is checked on the running sensor.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
           "solar": "Edit solar",
           "home": "Edit home",
-          "batteries": "Edit batteries"
+          "batteries": "Edit batteries",
+          "usages": "Edit loads"
         }
       },
       "confirm": {
@@ -67,7 +68,7 @@
           "add_battery": "Add battery",
           "edit_battery": "Edit battery",
           "remove_battery": "Remove battery from monitoring",
-          "review": "Continue to review"
+          "usages": "Continue to loads"
         }
       },
       "add_battery": {
@@ -130,6 +131,73 @@
         "data": {
           "battery_id": "Battery to remove"
         }
+      },
+      "usages": {
+        "title": "5 — Loads: solar router, EV and other appliances",
+        "description": "Add loads to show separately, or continue without any. Their consumption is already included in total home demand; it will not be added again. This monitoring sends no commands to F1ATB, the charger or other equipment.\n\n{summary}",
+        "menu_options": {
+          "add_usage": "Add load",
+          "edit_usage": "Edit load",
+          "remove_usage": "Remove load",
+          "review": "Continue to review"
+        }
+      },
+      "add_usage": {
+        "title": "Add load",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "kind": "Load type",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "kind": "The type organizes the display; it does not create a direct router or vehicle connection.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "usage_details": {
+        "title": "Edit load",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "kind": "Load type",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "kind": "The type organizes the display; it does not create a direct router or vehicle connection.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "edit_usage": {
+        "title": "Choose load to edit",
+        "data": {
+          "usage_id": "Load"
+        }
+      },
+      "remove_usage": {
+        "title": "Remove load from monitoring",
+        "description": "Removal is applied at final confirmation. It does not remove equipment or its integration, and sends no commands.",
+        "data": {
+          "usage_id": "Load"
+        }
       }
     },
     "error": {
@@ -145,7 +213,9 @@
       "boundary_unconfirmed": "First confirm that balance readings share the same AC boundary.",
       "solar_configuration": "Check declared solar presence and the mapping in the Solar step.",
       "storage_configuration": "Check declared storage presence and active batteries in the Storage step.",
-      "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor."
+      "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor.",
+      "invalid_usage": "Check name, type and energy period.",
+      "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load."
     },
     "abort": {
       "already_configured": "eHome EMS is already configured. Use Configure to edit its settings."
@@ -195,14 +265,15 @@
         }
       },
       "review": {
-        "title": "5 — Review measurements",
+        "title": "6 — Review measurements",
         "description": "Check the mappings and readings:\n\n{summary}\n\n[valid] means a readable numeric value and unit; it does not guarantee a physically correct sensor choice. [cumulative_energy]: replace the cumulative counter. [exceeds_capacity]: remaining energy is above capacity × 1.10. Other codes indicate unavailable/invalid data or an unexpected direction. Edit any step to correct mappings. For Home calculation, negative_balance indicates a negative balance: check boundary, signs and readings. Freshness is checked on the running sensor.",
         "menu_options": {
           "confirm": "Continue to confirmation",
           "grid": "Edit grid",
           "solar": "Edit solar",
           "home": "Edit home",
-          "batteries": "Edit batteries"
+          "batteries": "Edit batteries",
+          "usages": "Edit loads"
         }
       },
       "confirm": {
@@ -219,7 +290,7 @@
           "add_battery": "Add battery",
           "edit_battery": "Edit battery",
           "remove_battery": "Remove battery from monitoring",
-          "review": "Continue to review"
+          "usages": "Continue to loads"
         }
       },
       "add_battery": {
@@ -282,6 +353,73 @@
         "data": {
           "battery_id": "Battery to remove"
         }
+      },
+      "usages": {
+        "title": "5 — Loads: solar router, EV and other appliances",
+        "description": "Add loads to show separately, or continue without any. Their consumption is already included in total home demand; it will not be added again. This monitoring sends no commands to F1ATB, the charger or other equipment.\n\n{summary}",
+        "menu_options": {
+          "add_usage": "Add load",
+          "edit_usage": "Edit load",
+          "remove_usage": "Remove load",
+          "review": "Continue to review"
+        }
+      },
+      "add_usage": {
+        "title": "Add load",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "kind": "Load type",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "kind": "The type organizes the display; it does not create a direct router or vehicle connection.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "usage_details": {
+        "title": "Edit load",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "kind": "Load type",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "kind": "The type organizes the display; it does not create a direct router or vehicle connection.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "edit_usage": {
+        "title": "Choose load to edit",
+        "data": {
+          "usage_id": "Load"
+        }
+      },
+      "remove_usage": {
+        "title": "Remove load from monitoring",
+        "description": "Removal is applied at final confirmation. It does not remove equipment or its integration, and sends no commands.",
+        "data": {
+          "usage_id": "Load"
+        }
       }
     },
     "error": {
@@ -297,7 +435,9 @@
       "boundary_unconfirmed": "First confirm that balance readings share the same AC boundary.",
       "solar_configuration": "Check declared solar presence and the mapping in the Solar step.",
       "storage_configuration": "Check declared storage presence and active batteries in the Storage step.",
-      "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor."
+      "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor.",
+      "invalid_usage": "Check name, type and energy period.",
+      "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load."
     }
   },
   "selector": {
@@ -317,6 +457,20 @@
       "options": {
         "existing": "Use my existing sensor",
         "calculated": "Calculate automatically in eHome EMS"
+      }
+    },
+    "usage_kind": {
+      "options": {
+        "solar_router": "Solar router / water heating",
+        "ev_charger": "EV charging",
+        "other": "Other load"
+      }
+    },
+    "usage_energy_period": {
+      "options": {
+        "today": "Today",
+        "session": "Current or last session",
+        "total": "Cumulative total"
       }
     }
   },

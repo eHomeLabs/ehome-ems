@@ -7,6 +7,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 
 from .const import DOMAIN, SOURCES, CONF_BATTERIES, BATTERY_SOURCES
+from .const import CONF_USAGES, USAGE_SOURCES
 from .dashboard import build_dashboard
 
 SERVICE_GENERATE = "generate_dashboard"
@@ -40,6 +41,10 @@ def register_dashboard_service(hass):
             f"{battery_id}_{key}"
             for battery_id, battery in mapping.get(CONF_BATTERIES, {}).items()
             for key in BATTERY_SOURCES if battery.get(key)
+        ]
+        suffixes += [
+            f"usage_{usage_id}_{key}" for usage_id, usage in mapping.get(CONF_USAGES, {}).items()
+            for key in USAGE_SOURCES if usage.get(key)
         ]
         entities = {}
         for suffix in suffixes:

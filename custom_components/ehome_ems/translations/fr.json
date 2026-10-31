@@ -43,14 +43,15 @@
         }
       },
       "review": {
-        "title": "5 — Vérifier les mesures",
+        "title": "6 — Vérifier les mesures",
         "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape. Pour le calcul Maison, negative_balance indique un bilan négatif : vérifiez périmètre, signes et mesures. Le contrôle de fraîcheur est appliqué au capteur en fonctionnement.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
           "solar": "Modifier le photovoltaïque",
           "home": "Modifier la maison",
-          "batteries": "Modifier les batteries"
+          "batteries": "Modifier les batteries",
+          "usages": "Modifier les usages"
         }
       },
       "confirm": {
@@ -67,7 +68,7 @@
           "add_battery": "Ajouter une batterie",
           "edit_battery": "Modifier une batterie",
           "remove_battery": "Retirer une batterie du suivi",
-          "review": "Continuer vers la vérification"
+          "usages": "Continuer vers les usages"
         }
       },
       "add_battery": {
@@ -130,6 +131,73 @@
         "data": {
           "battery_id": "Batterie à retirer"
         }
+      },
+      "usages": {
+        "title": "5 — Usages : routeur solaire, VE et autres charges",
+        "description": "Ajoutez les équipements à détailler, ou continuez sans usage. Leur consommation est déjà incluse dans le total maison : elle ne sera pas ajoutée une seconde fois. Ce suivi n’envoie aucune commande à F1ATB, à la borne ou aux autres équipements.\n\n{summary}",
+        "menu_options": {
+          "add_usage": "Ajouter un usage",
+          "edit_usage": "Modifier un usage",
+          "remove_usage": "Retirer un usage du suivi",
+          "review": "Continuer vers la vérification"
+        }
+      },
+      "add_usage": {
+        "title": "Ajouter un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "usage_details": {
+        "title": "Modifier un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "edit_usage": {
+        "title": "Choisir l’usage à modifier",
+        "data": {
+          "usage_id": "Usage"
+        }
+      },
+      "remove_usage": {
+        "title": "Retirer un usage du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne supprime pas l’équipement ni son intégration et n’envoie aucune commande.",
+        "data": {
+          "usage_id": "Usage"
+        }
       }
     },
     "error": {
@@ -145,7 +213,9 @@
       "boundary_unconfirmed": "Confirmez d’abord que les mesures du bilan partagent le même périmètre AC.",
       "solar_configuration": "Vérifiez la présence déclarée du photovoltaïque et sa mesure à l’étape Solaire.",
       "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
-      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant."
+      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
+      "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
+      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage."
     },
     "abort": {
       "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
@@ -195,14 +265,15 @@
         }
       },
       "review": {
-        "title": "5 — Vérifier les mesures",
+        "title": "6 — Vérifier les mesures",
         "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape. Pour le calcul Maison, negative_balance indique un bilan négatif : vérifiez périmètre, signes et mesures. Le contrôle de fraîcheur est appliqué au capteur en fonctionnement.",
         "menu_options": {
           "confirm": "Continuer vers la confirmation",
           "grid": "Modifier le réseau",
           "solar": "Modifier le photovoltaïque",
           "home": "Modifier la maison",
-          "batteries": "Modifier les batteries"
+          "batteries": "Modifier les batteries",
+          "usages": "Modifier les usages"
         }
       },
       "confirm": {
@@ -219,7 +290,7 @@
           "add_battery": "Ajouter une batterie",
           "edit_battery": "Modifier une batterie",
           "remove_battery": "Retirer une batterie du suivi",
-          "review": "Continuer vers la vérification"
+          "usages": "Continuer vers les usages"
         }
       },
       "add_battery": {
@@ -282,6 +353,73 @@
         "data": {
           "battery_id": "Batterie à retirer"
         }
+      },
+      "usages": {
+        "title": "5 — Usages : routeur solaire, VE et autres charges",
+        "description": "Ajoutez les équipements à détailler, ou continuez sans usage. Leur consommation est déjà incluse dans le total maison : elle ne sera pas ajoutée une seconde fois. Ce suivi n’envoie aucune commande à F1ATB, à la borne ou aux autres équipements.\n\n{summary}",
+        "menu_options": {
+          "add_usage": "Ajouter un usage",
+          "edit_usage": "Modifier un usage",
+          "remove_usage": "Retirer un usage du suivi",
+          "review": "Continuer vers la vérification"
+        }
+      },
+      "add_usage": {
+        "title": "Ajouter un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "usage_details": {
+        "title": "Modifier un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "edit_usage": {
+        "title": "Choisir l’usage à modifier",
+        "data": {
+          "usage_id": "Usage"
+        }
+      },
+      "remove_usage": {
+        "title": "Retirer un usage du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne supprime pas l’équipement ni son intégration et n’envoie aucune commande.",
+        "data": {
+          "usage_id": "Usage"
+        }
       }
     },
     "error": {
@@ -297,7 +435,9 @@
       "boundary_unconfirmed": "Confirmez d’abord que les mesures du bilan partagent le même périmètre AC.",
       "solar_configuration": "Vérifiez la présence déclarée du photovoltaïque et sa mesure à l’étape Solaire.",
       "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
-      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant."
+      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
+      "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
+      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage."
     }
   },
   "selector": {
@@ -317,6 +457,20 @@
       "options": {
         "existing": "Utiliser mon capteur existant",
         "calculated": "Calculer automatiquement dans eHome EMS"
+      }
+    },
+    "usage_kind": {
+      "options": {
+        "solar_router": "Routeur solaire / ECS",
+        "ev_charger": "Recharge véhicule électrique",
+        "other": "Autre usage"
+      }
+    },
+    "usage_energy_period": {
+      "options": {
+        "today": "Aujourd’hui",
+        "session": "Session en cours ou dernière session",
+        "total": "Cumul total"
       }
     }
   },

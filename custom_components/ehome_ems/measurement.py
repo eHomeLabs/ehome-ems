@@ -12,7 +12,7 @@ from math import isfinite
 class PowerReading:
     """Normalized value and an explicit quality reason."""
 
-    value: float | None
+    value: float | str | None
     quality: str
 
 

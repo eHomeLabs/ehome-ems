@@ -1,5 +1,5 @@
 """Pure generation of an editable, native-card observation dashboard."""
-from .const import SOURCES, BATTERY_SOURCES, CONF_BATTERIES
+from .const import SOURCES, BATTERY_SOURCES, CONF_BATTERIES, CONF_USAGES, USAGE_SOURCES
 
 LABELS = {
     "fr": {
@@ -15,6 +15,10 @@ LABELS = {
                   "Les mesures absentes restent indisponibles ; aucun bilan solaire n’est estimé.",
         "empty": "Aucune mesure disponible dans le registre. Vérifiez les associations et les entités désactivées.",
         "storage_only": "Les mesures disponibles sont dans la vue Stockage.",
+        "usages": "Usages", "status": "État", "energy_today": "Énergie du jour",
+        "energy_session": "Énergie de session", "energy_total": "Compteur cumulé",
+        "usages_note": "Ces usages sont déjà inclus dans la consommation maison. Ne pas les ajouter une seconde fois. Suivi seul : aucun ordre envoyé au routeur ou à la borne.",
+        "breakdown_only": "Les mesures détaillées sont disponibles dans les autres vues.",
     },
     "en": {
         "summary": "Overview", "storage": "Storage", "history": "History",
@@ -29,6 +33,10 @@ LABELS = {
                   "Missing readings stay unavailable; no solar balance is estimated.",
         "empty": "No readings available in the registry. Check mappings and disabled entities.",
         "storage_only": "Available readings are in the Storage view.",
+        "usages": "Loads", "status": "Status", "energy_today": "Today's energy",
+        "energy_session": "Session energy", "energy_total": "Cumulative counter",
+        "usages_note": "These loads are already included in home consumption. Do not add them again. Monitoring only: no commands to the router or charger.",
+        "breakdown_only": "Detailed readings are available in the other views.",
     },
 }
 
@@ -110,13 +118,40 @@ def build_dashboard(mapping, entities, *, language="fr", max_power_w=10000):
                 cards.append({"type": "grid", "columns": 2, "square": False, "cards": battery_gauges})
             storage_cards.append({"type": "vertical-stack", "cards": cards})
 
+    usage_cards = []
+    for usage_id, usage in mapping.get(CONF_USAGES, {}).items():
+        rows = []
+        usage_power_gauge = None
+        for key in USAGE_SOURCES:
+            if not usage.get(key):
+                continue
+            entity = entity_for(f"usage_{usage_id}_{key}")
+            if not entity:
+                continue
+            name = labels["power"] if key == "power" else labels["status"] if key == "status" else labels[
+                f"energy_{usage.get('energy_period', 'total')}"
+            ]
+            rows.append(row(entity, name))
+            quality_row(entity, f"{usage['name']} / {name}")
+            if key == "power":
+                powers.append(entity)
+                usage_power_gauge = gauge(entity, labels["power"])
+        if rows:
+            group = [entities_card(usage["name"], rows)]
+            if usage_power_gauge:
+                group.append(usage_power_gauge)
+            usage_cards.append({"type": "vertical-stack", "cards": group})
     if not main_rows:
-        summary_cards.append({"type": "markdown", "content": labels["storage_only"] if storage_cards else labels["empty"]})
+        message = labels["breakdown_only"] if usage_cards else labels["storage_only"] if storage_cards else labels["empty"]
+        summary_cards.append({"type": "markdown", "content": message})
     views = [{"title": labels["summary"], "path": "summary", "icon": "mdi:home-lightning-bolt",
               "cards": summary_cards}]
     if storage_cards:
         views.append({"title": labels["storage"], "path": "storage",
                       "icon": "mdi:battery", "cards": storage_cards})
+    if usage_cards:
+        views.append({"title": labels["usages"], "path": "usages", "icon": "mdi:ev-station",
+                      "cards": [{"type": "markdown", "content": labels["usages_note"]}, *usage_cards]})
     if powers:
         views.append({"title": labels["history"], "path": "history", "icon": "mdi:chart-line",
                       "cards": [{"type": "history-graph", "title": labels["power"],

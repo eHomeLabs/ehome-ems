@@ -38,7 +38,7 @@ class SelectorDouble:
         self.config = config
 
     def __call__(self, value):
-        if not isinstance(value, str) or not value.startswith("sensor."):
+        if not isinstance(value, str) or not value.startswith(("sensor.", "binary_sensor.", "switch.", "select.")):
             raise ValueError(value)
         return value
 
@@ -316,3 +316,50 @@ class WizardTests(IsolatedAsyncioTestCase):
         self.assertIsNone(self.flow._draft["home_power"])
         result = await self.flow.async_step_confirm({})
         self.assertEqual(result["errors"]["base"], "missing_source")
+
+    async def test_usages_support_router_and_ev_and_keep_stable_ids(self):
+        await self.flow.async_step_user()
+        self.states.update({"sensor.router": state("350"), "sensor.ev": state("2", "kW"),
+                            "switch.router": state("on", None)})
+        for name, kind, source in (("Router", "solar_router", "sensor.router"), ("EV", "ev_charger", "sensor.ev")):
+            await self.flow.async_step_add_usage()
+            result = await self.flow.async_step_add_usage(
+                {"name": name, "kind": kind, "power": source, "included_in_home": True}
+            )
+            self.assertEqual(result["step_id"], "usages")
+        usage_id = next(iter(self.flow._draft["usages"]))
+        await self.flow.async_step_edit_usage({"usage_id": usage_id})
+        await self.flow.async_step_usage_details(
+            {"name": "Renamed router", "kind": "solar_router", "status": "switch.router", "included_in_home": True}
+        )
+        self.assertEqual(len(self.flow._draft["usages"]), 2)
+        self.assertEqual(self.flow._draft["usages"][usage_id]["name"], "Renamed router")
+        self.assertNotIn("power", self.flow._draft["usages"][usage_id])
+
+    async def test_usage_boundary_sources_and_period_are_checked(self):
+        await self.flow.async_step_user()
+        self.states["sensor.load"] = state("100")
+        await self.flow.async_step_add_usage()
+        result = await self.flow.async_step_add_usage({"name": "No boundary", "power": "sensor.load"})
+        self.assertEqual(result["errors"]["included_in_home"], "outside_home")
+        result = await self.flow.async_step_add_usage({"name": "No reading", "included_in_home": True})
+        self.assertEqual(result["errors"]["base"], "select_source")
+        result = await self.flow.async_step_add_usage(
+            {"name": "Bad energy", "energy": "sensor.load", "included_in_home": True}
+        )
+        self.assertEqual(result["errors"]["energy"], "unsupported_unit")
+
+    async def test_usage_removal_is_only_saved_at_confirmation(self):
+        await self.flow.async_step_user()
+        self.states["sensor.load"] = state("100")
+        await self.flow.async_step_add_usage()
+        await self.flow.async_step_add_usage({"name": "Load", "power": "sensor.load", "included_in_home": True})
+        saved = (await self.flow.async_step_confirm({}))["data"]
+        usage_id = next(iter(saved["usages"]))
+        options = flow_module.EhomeEmsOptionsFlow()
+        options.hass = self.hass
+        options.config_entry = SimpleNamespace(data={}, options=saved)
+        await options.async_step_init()
+        await options.async_step_remove_usage({"usage_id": usage_id})
+        self.assertIn(usage_id, saved["usages"])
+        self.assertEqual(options._draft["usages"], {})

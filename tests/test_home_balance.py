@@ -23,6 +23,13 @@ class HomeBalanceTests(TestCase):
         result = balance.calculate_home(config(), {"sensor.import": ("0.8", "kW"), "sensor.export": ("0", "W")})
         self.assertEqual(result.value, 800)
 
+    def test_usage_submeters_are_never_added_to_home_balance(self):
+        mapping = config(usages={"load": {"power": "sensor.load", "included_in_home": True}})
+        result = balance.calculate_home(mapping, {
+            "sensor.import": ("800", "W"), "sensor.export": ("0", "W"), "sensor.load": ("500", "W"),
+        })
+        self.assertEqual(result.value, 800)
+
     def test_solar_and_storage_are_not_counted_twice(self):
         mapping = config(home_has_solar=True, solar_power="sensor.pv", home_has_storage=True,
                          batteries={"a": {"role": "active", "coupling": "ac",

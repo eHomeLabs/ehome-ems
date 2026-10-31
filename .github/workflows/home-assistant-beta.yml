@@ -33,12 +33,13 @@ jobs:
       - run: python scripts/build_test_package.py
       - uses: actions/upload-artifact@v4
         with:
-          name: ehome-ems-0.2.0b3
+          name: ehome-ems-0.2.0b4
           path: |
-            dist/ehome-ems-0.2.0b3.zip
-            dist/ehome-ems-0.2.0b3.zip.sha256
+            dist/ehome-ems-0.2.0b4.zip
+            dist/ehome-ems-0.2.0b4.zip.sha256
             docs/INSTALLATION_BETA.md
             docs/CONSOMMATION_MAISON.md
+            docs/USAGES_OBSERVATION.md
             docs/DASHBOARD_OBSERVATION.md
             docs/VALIDATION_ASSISTANT.md
             docs/VALIDATION_0_2_0B1.md

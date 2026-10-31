@@ -6,7 +6,7 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : première bêta 0.2.0b3 en observation, préparée pour les essais.**
+**Statut : première bêta 0.2.0b4 en observation, préparée pour les essais.**
 Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
 et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
 en développement, et non une release logicielle 2.0.
@@ -15,10 +15,11 @@ en développement, et non une release logicielle 2.0.
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible sur cette branche | Bêta 0.2.0b3 en lecture seule, compatible avec les associations V0.1 |
+| Code disponible sur cette branche | Bêta 0.2.0b4 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
+| Usages | Routeur solaire/ECS, borne VE et autres charges : puissance, énergie avec période déclarée et état en lecture seule |
 | Dashboard | Première configuration native exportable : synthèse, batteries, historique et qualité ; rendu HA à valider |
 | Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
 | Prochaine étape | Installer la bêta au moment choisi puis valider les écrans et mesures sur l'installation réelle |
@@ -30,7 +31,7 @@ les prévisions, conseils et commandes ne sont pas encore disponibles.**
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
-- **Installer ou revenir en arrière :** [guide bêta 0.2.0b3](docs/INSTALLATION_BETA.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b4](docs/INSTALLATION_BETA.md).
 - **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
@@ -39,7 +40,13 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-### Retour des premiers essais — 0.2.0b3
+### Retour des premiers essais — 0.2.0b4
+
+Une étape [Usages](docs/USAGES_OBSERVATION.md) suit les batteries : routeur
+solaire/ECS, recharge VE et autres charges facultatives. Elle associe puissance
+réelle, énergie existante (jour/session/cumul) et état lu uniquement. Le dashboard
+exporté présente une vue Usages. Ces mesures ne sont jamais ajoutées au total
+maison une seconde fois ; le module ne commande ni F1ATB ni la borne.
 
 L'écran Maison permet de choisir une source existante (mesurée ou déjà calculée)
 ou un calcul automatique EMS. Le calcul est limité aux topologies AC confirmées :
