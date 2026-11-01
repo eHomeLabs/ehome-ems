@@ -1,20 +1,18 @@
-# eHome EMS — Instructions de développement V2
+# eHome EMS — Instructions de développement
 
-La référence produit est [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md), complétée par [docs/ROADMAP.md](docs/ROADMAP.md).
+La version 0.2.1 consolide le suivi énergétique en observation. Les références produit sont [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md) et [docs/ROADMAP.md](docs/ROADMAP.md).
 
-- Développer exclusivement une intégration Home Assistant distribuable via HACS / Marketplace ; réutiliser les intégrations HA existantes.
-- Le serveur autonome RPi5, FastAPI, React et SQLite comme pile imposée sont abandonnés.
-- Le code existant reste le prototype V0.1 ; ne pas présenter la V2 comme livrée et ne pas changer sa version pour une modification documentaire.
-- Priorité au lot A en lecture seule : assistant, normalisation, flux, jauges et statistiques.
-- Aucun pilotage en observation ou simulation. Activation explicite par équipement pour le futur mode automatique.
+- Développer une intégration Home Assistant distribuée via HACS / Marketplace ; réutiliser les intégrations HA existantes.
+- Aucun serveur autonome ni matériel dédié n'est requis. Validation de référence sur HA avec RPi4 et SSD, sans exclusivité matérielle.
+- Garder la documentation alignée sur les fonctions livrées. Ne pas changer la version pour une simple correction documentaire, sauf demande explicite de release.
+- Aucun pilotage en observation ou simulation. L'automatique reste futur et devra être explicitement activé par équipement.
 - Ne jamais modifier une instance HA réelle sans autorisation explicite.
-- Ne jamais committer de secrets, jetons, URL privées ni inventaires réels d'identifiants d'entités.
-- Distinguer W/kW, Wh/kWh, SOC, import/export, charge/décharge, mesure/calcul/estimation et qualité des données.
-- Prévenir les doubles comptes, respecter les topologies AC/DC et afficher les valeurs indisponibles ou périmées.
-- Ne pas assimiler toute décharge batterie à du solaire. Séparer surplus exporté et puissance réallouable.
-- Préserver les personnalisations du dashboard, les automatismes existants et les régulations natives.
-- Backend Python asynchrone, frontend adapté à HA, interfaces publiques, reload/unload propres et identifiants stables.
-- Fonctionnement local de base, aucun solveur lourd ni IA distante obligatoire ; cible de validation RPi4 avec SSD.
-- Interface responsive et accessible, français prioritaire et structure de traduction anglaise.
-- Utiliser des données simulées pour les tests significatifs : signes, unités, bilans, statistiques, arbitrage, migrations et repli.
-- Vérifier les liens et la cohérence pour les modifications documentaires ; ne pas lancer des tests matériels pour celles-ci.
+- Ne pas committer de secrets, jetons, URL privées ou inventaires réels d'entités ; utiliser les jeux simulés.
+- Distinguer W/kW, Wh/kWh, SOC, import/export, charge/décharge, stock/cumul, mesure/calcul/estimation et qualité.
+- Conso Maison = solaire + réseau signé − charge + décharge. Cumulus et borne restent inclus. Éviter les doubles comptes et respecter les périmètres AC/DC.
+- Ne jamais remplacer une source invalide ou absente par zéro, ni assimiler toute décharge batterie à du solaire.
+- Préserver les identifiants, personnalisations, automatismes et régulations natives ; modifications de paramètres rechargeables sans redémarrage global.
+- Backend Python asynchrone, interfaces HA publiques, unload/reload propres, fonctionnement local de base.
+- Interface responsive et accessible ; français prioritaire et traductions anglaises cohérentes.
+- Tests simulés significatifs : signes, unités, bilans, qualité, unités de stock, historique, changements d'heure, droits, conflits et migrations.
+- Pour le code, lancer les tests appropriés et les contrôles CI HA/navigateur. Pour la documentation, vérifier liens, captures et cohérence ; aucun test matériel implicite.

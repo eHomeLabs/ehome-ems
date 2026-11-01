@@ -1,81 +1,35 @@
-# Consommation maison : source existante ou calcul EMS
+# Conso Maison : comprendre le bilan
 
-Disponible à partir de la bêta 0.2.0b3, en observation.
+Conso Maison représente la puissance réellement consommée par tous les usages : électroménager, éclairage, chauffage, cumulus, piscine et borne de recharge. Elle s'exprime en W/kW. La charge électrique des batteries est un flux séparé.
 
-La consommation maison est la puissance utilisée à cet instant par l'ensemble
-des usages : éclairage, électroménager, chauffage, chauffe-eau, piscine, véhicule,
-etc. Elle s'exprime en W/kW. L'énergie sur une période s'exprime en Wh/kWh :
-ce n'est pas le champ demandé ici. La charge batterie est un flux séparé.
+## Source existante ou calcul automatique
 
-## Capteur existant
+Une source existante peut être une mesure complète ou un template déjà calculé. EMS la reprend sans soustraire les sous-compteurs. Une pince mesurant seulement l'arrivée réseau ne représente pas à elle seule le total consommé lorsque solaire et batteries alimentent la maison.
 
-Choix par défaut, conservé pour les anciennes configurations. Une mesure directe
-du total ou un capteur template déjà calculé convient. EMS en reprend la valeur
-sans refaire un bilan par-dessus. Ce capteur ne doit pas dépendre du capteur
-Maison produit par EMS.
+Le mode automatique applique :
 
-Un compteur ou des pinces mesurant la puissance de tous les usages, ou la somme
-cohérente de sous-compteurs, peut fournir ce total. Le périmètre physique compte
-plus que la marque du compteur. Une pince sur l'arrivée réseau peut ne mesurer
-que l'échange réseau : elle ne donne alors pas seule les usages alimentés aussi
-par le photovoltaïque ou la batterie.
+**Conso Maison = Production solaire + Réseau − Charge batterie + Décharge batterie**
 
-## Calcul automatique EMS
+Le réseau signé est positif à l'import, négatif à l'export. Avec deux sources séparées : **Réseau = Import − Export**, chacune en magnitude positive. Le mode réseau « Auto » choisit la paire complète Import/Export si elle est configurée, sinon le réseau signé ; il ne cumule jamais les deux représentations. Un choix explicite « signé » ou « séparé » est disponible.
 
-Le premier moteur applique un bilan AC :
+**Exemple :** solaire 2 000 W, export 300 W, charge batterie 500 W et décharge 0 W donnent **1 200 W** de consommation maison, sans achat réseau. Le cumulus reste inclus, de même que la borne : leurs cartes expliquent le total et ne sont ni ajoutées une seconde fois ni soustraites.
 
-P maison = P solaire + P import + somme P décharge − P injection − somme P charge.
+## Périmètre AC
 
-Le solaire est ajouté : il alimente les usages même lorsque le réseau importe peu.
-Le cumulus, le routeur solaire et la recharge VE font partie du total maison.
-Leurs sous-compteurs décrivent une partie de ce total : ne pas les ajouter.
-Soustraire la puissance réelle du cumulus donne un autre indicateur, « maison
-hors cumulus », et non le total maison. La consigne du routeur ne remplace pas
-une mesure de puissance réellement consommée.
+- Confirmer le même périmètre électrique pour toutes les mesures ; une puissance pack/DC n'est pas interchangeable avec une puissance côté AC.
+- Déclarer le solaire réellement présent et son total AC, sans sommer un total avec ses sous-ensembles.
+- Déclarer toutes les batteries actives, avec charge et décharge positives distinctes. Les batteries de secours restent hors de ce bilan quotidien.
+- Une batterie active DC n'est pas compatible avec ce bilan AC simple. Utiliser une source maison existante adaptée à la topologie.
+- Une absence déclarée de solaire ou stockage n'est pas une façon de contourner une source manquante d'un équipement réellement présent.
 
-Exemple : 719 W solaire, 0 W import, 47 W injection, 247 W charge et 0 W décharge
-donnent 425 W pour les usages.
+## Qualité et fraîcheur
 
-Sélectionner Calculer automatiquement dans eHome EMS dans l'écran Maison.
-Le champ de source maison est alors ignoré. Le capteur EMS garde son identifiant
-unique en changeant de mode.
+Une source requise absente, indisponible, non numérique, de mauvaise unité ou de signe inattendu bloque le résultat. Un bilan négatif reste indisponible (`negative_balance`), sans être rabattu à zéro.
 
-Conditions :
+L'âge maximal est réglable : 300 s par défaut, de 30 à 3 600 s, ou 0 pour désactiver explicitement le contrôle d'âge. En observation, la politique « Signaler sans bloquer » laisse visible un bilan calculable malgré une source ancienne ; le mode strict le bloque. Une valeur stable à 0 W peut être valide même si le capteur ne publie que les changements. Aucune politique ne transforme une donnée absente ou invalide en valeur utilisable.
 
-- Import ET injection : deux sources distinctes. Le réseau signé seul n'est pas
-  encore utilisé par le calcul, faute de convention de signe configurée.
-- Présence réelle du PV déclarée, avec puissance AC totale s'il est présent.
-- Présence réelle de stockage actif déclarée ; toutes les batteries participant
-  aux flux quotidiens ajoutées avec le rôle actif.
-- Charge ET décharge de chaque batterie active mesurées côté AC. Une puissance
-  interne pack/DC n'est pas interchangeable avec une puissance AC.
-- Même périmètre de mesure, sans double compte de production ni de stockage.
-  Cette cohérence doit être explicitement confirmée.
+Le diagnostic détaille les contributions, la représentation réseau, les âges et la qualité. Des publications non synchronisées peuvent expliquer des écarts transitoires. L'attribut `value_origin` distingue source externe et calcul EMS. Changer de mode conserve l'identifiant logique du capteur maison.
 
-Les batteries actives DC bloquent le calcul AC simple. Pour un système hybride ou
-une topologie différente, conserver un capteur maison existant adapté.
-Les batteries de secours sont hors de ce bilan quotidien. Si elles alimentent
-les usages au quotidien, revoir leur rôle et leur périmètre ; ne pas les exclure
-pour contourner une mesure manquante.
+![Contributions au bilan maison](screenshots/home-balance.png)
 
-Déclarer un module absent signifie zéro pour ce module uniquement. Ne pas déclarer
-absent un équipement réellement présent pour contourner une mesure manquante.
-
-## Données manquantes et fraîcheur
-
-Une source requise absente, indisponible, de mauvaise unité, non numérique ou de
-signe inattendu rend le résultat indisponible. Un bilan négatif est également
-indisponible (negative_balance), sans être ramené artificiellement à zéro.
-
-L'âge maximal des sources est réglable de 30 à 3 600 s, 300 s par défaut, à partir
-de la dernière publication d'état HA (last_reported). Le contrôle est réévalué
-toutes les 30 s et à chaque changement. Adapter l'âge pour les appareils qui ne
-publient qu'en cas de variation. La fraîcheur ne garantit pas la synchronisation :
-des écarts transitoires restent possibles.
-
-L'attribut value_origin distingue external_source et calculated. Lorsque le
-capteur est disponible, les sources et la qualité du calcul sont exposées.
-HA peut masquer les attributs d'un capteur indisponible.
-
-Ce bilan calcule une puissance, pas l'origine solaire du stock batterie, un taux
-d'autonomie ni une énergie journalière.
+Ce bilan est une puissance instantanée : il ne calcule pas à lui seul l'énergie journalière, l'origine solaire du stock batterie ni une économie réalisée.

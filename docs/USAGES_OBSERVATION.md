@@ -1,61 +1,31 @@
-# Usages : F1ATB/ECS, recharge VE et autres charges
+# Usages et Mes Appareils
 
-À partir de 0.2.0b4, une étape Usages suit les batteries. Elle permet d'ajouter,
-renommer, modifier ou retirer plusieurs usages avant confirmation finale.
-Les identifiants sont stables ; aucune intégration constructeur n'est supprimée.
-L'étape est facultative : Continuer vers la vérification permet de l'ignorer.
+Le panneau suit des entités déjà disponibles dans HA. **Mes Appareils** permet d'ajouter, modifier et retirer des appareils directement. **Usages** présente notamment routeur/cumulus et borne de recharge. Les identifiants sont conservés lors d'une modification ; retirer du suivi ne désinstalle pas l'intégration constructeur.
 
-## Champs
+## Sources et icônes
 
-- Type : routeur solaire/ECS, recharge véhicule électrique ou autre usage.
-- Puissance réellement consommée, en W/kW.
-- Compteur d'énergie existant, en Wh/kWh, facultatif.
-- Période réelle de ce compteur : aujourd'hui, session ou cumul total.
-- État existant, facultatif : sensor, binary_sensor, switch ou select.
-- Confirmation que l'usage appartient au périmètre de consommation maison.
+Nom, puissance W/kW, énergie Wh/kWh, période du compteur, état facultatif et confirmation du périmètre maison. Le cumulus accepte aussi une température d'eau facultative. Au moins une source est nécessaire.
 
-Au moins une mesure ou un état est nécessaire. Les sources absentes, les mauvaises
-unités et les doublons sont refusés. Une source indisponible reste indisponible.
-Un compteur cumulé peut être suivi comme cumul : il n'est pas transformé en
-consommation du jour. La période est déclarée par l'utilisateur ; les unités
-seules ne permettent pas de la deviner.
+L'icône native MDI est choisie selon le nom : réfrigérateur, lave-linge, sèche-serviettes, piscine, climatisation, cafetière, etc. Le champ **Icône du produit** permet une sélection manuelle. Les sous-compteurs restent inclus dans Conso Maison ; ils ne sont jamais ajoutés ou soustraits à son bilan.
 
-## F1ATB et chauffe-eau
+## Énergie quotidienne depuis un cumul
 
-La puissance du compteur du cumulus peut représenter la consommation réelle.
-Elle est distincte d'un pourcentage SSR, d'une consigne de puissance ou d'un
-ordre de forçage. L'énergie du jour peut provenir d'un compteur journalier existant.
-L'état peut représenter le routage ou un mode déjà exposé dans HA.
-Ce module ne se connecte pas directement à F1ATB : il lit les entités HA choisies.
+Déclarer la période réelle de la source : **aujourd'hui**, **session** ou **total cumulé**. Pour un cumul, le panneau utilise l'historique à minuit dans le fuseau HA et la variation jusqu'à maintenant, avec traitement des remises à zéro. **Énergie Totale** affiche le compteur source, distinct du résultat calculé du jour.
 
-## Borne VE
+Exemple : 1 524,81 kWh actuellement − 1 524 kWh à minuit = **0,81 kWh aujourd'hui**. Sans référence historique exploitable à minuit, énergie et coût du jour restent indisponibles. Un compteur de session n'est pas transformé en compteur journalier. Un compteur déclaré « aujourd'hui » doit réellement couvrir le jour courant.
 
-Choisir la puissance consommée par la borne, plutôt que l'import réseau ou toute
-la maison. L'énergie peut correspondre à la session, à aujourd'hui ou au cumul
-selon le compteur associé. L'état reflète exactement la source choisie : véhicule
-branché, charge en cours ou autre état ; ils ne sont pas déduits l'un de l'autre.
-Ce premier module accepte un état par usage.
+Le coût estimatif applique le tarif fixe configuré à l'énergie quotidienne exploitable, hors abonnement et revente. Ce n'est pas une facturation HP/HC ou Tempo.
 
-## Total maison et absence de commande
+![Appareils, tendances et énergie quotidienne](screenshots/appliances.png)
 
-Ces consommations sont déjà contenues dans le total maison, qu'il provienne
-d'un capteur existant ou du bilan AC. Elles ne sont jamais ajoutées une seconde
-fois ni soustraites du total. Elles servent à expliquer sa répartition.
-Un usage hors de ce périmètre ne doit pas être déclaré comme inclus.
+## Cumulus et borne
 
-Même si un switch est sélectionné pour lire son état, le miroir est un sensor
-sans commande. Aucune consigne, aucun changement de mode et aucun ordre de charge
-ne sont envoyés. Les automatismes du routeur et de la borne restent inchangés.
-Priorités, échéances VE, puissance réglable et coordination du surplus sont des
-fonctions futures, distinctes de ce suivi.
+La puissance réelle consommée est distincte de la consigne SSR, du pourcentage de routage ou d'un ordre de forçage. « Température non associée » signifie qu'aucun capteur de température n'est configuré ; « Température indisponible » concerne la source de température associée. Ces mentions ne signifient pas que la puissance du cumulus est indisponible. L'échelle thermique 0–100 °C n'est pas un stock énergétique mesuré.
 
-## Dashboard
+La borne affiche sa puissance et l'énergie selon la période déclarée, avec une silhouette dédiée. Un état comme « branché » ne prouve pas une recharge active. Les régulations natives F1ATB et constructeur restent inchangées.
 
-La configuration exportée comprend une vue Usages avec puissance, jauge, énergie
-et sa période, ainsi que l'état disponible. L'historique des puissances comprend
-les sous-consommations ; il ne les additionne pas. Les jauges utilisent l'échelle
-d'affichage générale, à personnaliser dans la copie du dashboard.
+## Tendances
 
-La copie déjà installée n'est pas mise à jour automatiquement : régénérer puis
-reporter les éléments souhaités dans un nouveau dashboard.
-Les bilans journaliers calculés par EMS et les flux animés restent à développer.
+Une seule flèche par carte : hausse, baisse ou stabilité entre moyennes de quarts d'heure sur six heures. Sans données suffisantes, flèche horizontale et mention explicite. Rouge pour une charge consommant une puissance positive, bleue sinon ; production, export et décharge restent bleus. Le seuil de 10 W concerne seulement l'animation des flux, pas la couleur de consommation.
+
+Même si une source `switch` est choisie pour son état, EMS ne fait que la lire. Aucune consigne ni commande n'est envoyée.
