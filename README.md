@@ -6,9 +6,9 @@
 
 eHome EMS est une intégration Home Assistant qui rassemble les mesures de votre installation dans un dashboard énergétique : solaire, réseau, consommation de la maison, batteries et appareils suivis. Elle réutilise vos intégrations et capteurs existants.
 
-**Version actuelle : [0.2.0b14 — préversion publique](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.0b14).** Le suivi fonctionne en observation, sans commande physique. Les priorités et scénarios de simulation restent distincts d’un pilotage réel.
+**Version actuelle : [0.2.0b15 — préversion publique](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.0b15).** Le suivi fonctionne en observation, sans commande physique. Les priorités et scénarios de simulation restent distincts d’un pilotage réel.
 
-[Installation](#installation) · [Découvrir le dashboard](#découvrir-le-dashboard) · [Conso Maison](#comprendre-conso-maison) · [Limites](#ce-qui-est-disponible-et-ce-qui-reste-à-développer) · [Notes b14](docs/RELEASE_0_2_0B14.md)
+[Installation](#installation) · [Découvrir le dashboard](#découvrir-le-dashboard) · [Conso Maison](#comprendre-conso-maison) · [Limites](#ce-qui-est-disponible-et-ce-qui-reste-à-développer) · [Notes b15](docs/RELEASE_0_2_0B15.md)
 
 ## Découvrir le dashboard
 
@@ -23,7 +23,7 @@ Les mesures principales sont en haut, la maison et les flux au centre, la situat
 - **Jaune : solaire ; rouge : import ; bleu : export ; vert : stockage.** Les usages conservent leurs couleurs dédiées.
 - Les flux s’animent à partir de **10 W**. Une consommation de 1 W reste affichée sans animation et ne prouve pas qu’un appareil est arrêté.
 - La maison passe automatiquement en mode **jour à 7 h** et **nuit à 19 h**, dans le fuseau de Home Assistant.
-- Les tendances comportent **24 pas de 15 minutes sur six heures**. Une flèche compare la moyenne d’un quart d’heure à celle du précédent. Sans données suffisantes, elle reste horizontale et explicitement neutre.
+- Les tendances sont calculées **par pas de 15 minutes sur six heures**. Une flèche compare la moyenne d’un quart d’heure à celle du précédent. Sans données suffisantes, elle reste horizontale et explicitement neutre.
 - Les valeurs utilisent au maximum deux décimales ; les **pourcentages sont affichés à l’entier**. La précision des calculs est conservée.
 
 <details>
@@ -95,7 +95,7 @@ Le détail s’ouvre automatiquement si le calcul est indisponible. Il affiche l
 **Prérequis :** Home Assistant **2026.9.1 minimum**, des capteurs déjà présents dans HA et Marketplace/HACS pour l’installation recommandée. History/Recorder doit enregistrer les sources pour les tendances et le calcul journalier depuis les cumuls.
 
 1. Dans **Marketplace/HACS → Dépôts personnalisés**, ajouter `https://github.com/eHomeLabs/ehome-ems` avec la catégorie **Intégration**.
-2. Installer la préversion **0.2.0b14** ; afficher les versions bêta si nécessaire.
+2. Installer la préversion **0.2.0b15** ; afficher les versions bêta si nécessaire.
 3. Redémarrer Home Assistant une fois, puis ouvrir **Paramètres → Appareils et services → Ajouter une intégration → eHome EMS**.
 4. Associer réseau, solaire, Conso Maison et les équipements présents dans l’assistant. Confirmer les unités et le périmètre des mesures.
 5. Ouvrir **eHome EMS** dans la barre latérale. Aucun YAML ni carte HACS tierce n’est requis pour ce panneau.
@@ -138,7 +138,7 @@ Le projet reste une bêta : **V2 désigne le périmètre produit visé, pas une 
 
 ## Documentation et contribution
 
-- [Notes et limites de la b14](docs/RELEASE_0_2_0B14.md)
+- [Notes et limites de la b15](docs/RELEASE_0_2_0B15.md)
 - [Installation et retour arrière](docs/INSTALLATION_BETA.md)
 - [Priorités et simulation](docs/SIMULATION.md)
 - [Cahier des charges V2](docs/CAHIER_DES_CHARGES.md) et [feuille de route](docs/ROADMAP.md)
@@ -150,3 +150,17 @@ Pour un retour de test, préciser les versions HA et eHome EMS, le résultat att
 Les tests couvrent les calculs, schémas de configuration, unités, signes, identifiants stables, rechargements et droits d’accès. La CI valide HA **2026.9.1** et **2026.11.0b0**, ainsi que le panneau Chromium sur ordinateur et mobile avec des données simulées. Ces validations ne remplacent pas les essais sur votre matériel.
 
 Les anciens guides du serveur autonome RPi5 et le prototype V0.1 sont historiques. Le développement actuel concerne exclusivement l’intégration Home Assistant.
+
+### Tendances, icônes et historique
+
+Chaque carte conserve une seule flèche : hausse, baisse ou stabilité, calculée par pas de 15 minutes sur les six dernières heures. Sans données, elle reste horizontale. Elle est rouge lorsqu’une charge consomme une puissance positive, bleue sinon ; la production solaire, l’export et la décharge restent bleus. Les cartes gardent les mêmes alignements.
+
+Les icônes natives Home Assistant sont choisies selon le nom du produit ; le menu « Modifier » permet aussi de choisir une icône. « Énergie Totale » désigne le compteur source, distinct de la consommation quotidienne calculée depuis minuit.
+
+Sur le cumulus, « Température non associée » ou « Température indisponible » concerne uniquement la température de l’eau ; la puissance et l’énergie restent affichées séparément.
+
+L’onglet Historique affiche les 24 dernières heures sur chaque ligne, avec les unités de la source et les interruptions de données. Cliquer sur le nom ouvre le détail natif Home Assistant. History/Recorder doit conserver ces sources.
+
+![Historique des puissances sur 24 heures, données de démonstration](docs/screenshots/history.png)
+
+La confirmation de l’assistant arrive après les raccourcis de correction. Les mesures valides apparaissent en vert, les autres en rouge. Aucun flux ne relie Conso Maison aux sous-compteurs : ceux-ci sont déjà inclus dans le total.

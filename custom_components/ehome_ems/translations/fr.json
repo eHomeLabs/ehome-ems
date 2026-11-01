@@ -165,7 +165,8 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -189,7 +190,8 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -235,7 +237,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -255,7 +258,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -487,7 +491,8 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -511,7 +516,8 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -557,7 +563,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -577,7 +584,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "icon": "Icône du produit (auto ou MDI)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",

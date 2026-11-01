@@ -56,7 +56,7 @@ automatiquement ajoutée ni soustraite au budget. Au plus 100 cibles sont trait�
 SOC, réserve batterie, échéances, pertes, topologie complète, temporisations,
 hystérésis, état des équipements et régulations natives ne sont pas encore des
 contraintes de ce premier répartiteur. Il ne coordonne pas F1ATB, Zendure ou
-evcc et ne remplace aucun de leurs automatismes. L'EMS reste en observation.
+un EMS existant et ne remplace aucun de leurs automatismes. L'EMS reste en observation.
 Aucune commande de service matériel n'est envoyée.
 
 ## Conservation et journal
@@ -80,3 +80,4 @@ secours/DC, paramètres invalides et changements concurrents ; aucun envoi de
 commande ; refus d'écriture pour les lecteurs ; journal borné et conservé sur
 reload ; modification, déplacement, sauvegarde et simulation dans Chromium
 mobile/desktop. La validation physique du pilotage ne fait pas partie de ce lot.
+

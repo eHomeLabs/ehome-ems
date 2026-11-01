@@ -180,7 +180,7 @@ class WizardTests(IsolatedAsyncioTestCase):
     async def test_unavailable_reading_is_visible_and_does_not_become_zero(self):
         self.states["sensor.pv"] = state("unavailable", "W")
         review = await self.walk_to_review()
-        self.assertIn("→ — [unavailable]", review["description_placeholders"]["summary"])
+        self.assertIn('→ — <font color="#ff6565">[unavailable]</font>', review["description_placeholders"]["summary"])
         self.assertEqual((await self.flow.async_step_confirm({}))["type"], "create_entry")
 
     async def test_source_removed_before_save_blocks_commit_and_allows_correction(self):
@@ -192,6 +192,12 @@ class WizardTests(IsolatedAsyncioTestCase):
         result = await self.flow.async_step_solar({})
         self.assertEqual(result["step_id"], "review")
         self.assertEqual((await self.flow.async_step_confirm({}))["type"], "create_entry")
+
+    async def test_review_confirmation_last_and_colored_escaped_quality(self):
+        await self.walk_to_review()
+        result = await self.flow.async_step_review()
+        self.assertEqual(result["menu_options"][-1], "confirm")
+        self.assertIn('<font color="#51d593">[valid]</font>', result["description_placeholders"]["summary"])
 
     async def test_edit_from_review_preserves_other_groups(self):
         await self.walk_to_review()

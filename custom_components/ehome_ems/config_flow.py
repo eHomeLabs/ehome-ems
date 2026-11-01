@@ -1,5 +1,6 @@
 """Read-only guided power mapping, shared by setup and options."""
 import voluptuous as vol
+from html import escape
 from collections import Counter
 from copy import deepcopy
 from math import isfinite
@@ -76,6 +77,7 @@ def usage_schema(existing):
         vol.Required("kind", default=existing.get("kind", "solar_router")): selector.SelectSelector(
             selector.SelectSelectorConfig(options=["solar_router", "ev_charger", "other", "appliance"],
                                           translation_key="usage_kind")),
+        vol.Optional("icon", default=existing.get("icon", "auto")): selector.SelectSelector(selector.SelectSelectorConfig(options=["auto","mdi:power-plug","mdi:washing-machine","mdi:dishwasher","mdi:tumble-dryer","mdi:fridge","mdi:radiator","mdi:air-conditioner","mdi:pool","mdi:coffee-maker","mdi:printer-3d-nozzle","mdi:lightbulb","mdi:television","mdi:desktop-classic","mdi:water-boiler","mdi:ev-station"])),
         vol.Required("energy_period", default=existing.get("energy_period", "total")): selector.SelectSelector(
             selector.SelectSelectorConfig(options=["today", "session", "total"], translation_key="usage_energy_period")),
         vol.Required("included_in_home", default=existing.get("included_in_home", False)): bool,
@@ -432,7 +434,8 @@ class PowerWizard:
                 continue
             state = self.hass.states.get(entity_id)
             if key.startswith("daily."):
-                rows.append(f"- Today / {key}: {entity_id} (Wh/kWh, daily source declared)")
+                reading = normalize_usage(state.state if state else None, state.attributes.get("unit_of_measurement") if state else None, "energy")
+                rows.append(f"- Today / {key}: {entity_id} (Wh/kWh, daily source declared) [{reading.quality}]")
                 continue
             if key.startswith("usages."):
                 usage = self._draft[CONF_USAGES][key.split(".")[1]]
@@ -471,13 +474,21 @@ class PowerWizard:
             reading = calculate_home(self._draft, inputs)
             value = f"{reading.value:g} W" if reading.value is not None else "—"
             rows.append(f"- Maison / Home (calcul EMS): {value} [{reading.quality}]")
-        return "\n".join(rows) or "—"
+        colored = []
+        for row in rows:
+            text = escape(row)
+            if text.endswith("]") and " [" in text:
+                prefix, quality = text.rsplit(" [", 1)
+                color = "#51d593" if quality == "valid]" else "#ff6565"
+                text = f'{prefix} <font color="{color}">[{quality}</font>'
+            colored.append(text)
+        return "\n".join(colored) or "—"
 
     async def async_step_review(self, user_input=None):
         self._reviewing = True
         return self.async_show_menu(
             step_id="review",
-            menu_options=["confirm", "grid", "solar", "home", "batteries", "usages", "appliances", "daily"],
+            menu_options=["grid", "solar", "home", "batteries", "usages", "appliances", "daily", "confirm"],
             description_placeholders={"summary": self._preview()},
         )
 
