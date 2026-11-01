@@ -158,6 +158,48 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
             remove()
         self.assertEqual(self.hass.listeners, [])
 
+    async def test_signed_grid_display_channels_and_lifecycle(self):
+        self.states["sensor.grid"] = SimpleNamespace(state="-.3", attributes={"unit_of_measurement":"kW"})
+        incoming = sensor_module.DerivedGridPower("entry", "grid_import", "sensor.grid")
+        outgoing = sensor_module.DerivedGridPower("entry", "grid_export", "sensor.grid")
+        for item in (incoming, outgoing):
+            item.hass = self.hass; item.removers = []; item.writes = 0
+            await item.async_added_to_hass()
+        self.assertEqual((incoming._attr_native_value, outgoing._attr_native_value), (0,300))
+        self.states["sensor.grid"].state = ".2"
+        for callback in self.hass.listeners: callback(None)
+        self.assertEqual((incoming._attr_native_value, outgoing._attr_native_value), (200,0))
+        self.states["sensor.grid"].state = "unavailable"
+        for callback in self.hass.listeners: callback(None)
+        self.assertIsNone(incoming._attr_native_value)
+        self.assertIsNone(outgoing._attr_native_value)
+        for item in (incoming, outgoing):
+            for remove in item.removers: remove()
+        self.assertFalse(self.hass.listeners)
+
+    async def test_home_diagnostics_explain_stale_and_explicit_timeout_disable(self):
+        now = datetime.now(timezone.utc)
+        self.states = {"sensor.grid": SimpleNamespace(state="-300", attributes={"unit_of_measurement": "W"}, last_reported=now),
+                       "sensor.pv": SimpleNamespace(state="2000", attributes={"unit_of_measurement": "W"}, last_reported=now-timedelta(hours=1))}
+        self.hass.states.get = self.states.get
+        sensor = sensor_module.CalculatedHomePower("entry", {"grid_power": "sensor.grid", "home_grid_mode": "signed", "solar_power": "sensor.pv", "home_has_solar": True, "home_has_storage": False, "home_boundary_confirmed": True})
+        sensor.hass = self.hass
+        sensor._update()
+        a = sensor._attr_extra_state_attributes
+        self.assertEqual(a["data_quality"], "stale_source")
+        self.assertEqual(a["stale_source_entity_ids"], ["sensor.pv"])
+        self.assertEqual(a["grid_representation"], "signed")
+        self.assertEqual(a["balance_inputs"][0]["contribution_w"], -300)
+        sensor._mapping["home_max_age_seconds"] = 0
+        sensor._update()
+        self.assertEqual(sensor._attr_native_value, 1700)
+        self.assertFalse(sensor._attr_extra_state_attributes["freshness_check_enabled"])
+        self.assertGreater(sensor._attr_extra_state_attributes["balance_inputs"][1]["age_seconds"], 3500)
+        self.states["sensor.pv"].state = "unavailable"
+        sensor._update()
+        self.assertIsNone(sensor._attr_native_value)
+        self.assertEqual(sensor._attr_extra_state_attributes["data_quality"], "unavailable")
+
     async def test_usage_mirrors_use_units_and_read_only_status(self):
         usage = {"name": "Router", "kind": "solar_router", "energy_period": "today",
                  "energy": "sensor.source", "status": "sensor.source", "included_in_home": True}

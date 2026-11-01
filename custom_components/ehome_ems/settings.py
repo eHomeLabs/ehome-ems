@@ -79,8 +79,12 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                         if type(values.get(key, False)) is not bool:
                             raise SettingsError("invalid_settings")
                         candidate[key] = values.get(key, False)
+                    grid_mode = values.get("home_grid_mode", "auto")
+                    if grid_mode not in ("auto", "signed", "separate"):
+                        raise SettingsError("grid_configuration")
+                    candidate["home_grid_mode"] = grid_mode
                     age = values.get("home_max_age_seconds", 300)
-                    if type(age) is not int or not 30 <= age <= 3600:
+                    if type(age) is not int or not (age == 0 or 30 <= age <= 3600):
                         raise SettingsError("invalid_settings")
                     candidate["home_max_age_seconds"] = age
         else:

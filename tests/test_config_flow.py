@@ -317,13 +317,16 @@ class WizardTests(IsolatedAsyncioTestCase):
         result = await self.flow.async_step_home({"home_power_mode": "calculated"})
         self.assertEqual(result["errors"]["home_boundary_confirmed"], "boundary_unconfirmed")
 
-    async def test_calculated_home_preserves_settings_and_checks_missing_grid(self):
+    async def test_calculated_home_preserves_settings_and_supports_signed_grid(self):
         await self.walk_to_review()
         await self.flow.async_step_home({"home_power_mode": "calculated", "home_has_solar": True,
                                         "home_has_storage": False, "home_boundary_confirmed": True})
         self.assertIsNone(self.flow._draft["home_power"])
         result = await self.flow.async_step_confirm({})
-        self.assertEqual(result["errors"]["base"], "missing_source")
+        self.assertEqual(result["type"], "create_entry")
+        self.flow._draft.pop("grid_power", None)
+        result = await self.flow.async_step_confirm({})
+        self.assertEqual(result["errors"]["base"], "missing_grid_source")
 
     async def test_usages_support_router_and_ev_and_keep_stable_ids(self):
         await self.flow.async_step_user()

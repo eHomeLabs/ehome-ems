@@ -7,7 +7,7 @@ LABELS = {
         "quality": "Qualité des données", "power": "Puissances",
         "grid_power": "Réseau signé", "grid_import": "Import réseau",
         "grid_export": "Export réseau", "solar_power": "Production solaire",
-        "home_power": "Maison", "charge_power": "Charge", "discharge_power": "Décharge",
+        "home_power": "Conso Maison", "charge_power": "Charge", "discharge_power": "Décharge",
         "soc": "État de charge", "remaining_energy": "Énergie restante",
         "active": "Active", "backup": "Secours",
         "notice": "Observation · aucune commande. Réseau signé selon la convention de la source. "
@@ -25,7 +25,7 @@ LABELS = {
         "quality": "Data quality", "power": "Power readings",
         "grid_power": "Signed grid", "grid_import": "Grid import",
         "grid_export": "Grid export", "solar_power": "Solar production",
-        "home_power": "Home", "charge_power": "Charge", "discharge_power": "Discharge",
+        "home_power": "Home consumption", "charge_power": "Charge", "discharge_power": "Discharge",
         "soc": "State of charge", "remaining_energy": "Remaining energy",
         "active": "Active", "backup": "Backup",
         "notice": "Observation · no commands. Signed grid follows the source convention. "
@@ -78,7 +78,7 @@ def build_dashboard(mapping, entities, *, language="fr", max_power_w=10000):
     summary_cards = [{"type": "markdown", "content": labels["notice"]}]
     main_rows, gauges = [], []
     for key in SOURCES:
-        if not mapping.get(key) and not (key == "home_power" and mapping.get("home_power_mode") == "calculated"):
+        if not mapping.get(key) and not (mapping.get("home_power_mode") == "calculated" and (key == "home_power" or (key in ("grid_import", "grid_export") and mapping.get("grid_power")))):
             continue
         entity = entity_for(key)
         if not entity:

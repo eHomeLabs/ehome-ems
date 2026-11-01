@@ -1,6 +1,6 @@
 """Read-only Home Assistant power sensor mapping."""
 from .measurement import normalize_power, normalize_battery
-from .home_balance import home_sources, calculate_home
+from .home_balance import home_sources, calculate_home, grid_sources
 from .usage import normalize_usage
 from datetime import datetime, timedelta, timezone
 
@@ -20,7 +20,7 @@ LABELS = {
     CONF_GRID_IMPORT: "Grid import",
     CONF_GRID_EXPORT: "Grid export",
     CONF_SOLAR_POWER: "Solar power",
-    CONF_HOME_POWER: "Home power",
+    CONF_HOME_POWER: "Conso Maison",
     "charge_power": "Charge power",
     "discharge_power": "Discharge power",
     "soc": "State of charge",
@@ -36,6 +36,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
         for key in SOURCES if mapping.get(key)
         and not (key == CONF_HOME_POWER and mapping.get(HOME_MODE) == "calculated")
     ]
+    network, _ = grid_sources(mapping)
+    if mapping.get(HOME_MODE) == "calculated" and network and network[0][0] == "grid_power":
+        entities.extend(DerivedGridPower(entry.entry_id, key, mapping["grid_power"])
+                        for key in (CONF_GRID_IMPORT, CONF_GRID_EXPORT) if not mapping.get(key))
     if mapping.get(HOME_MODE) == "calculated":
         entities.append(CalculatedHomePower(entry.entry_id, mapping))
     for battery_id, battery in mapping.get(CONF_BATTERIES, {}).items():
@@ -129,6 +133,23 @@ class MappedPowerSensor(SensorEntity):
         self._attr_available = reading.value is not None
 
 
+class DerivedGridPower(MappedPowerSensor):
+    """Split a signed grid sensor for display; never add it again to the balance."""
+
+    @callback
+    def _update_from_source(self):
+        state = self.hass.states.get(self._source)
+        reading = normalize_power(state.state if state else None,
+                                  state.attributes.get("unit_of_measurement") if state else None,
+                                  "grid_power")
+        self._attr_native_value = None if reading.value is None else max(0, reading.value if self._role == CONF_GRID_IMPORT else -reading.value)
+        self._attr_available = self._attr_native_value is not None
+        self._attr_extra_state_attributes = {
+            "value_origin": "calculated_signed_grid", "data_quality": reading.quality,
+            "source_entity_id": self._source, "sign_convention": "import_positive_export_negative",
+        }
+
+
 class CalculatedHomePower(SensorEntity):
     """Event-driven, AC-only home load power, with the same ID as its mirror."""
 
@@ -139,7 +160,7 @@ class CalculatedHomePower(SensorEntity):
 
     def __init__(self, entry_id, mapping):
         self._attr_unique_id = f"{entry_id}_{CONF_HOME_POWER}"
-        self._attr_name = "eHome EMS Home power"
+        self._attr_name = "eHome EMS Conso Maison"
         self._mapping = mapping
         self._sources, self._setup_reason = home_sources(mapping)
         self._attr_available = False
@@ -162,16 +183,26 @@ class CalculatedHomePower(SensorEntity):
     @callback
     def _update(self):
         values = {}
-        stale = False
+        details = []
+        stale_sources = []
         now = datetime.now(timezone.utc)
         max_age = self._mapping.get("home_max_age_seconds", 300)
-        for _, source, _ in self._sources:
+        for role, source, coefficient in self._sources:
             state = self.hass.states.get(source)
             if state:
                 values[source] = (state.state, state.attributes.get("unit_of_measurement"))
-                if (now - state.last_reported).total_seconds() > max_age:
-                    stale = True
+            age = max(0, (now - state.last_reported).total_seconds()) if state else None
+            normalized = normalize_power(*values.get(source, (None, None)), role)
+            is_stale = bool(max_age and age is not None and age > max_age)
+            if is_stale:
+                stale_sources.append(source)
+            details.append({"role": role, "entity_id": source, "coefficient": coefficient,
+                            "value_w": normalized.value,
+                            "contribution_w": normalized.value * coefficient if normalized.value is not None else None,
+                            "age_seconds": round(age, 1) if age is not None else None,
+                            "quality": "stale_source" if is_stale and normalized.value is not None else normalized.quality})
         reading = calculate_home(self._mapping, values)
+        stale = bool(stale_sources) and reading.value is not None
         self._attr_native_value = None if stale else reading.value
         self._attr_available = self._attr_native_value is not None
         self._attr_extra_state_attributes = {
@@ -180,6 +211,12 @@ class CalculatedHomePower(SensorEntity):
             "source_entity_ids": [source for _, source, _ in self._sources],
             "max_source_age_seconds": max_age,
             "balance_topology": "ac_loads",
+            "balance_formula": "solar + grid - battery_charge + battery_discharge",
+            "home_includes": "all_household_loads_including_water_heater_and_ev",
+            "grid_representation": "signed" if any(role == "grid_power" for role, _, _ in self._sources) else "separate",
+            "balance_inputs": details,
+            "stale_source_entity_ids": stale_sources,
+            "freshness_check_enabled": bool(max_age),
         }
 
 

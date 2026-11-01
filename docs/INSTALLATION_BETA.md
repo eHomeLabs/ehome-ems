@@ -1,4 +1,4 @@
-# eHome EMS 0.2.0b12 — installation et retour arrière
+# eHome EMS 0.2.0b13 — installation et retour arrière
 
 Première bêta en observation. Le périmètre produit « V2 » n'est pas encore livré
 en totalité. La bêta contient l'assistant, les mesures normalisées, le suivi
@@ -16,7 +16,7 @@ Tester une borne à 1 W : la valeur doit rester visible sans animation.
 Vérifier aussi une batterie avec charge et décharge à zéro : aucune carte ne
 doit recouvrir le texte placé sous la scène.
 
-La bêta 0.2.0b12 ajoute des explications dans chaque étape et une aide par champ
+La bêta 0.2.0b13 ajoute des explications dans chaque étape et une aide par champ
 pour les batteries. Une consommation maison déjà calculée est acceptée si elle
 décrit les usages réels. L'énergie restante doit être un stock, pas un compteur
 cumulatif. Les compteurs déclarés total/total_increasing sont refusés ; au-delà
@@ -26,7 +26,7 @@ Le champ reste facultatif : laissez-le vide si aucune source ne convient.
 La vue automatique et la copie native sont disponibles depuis 0.2.0b5 ;
 un synoptique animé est disponible dans la vue gérée depuis 0.2.0b7.
 
-La bêta 0.2.0b12 organise le dashboard avec une navigation haute : Vue d’ensemble,
+La bêta 0.2.0b13 organise le dashboard avec une navigation haute : Vue d’ensemble,
 Historique, Stockage, Usages, Stratégie et Configuration. Les mesures principales
 sont en haut, le flux au centre, les usages en bas et la situation EMS à droite
 sur PC. Sur mobile, la colonne de droite passe sous le flux et les usages.
@@ -47,14 +47,14 @@ La b11 ajoute Mes Appareils et Aujourd’hui, les cartes de puissance colorées 
 
 Dans GitHub → Actions → Home Assistant beta package, ouvrir une exécution réussie
 correspondant au dernier commit de la proposition de code puis télécharger
-l'artefact ehome-ems-0.2.0b12. Il contient le ZIP installable, son SHA-256 et ce guide.
+l'artefact ehome-ems-0.2.0b13. Il contient le ZIP installable, son SHA-256 et ce guide.
 Le paquet est produit seulement après succès de la validation backend HA réelle.
 Les artefacts GitHub sont conservés 90 jours et peuvent être reconstruits avec
 scripts/build_test_package.py ou en relançant le workflow.
 
 Le ZIP installable contient custom_components/ehome_ems uniquement. L'archive
 d'artefact GitHub est une enveloppe : extraire d'abord le fichier
-ehome-ems-0.2.0b12.zip qu'elle contient.
+ehome-ems-0.2.0b13.zip qu'elle contient.
 
 La cible actuelle est Home Assistant Core 2026.11.0b0 et Python 3.14.
 La CI vérifie aussi 2026.9.1 comme point de comparaison.
@@ -72,13 +72,13 @@ propre environnement. Aucune autre version HA n'est déclarée validée ici.
 
 ## Installation manuelle de la bêta
 
-Le dépôt est public. La méthode recommandée est désormais Marketplace/HACS : ajouter https://github.com/eHomeLabs/ehome-ems en dépôt personnalisé de catégorie Intégration, puis sélectionner la préversion 0.2.0b12 (afficher les bêtas si nécessaire). Le ZIP reste une alternative.
+Le dépôt est public. La méthode recommandée est désormais Marketplace/HACS : ajouter https://github.com/eHomeLabs/ehome-ems en dépôt personnalisé de catégorie Intégration, puis sélectionner la préversion 0.2.0b13 (afficher les bêtas si nécessaire). Le ZIP reste une alternative.
 
-1. Extraire ehome-ems-0.2.0b12.zip sur le PC.
+1. Extraire ehome-ems-0.2.0b13.zip sur le PC.
 2. Copier son dossier custom_components/ehome_ems dans
    /config/custom_components/ehome_ems sur HA, en remplaçant le code précédent.
    Vérifier qu'il n'y a pas de niveau ehome_ems/ehome_ems imbriqué.
-3. Vérifier la présence de manifest.json avec version 0.2.0b12.
+3. Vérifier la présence de manifest.json avec version 0.2.0b13.
    Copier aussi les sous-dossiers frontend et brand, avec tous leurs fichiers.
 4. Redémarrer Home Assistant une fois pour charger le nouveau code.
 5. Si l'intégration existe déjà : Paramètres → Appareils et services → eHome EMS
@@ -115,7 +115,7 @@ et la version chargée : ne pas conclure automatiquement à un problème de cach
 
 Après remplacement complet du dossier, redémarrer HA une fois puis recharger
 complètement la page ou fermer/réouvrir l'application HA. Dans Configuration,
-les versions Interface et Intégration doivent toutes deux indiquer 0.2.0b12.
+les versions Interface et Intégration doivent toutes deux indiquer 0.2.0b13.
 Un serveur ne fournissant pas le flux déclenche maintenant une explication visible,
 au lieu de masquer silencieusement le composant.
 
