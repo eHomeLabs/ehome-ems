@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>eHome EMS — fixture simulée</title><style>html,body{margin:0;min-height:100%;--primary-background-color:#101820;--primary-text-color:#eef4fa;--card-background-color:#15222d;--divider-color:#3b536b;--primary-color:#70a246;--text-primary-color:#fff}</style>
+<title>eHome EMS — fixture simulée</title><style>html{background:#101820}html,body{margin:0;min-height:100%;--primary-background-color:#101820;--primary-text-color:#eef4fa;--card-background-color:#15222d;--divider-color:#3b536b;--primary-color:#70a246;--text-primary-color:#fff}</style>
 <script>customElements.define("ehome-ems-panel",class extends HTMLElement{});</script>
 <ehome-ems-panel-0-2-0b12></ehome-ems-panel-0-2-0b12>
 <script type="module">
@@ -36,6 +36,9 @@ const settings={home_power:"sensor.home",usages:{d:{name:"Frigo",kind:"appliance
 const flow=window.fixtureFlow={entities:{solar_power:"sensor.pv",home_power:"sensor.home",grid_import:"sensor.import",grid_export:"sensor.export"},
  home_calculated:true,batteries:[{id:"a",name:"Zendure",role:"active",coupling:"ac",charge_power:"sensor.charge",discharge_power:"sensor.discharge",soc:"sensor.soc",remaining_energy:"sensor.stock"},{id:"backup",name:"Aferiy",role:"backup",coupling:"ac",charge_power:"sensor.aferiy_in",discharge_power:"sensor.aferiy_out",soc:"sensor.aferiy_soc",remaining_energy:"sensor.aferiy_stock"}],
  usages:[{id:"b",name:"Cumulus",kind:"solar_router",power:"sensor.cumulus",temperature:"sensor.water_temp",energy:"sensor.water_energy",energy_period:"today"},{id:"c",name:"Véhicule",kind:"ev_charger",power:"sensor.ev"},{id:"d",name:"Frigo",kind:"appliance",power:"sensor.fridge",energy:"sensor.fridge_energy",energy_period:"today"}]};
+Object.assign(settings,{solar_power:"sensor.pv_source",grid_import:"sensor.import",grid_export:"sensor.export",home_power_mode:"existing"});
+for(const b of flow.batteries)settings.batteries[b.id]={...b};
+for(const u of flow.usages)settings.usages[u.id]={...u,included_in_home:true};
 window.fixtureHass={
  callApi:async()=>[Object.entries(Object.fromEntries(Array.from({length:25},(_,i)=>[i,350+120*Math.sin(i/2)]))).map(([i,value])=>({entity_id:"sensor.pv_source",state:String(value),last_changed:new Date(Date.now()-(24-Number(i))*10*60000).toISOString()}))],
  config:{time_zone:"Europe/Paris"},language:"fr",user:{is_admin:true},states:{

@@ -146,6 +146,9 @@ export class EhomeEmsPanel extends BaseElement {
                             "View temporarily unavailable. Refresh after the integration loads.");
     }
     if(!this._dialog?.open)this._render();
+    if(this._snapshotData?.missing_entities?.length && this._settingsRetries>0 && !this._dialog?.open){
+      clearTimeout(this._settleRefresh);this._settleRefresh=setTimeout(()=>{this._settingsRetries--;if(!this._dialog?.open)this._load();},500);
+    }else if(!this._snapshotData?.missing_entities?.length)this._settingsRetries=0;
   }
   _node(tag, text, className) {
     const element = document.createElement(tag);
@@ -192,7 +195,7 @@ export class EhomeEmsPanel extends BaseElement {
       .editable{cursor:context-menu;touch-action:pan-y;user-select:none}.editable:focus-visible{outline:3px solid var(--primary-color,#007b83)}
       dialog{max-width:min(600px,calc(100vw - 32px));width:100%;max-height:85vh;overflow:auto;border:1px solid var(--divider-color,#ccc);border-radius:16px;padding:24px;background:var(--card-background-color,#fff);color:inherit}
       dialog::backdrop{background:#0008}dialog input:not([type=checkbox]),dialog select{display:block;width:100%;font:inherit;padding:12px;margin:12px 0;background:var(--card-background-color,#fff);color:inherit;border:1px solid var(--divider-color,#aaa);border-radius:8px}
-      dialog .actions{justify-content:flex-end}.settings-form{display:grid;gap:8px}.settings-form label{display:block;font-size:14px}.settings-form label:has(input[type=checkbox]){display:flex;align-items:center;gap:10px;padding:12px 0}.settings-form input[type=checkbox]{width:22px;height:22px}.equipment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.settings-shortcuts{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.ratios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:24px 0}.ratio-value{font-size:36px;font-weight:750;color:#51d593}.exchange-bar{height:12px;display:flex;border-radius:8px;overflow:hidden;background:#526579;margin:10px 0}.exchange-bar>span:first-child{background:#ff6565}.exchange-bar>span:last-child{background:#58aeff}.charger-icon{color:#bb86fc}.charger-icon ha-icon{--mdc-icon-size:190px;width:190px;height:190px}.charger-card .vessel-main{color:#bb86fc}.charger-card .vessel-layout{grid-template-columns:40% 1fr}.charger-card .vessel-main{font-size:clamp(28px,3vw,45px)}
+      dialog .actions{justify-content:flex-end;position:sticky;bottom:-24px;background:var(--card-background-color,#15222d);padding:12px 0}.settings-form{display:grid;gap:8px}.settings-form label{display:block;font-size:14px}.settings-form label:has(input[type=checkbox]){display:flex;align-items:center;gap:10px;padding:12px 0}.settings-form input[type=checkbox]{width:22px;height:22px}.equipment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.settings-shortcuts{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.ratios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:24px 0}.ratio-value{font-size:36px;font-weight:750;color:#51d593}.exchange-bar{height:12px;display:flex;border-radius:8px;overflow:hidden;background:#526579;margin:10px 0}.exchange-bar>span:first-child{background:#ff6565}.exchange-bar>span:last-child{background:#58aeff}.charger-icon{color:#bb86fc}.charger-icon ha-icon{--mdc-icon-size:190px;width:190px;height:190px}.charger-card .vessel-main{color:#bb86fc}.charger-card .vessel-layout{grid-template-columns:40% 1fr}.charger-card .vessel-main{font-size:clamp(28px,3vw,45px)}
       a{color:var(--primary-color,#007b83);overflow-wrap:anywhere}
       .top-nav{position:sticky;top:0;z-index:2;padding:12px 0;background:var(--primary-background-color,#f4f6f8);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}.top-nav button{white-space:nowrap;flex:none}
       .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:16px 0}
@@ -759,7 +762,7 @@ export class EhomeEmsPanel extends BaseElement {
       save.disabled=true;form.inert=true;
       try{
         await this._hass.callWS({type:"ehome_ems/manage_settings",entry_id:this._panel.config.entry_id,revision,section,action:remove?"remove":"save",identifier,values});
-        dialog.close();await this._load();clearTimeout(this._settleRefresh);if(this._snapshotData?.missing_entities?.length)this._settleRefresh=setTimeout(()=>{if(!this._dialog?.open)this._load();},500);this._message.textContent=this._t("Configuration enregistrée. Aucune commande envoyée.","Settings saved. No device commands sent.");
+        this._settingsRetries=5;dialog.close();await this._load();this._message.textContent=this._t("Configuration enregistrée. Aucune commande envoyée.","Settings saved. No device commands sent.");
       }catch(error){message.textContent=error.code==="conflict"?this._t("La configuration a changé. Annulez et actualisez avant de réessayer.","Configuration changed. Cancel and refresh before retrying."):
         this._t("Réglages refusés : vérifier sources, unités, doublons et périmètre maison. ","Settings rejected: check sources, units, duplicates and home boundary. ")+(error.message||error.code||"");}
       finally{save.disabled=false;form.inert=false;}

@@ -110,6 +110,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       });
       assert.ok(await page.getByText("Indisponible", { exact: true }).count());
       assert.equal(await page.locator(".flow-solar").getByText("Indisponible", { exact: true }).count(), 1);
+      assert.equal(await page.locator(".flow-solar").getByText("Indisponible",{exact:true}).evaluate(el=>getComputedStyle(el).color),"rgb(255, 101, 101)");
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       await page.emulateMedia({ reducedMotion: "reduce" });
       assert.equal(await page.locator(".flow-links path.active").first().evaluate(el => getComputedStyle(el).animationName), "none");
@@ -141,6 +142,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
       assert.ok(await page.getByText("Interface 0.2.0b12 · Intégration 0.2.0b12", { exact: true }).count());
+      assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Solaire",exact:true}).click();
       await page.getByRole("dialog",{name:"Solaire",exact:true}).waitFor();
       assert.equal(await page.getByLabel("Production solaire",{exact:true}).count(),1);
