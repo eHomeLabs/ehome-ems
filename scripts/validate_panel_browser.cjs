@@ -152,7 +152,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.locator(".flow-battery").count(),2);
       await page.waitForFunction(()=>{const r=fixturePanel.shadowRoot;return r.querySelectorAll(".flow-battery")[1].getBoundingClientRect().top>=r.querySelectorAll(".flow-battery")[0].getBoundingClientRect().bottom+8;});
       assert.equal(await page.evaluate(()=>fixturePanel.shadowRoot.querySelector("main").scrollWidth<=innerWidth),true);
-      await page.screenshot({path:path.join(output,viewport.width<600?"two-batteries-mobile.png":"two-batteries-desktop.png"),fullPage:true});
+      await page.locator(".flow").screenshot({path:path.join(output,viewport.width<600?"two-batteries-mobile.png":"two-batteries-desktop.png")});
       await page.evaluate(()=>{fixtureFlow.batteries[1].role="backup";});
       await page.evaluate(() => { window.omitFlow = true; });
       await page.getByRole("button", { name: "Actualiser", exact: true }).click();
