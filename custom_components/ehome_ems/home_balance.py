@@ -63,6 +63,7 @@ def calculate_home(mapping, readings):
         if reading.value is None:
             return PowerReading(None, reading.quality)
         total += reading.value * coefficient
+    total = round(total, 2)
     if total < 0:
         return PowerReading(None, "negative_balance")
     return PowerReading(round(total, 2), "valid")

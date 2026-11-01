@@ -118,3 +118,9 @@ class HomeBalanceTests(TestCase):
             self.assertIsNone(balance.calculate_home(
                 config(), {"sensor.import": reading, "sensor.export": ("0", "W")}
             ).value)
+
+    def test_decimal_cancellation_does_not_make_a_false_negative_load(self):
+        mapping=config(home_has_solar=True,solar_power='sensor.pv',home_has_storage=True,grid_power='sensor.grid',home_grid_mode='signed',batteries={'b':{'role':'active','coupling':'ac','charge_power':'sensor.charge','discharge_power':'sensor.discharge'}})
+        value=balance.calculate_home(mapping,{'sensor.pv':('.3','W'),'sensor.grid':('-.1','W'),'sensor.charge':('.2','W'),'sensor.discharge':('0','W')})
+        self.assertEqual(value.value,0)
+        self.assertEqual(value.quality,'valid')

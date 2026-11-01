@@ -142,7 +142,7 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
         self.hass.states.get = self.states.get
         sensor = sensor_module.CalculatedHomePower("entry", {
             "grid_import": "sensor.import", "grid_export": "sensor.export",
-            "home_boundary_confirmed": True, "home_has_solar": False, "home_has_storage": False,
+            "home_boundary_confirmed": True, "home_has_solar": False, "home_has_storage": False, "home_freshness_policy": "strict",
         })
         sensor.hass = self.hass
         sensor.removers = []
@@ -182,7 +182,7 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
         self.states = {"sensor.grid": SimpleNamespace(state="-300", attributes={"unit_of_measurement": "W"}, last_reported=now),
                        "sensor.pv": SimpleNamespace(state="2000", attributes={"unit_of_measurement": "W"}, last_reported=now-timedelta(hours=1))}
         self.hass.states.get = self.states.get
-        sensor = sensor_module.CalculatedHomePower("entry", {"grid_power": "sensor.grid", "home_grid_mode": "signed", "solar_power": "sensor.pv", "home_has_solar": True, "home_has_storage": False, "home_boundary_confirmed": True})
+        sensor = sensor_module.CalculatedHomePower("entry", {"grid_power": "sensor.grid", "home_grid_mode": "signed", "solar_power": "sensor.pv", "home_has_solar": True, "home_has_storage": False, "home_boundary_confirmed": True, "home_freshness_policy":"strict"})
         sensor.hass = self.hass
         sensor._update()
         a = sensor._attr_extra_state_attributes
@@ -190,6 +190,11 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
         self.assertEqual(a["stale_source_entity_ids"], ["sensor.pv"])
         self.assertEqual(a["grid_representation"], "signed")
         self.assertEqual(a["balance_inputs"][0]["contribution_w"], -300)
+        sensor._mapping["home_freshness_policy"] = "warn"
+        sensor._update()
+        self.assertEqual(sensor._attr_native_value, 1700)
+        self.assertTrue(sensor._attr_extra_state_attributes["source_age_warning"])
+        self.assertEqual(sensor._attr_extra_state_attributes["data_quality"], "valid")
         sensor._mapping["home_max_age_seconds"] = 0
         sensor._update()
         self.assertEqual(sensor._attr_native_value, 1700)

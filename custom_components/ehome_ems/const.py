@@ -1,6 +1,6 @@
 """Constants for eHome EMS."""
 DOMAIN = "ehome_ems"
-VERSION = "0.2.0b13"
+VERSION = "0.2.0b14"
 CONF_GRID_POWER = "grid_power"
 CONF_GRID_IMPORT = "grid_import"
 CONF_GRID_EXPORT = "grid_export"
@@ -11,7 +11,7 @@ CONF_BATTERIES = "batteries"
 BATTERY_SOURCES = ("charge_power", "discharge_power", "soc", "remaining_energy")
 HOME_MODE = "home_power_mode"
 HOME_SETTINGS = (HOME_MODE, "home_has_solar", "home_has_storage", "home_boundary_confirmed",
-                 "home_max_age_seconds", "home_grid_mode")
+                 "home_max_age_seconds", "home_grid_mode", "home_freshness_policy")
 CONF_USAGES = "usages"
 USAGE_SOURCES = ("power", "energy", "status", "temperature")
 DAILY_SOURCES = ("solar", "home", "import", "export", "charge", "discharge")

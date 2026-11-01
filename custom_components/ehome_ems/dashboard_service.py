@@ -85,6 +85,7 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                    for identifier, usage in mapping.get(CONF_USAGES, {}).items()],
     }
     result["settings"] = deepcopy(dict(mapping))
+    result["weather_entity"] = mapping.get("weather_entity")
     result["time_zone"] = getattr(hass.config, "time_zone", "UTC")
     result["daily"] = dict(mapping.get("daily", {}))
     result["tariff_eur_kwh"] = mapping.get("tariff_eur_kwh")

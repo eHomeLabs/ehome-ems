@@ -32,7 +32,8 @@
           "home_has_storage": "Automatic calculation: active storage present",
           "home_boundary_confirmed": "I confirm the same AC boundary for all balance readings",
           "home_max_age_seconds": "Maximum source age (seconds, 0 disables check)",
-          "home_grid_mode": "Grid representation used in the balance"
+          "home_grid_mode": "Grid representation used in the balance",
+          "home_freshness_policy": "Old source: warn or block"
         },
         "data_description": {
           "home_power": "Must include water heater, EV and all appliances. A meter covering all load circuits or a template implementing the balance is suitable. Correct an older template that subtracts water heating. Ignored in EMS calculation mode.",
@@ -40,8 +41,9 @@
           "home_has_solar": "Only for EMS calculation. When checked, solar power must be mapped. Do not uncheck to bypass missing readings on an actual solar installation.",
           "home_has_storage": "Only for EMS calculation. In the next step, declare every battery participating in daily exchanges as active, with BOTH charge and discharge. Backup means outside this daily balance. Active DC storage blocks the simple AC calculation.",
           "home_boundary_confirmed": "Check meter placement, double counting and AC-side battery power. Internal pack/DC power is not interchangeable with AC power. EMS calculation cannot be enabled without confirmation.",
-          "home_max_age_seconds": "Default 300 s, checked every 30 s. Change-only integrations may not report stable readings such as 0 W: adapt the timeout or explicitly choose 0 to disable age blocking. Ages remain visible in balance details. Missing, invalid and unavailable inputs always block the result.",
-          "home_grid_mode": "Auto preserves a complete Import/Export pair, otherwise uses signed grid. Only one representation enters the balance. Signed grid must report positive import and negative export; an import-only sensor is unsuitable."
+          "home_max_age_seconds": "Default 300 s, checked every 30 s. Warn mode flags old sources without hiding the balance; Strict mode blocks them. Set 0 to disable age checks. Stable 0 W is a valid reading.",
+          "home_grid_mode": "Auto preserves a complete Import/Export pair, otherwise uses signed grid. Only one representation enters the balance. Signed grid must report positive import and negative export; an import-only sensor is unsuitable.",
+          "home_freshness_policy": "Observation Warn mode retains the balance with source-age warnings. Strict mode blocks after the timeout. Missing, invalid and unavailable readings always block calculation."
         }
       },
       "review": {
@@ -86,7 +88,8 @@
           "charge_power": "Positive charge power (W/kW)",
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
-          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+          "remaining_energy": "Measured remaining energy (Wh/kWh)",
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -96,7 +99,8 @@
           "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
           "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
           "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
-          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent.",
+          "remaining_energy_is_stock": "Only confirm a real remaining stock misclassified by HA. Accepts Wh/kWh; capacity checks still apply. Lifetime consumed energy is unsuitable."
         }
       },
       "battery_details": {
@@ -110,7 +114,8 @@
           "charge_power": "Positive charge power (W/kW)",
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
-          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+          "remaining_energy": "Measured remaining energy (Wh/kWh)",
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -120,7 +125,8 @@
           "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
           "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
           "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
-          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent.",
+          "remaining_energy_is_stock": "Only confirm a real remaining stock misclassified by HA. Accepts Wh/kWh; capacity checks still apply. Lifetime consumed energy is unsuitable."
         }
       },
       "edit_battery": {
@@ -282,7 +288,11 @@
           "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
-          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)",
+          "weather_entity": "Daily weather (HA weather entity)"
+        },
+        "data_description": {
+          "weather_entity": "Today displays this entity’s daily forecast. If unsupported, current conditions are explicitly identified."
         }
       }
     },
@@ -304,7 +314,8 @@
       "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load.",
       "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh.",
       "missing_grid_source": "Map a signed grid sensor or both Import/Export sensors.",
-      "grid_configuration": "Check the selected grid representation for home consumption."
+      "grid_configuration": "Check the selected grid representation for home consumption.",
+      "invalid_weather": "Choose an existing weather entity."
     },
     "abort": {
       "already_configured": "eHome EMS is already configured. Use Configure to edit its settings."
@@ -343,7 +354,8 @@
           "home_has_storage": "Automatic calculation: active storage present",
           "home_boundary_confirmed": "I confirm the same AC boundary for all balance readings",
           "home_max_age_seconds": "Maximum source age (seconds, 0 disables check)",
-          "home_grid_mode": "Grid representation used in the balance"
+          "home_grid_mode": "Grid representation used in the balance",
+          "home_freshness_policy": "Old source: warn or block"
         },
         "data_description": {
           "home_power": "Must include water heater, EV and all appliances. A meter covering all load circuits or a template implementing the balance is suitable. Correct an older template that subtracts water heating. Ignored in EMS calculation mode.",
@@ -351,8 +363,9 @@
           "home_has_solar": "Only for EMS calculation. When checked, solar power must be mapped. Do not uncheck to bypass missing readings on an actual solar installation.",
           "home_has_storage": "Only for EMS calculation. In the next step, declare every battery participating in daily exchanges as active, with BOTH charge and discharge. Backup means outside this daily balance. Active DC storage blocks the simple AC calculation.",
           "home_boundary_confirmed": "Check meter placement, double counting and AC-side battery power. Internal pack/DC power is not interchangeable with AC power. EMS calculation cannot be enabled without confirmation.",
-          "home_max_age_seconds": "Default 300 s, checked every 30 s. Change-only integrations may not report stable readings such as 0 W: adapt the timeout or explicitly choose 0 to disable age blocking. Ages remain visible in balance details. Missing, invalid and unavailable inputs always block the result.",
-          "home_grid_mode": "Auto preserves a complete Import/Export pair, otherwise uses signed grid. Only one representation enters the balance. Signed grid must report positive import and negative export; an import-only sensor is unsuitable."
+          "home_max_age_seconds": "Default 300 s, checked every 30 s. Warn mode flags old sources without hiding the balance; Strict mode blocks them. Set 0 to disable age checks. Stable 0 W is a valid reading.",
+          "home_grid_mode": "Auto preserves a complete Import/Export pair, otherwise uses signed grid. Only one representation enters the balance. Signed grid must report positive import and negative export; an import-only sensor is unsuitable.",
+          "home_freshness_policy": "Observation Warn mode retains the balance with source-age warnings. Strict mode blocks after the timeout. Missing, invalid and unavailable readings always block calculation."
         }
       },
       "review": {
@@ -397,7 +410,8 @@
           "charge_power": "Positive charge power (W/kW)",
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
-          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+          "remaining_energy": "Measured remaining energy (Wh/kWh)",
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -407,7 +421,8 @@
           "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
           "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
           "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
-          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent.",
+          "remaining_energy_is_stock": "Only confirm a real remaining stock misclassified by HA. Accepts Wh/kWh; capacity checks still apply. Lifetime consumed energy is unsuitable."
         }
       },
       "battery_details": {
@@ -421,7 +436,8 @@
           "charge_power": "Positive charge power (W/kW)",
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
-          "remaining_energy": "Measured remaining energy (Wh/kWh)"
+          "remaining_energy": "Measured remaining energy (Wh/kWh)",
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -431,7 +447,8 @@
           "charge_power": "Power currently entering the battery. Do not select a cumulative charged-energy counter.",
           "discharge_power": "Power currently leaving the battery for loads. Discharge is not automatically solar-origin energy.",
           "soc": "Current state of charge between 0 and 100%, not an energy reading in kWh.",
-          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent."
+          "remaining_energy": "Optional: currently available stored energy in Wh/kWh. Do not select Total Grid Energy, daily energy, or lifetime charge/discharge counters. Leave empty without a suitable source. Declared cumulative counters are rejected; above capacity × 1.10, the association is flagged inconsistent.",
+          "remaining_energy_is_stock": "Only confirm a real remaining stock misclassified by HA. Accepts Wh/kWh; capacity checks still apply. Lifetime consumed energy is unsuitable."
         }
       },
       "edit_battery": {
@@ -593,7 +610,11 @@
           "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
-          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)",
+          "weather_entity": "Daily weather (HA weather entity)"
+        },
+        "data_description": {
+          "weather_entity": "Today displays this entity’s daily forecast. If unsupported, current conditions are explicitly identified."
         }
       }
     },
@@ -615,7 +636,8 @@
       "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load.",
       "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh.",
       "missing_grid_source": "Map a signed grid sensor or both Import/Export sensors.",
-      "grid_configuration": "Check the selected grid representation for home consumption."
+      "grid_configuration": "Check the selected grid representation for home consumption.",
+      "invalid_weather": "Choose an existing weather entity."
     }
   },
   "selector": {
@@ -657,6 +679,12 @@
         "auto": "Auto: complete Import/Export, otherwise signed",
         "signed": "Signed grid (+ import / − export)",
         "separate": "Separate Import and Export sensors"
+      }
+    },
+    "home_freshness_policy": {
+      "options": {
+        "warn": "Warn without blocking (observation)",
+        "strict": "Block after timeout (strict)"
       }
     }
   },

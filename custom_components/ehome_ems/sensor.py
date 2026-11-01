@@ -104,6 +104,7 @@ class MappedPowerSensor(SensorEntity):
         normalize = normalize_battery if self._battery else normalize_power
         details = {
             "capacity_kwh": self._battery.get("capacity_kwh"),
+            "stock_confirmed": self._battery.get("remaining_energy_is_stock", False),
             "state_class": state.attributes.get("state_class") if state else None,
         } if self._battery else {}
         reading = normalize(
@@ -202,7 +203,7 @@ class CalculatedHomePower(SensorEntity):
                             "age_seconds": round(age, 1) if age is not None else None,
                             "quality": "stale_source" if is_stale and normalized.value is not None else normalized.quality})
         reading = calculate_home(self._mapping, values)
-        stale = bool(stale_sources) and reading.value is not None
+        stale = bool(stale_sources) and reading.value is not None and self._mapping.get("home_freshness_policy", "warn") == "strict"
         self._attr_native_value = None if stale else reading.value
         self._attr_available = self._attr_native_value is not None
         self._attr_extra_state_attributes = {
@@ -217,6 +218,8 @@ class CalculatedHomePower(SensorEntity):
             "balance_inputs": details,
             "stale_source_entity_ids": stale_sources,
             "freshness_check_enabled": bool(max_age),
+            "freshness_policy": self._mapping.get("home_freshness_policy", "warn"),
+            "source_age_warning": bool(stale_sources),
         }
 
 
