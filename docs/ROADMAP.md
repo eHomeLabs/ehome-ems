@@ -1,6 +1,6 @@
-# Feuille de route après la 0.2.1
+# Feuille de route après la 0.2.2
 
-La 0.2.1 consolide le socle d'observation validé avec la b15. Le numéro 0.2.1 ne signifie pas que tout le périmètre produit est livré.
+La 0.2.2 consolide le socle d'observation validé avec la b15. Le numéro 0.2.2 ne signifie pas que tout le périmètre produit est livré.
 
 | Domaine | Disponible | Suite envisagée |
 | --- | --- | --- |
@@ -8,7 +8,7 @@ La 0.2.1 consolide le socle d'observation validé avec la b15. Le numéro 0.2.1 
 | Interface | Flux, tendances, historiques 24 h, appareils, stockage, météo | Analyses et comparaisons de périodes |
 | Énergie et coûts | Compteurs du jour, différence depuis cumul, tarif fixe | Tarification avancée, bilans historiques plus complets |
 | Stratégie | Priorités et scénarios manuels sans commande | Conseils explicables, prévisions énergétiques |
-| Pilotage | Aucune commande physique | Activation explicite par équipement, repli et arbitrage coordonné |
+| Pilotage | Boutons On/Off manuels explicitement activés | Pilotage automatique avec repli et arbitrage coordonné |
 
 ## Critères avant d'aller plus loin
 

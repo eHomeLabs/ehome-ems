@@ -262,7 +262,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.1.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.2.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -277,9 +277,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.1"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-1"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.1.js"
+                assert snapshot["version"] == "0.2.2"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-2"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.2.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -402,6 +402,34 @@ async def validate(config_dir):
                 assert len(snapshot["simulation_history"]) == 20
                 assert snapshot["simulation_history"][-1]["budget_w"] == 21
                 assert snapshot["simulation"]["targets"][0]["enabled"]
+                # Explicit manual control, using a simulated service only.
+                hass.states.async_set("switch.sim_manual", "off")
+                manual_calls = []
+                async def manual_service(call):
+                    manual_calls.append(call)
+                    hass.states.async_set("switch.sim_manual", "on" if call.service == "turn_on" else "off")
+                hass.services.async_register("switch", "turn_on", manual_service)
+                hass.services.async_register("switch", "turn_off", manual_service)
+                values = {"name":"Simulated manual load","power":"sensor.sim_coffee","energy":"sensor.sim_coffee_day","energy_period":"today","included_in_home":True,"control_entity":"switch.sim_manual","control_enabled":True,"daily_energy_goal_kwh":3}
+                created = await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"appliances","action":"save","values":values})
+                await hass.async_block_till_done()
+                manual_identifier = created["identifier"]
+                hass.states.async_set("sensor.sim_coffee", "-5", {"unit_of_measurement":"W","device_class":"power"})
+                await hass.async_block_till_done()
+                power = mirror(f"usage_{manual_identifier}_power")[1]
+                assert float(power.state) == 0 and power.attributes["negative_offset_corrected"]
+                assert power.attributes["source_raw_value"] == "-5"
+                payload = {"type":"ehome_ems/manual_control","entry_id":entry.entry_id,"identifier":manual_identifier,"revision":entry.modified_at.isoformat(),"desired_on":True,"expected_state":"off"}
+                await command({**payload,"revision":"old"}, success=False)
+                assert not manual_calls
+                await command(payload)
+                assert len(manual_calls) == 1 and manual_calls[0].context.user_id is not None
+                assert hass.states.get("switch.sim_manual").state == "on"
+                await command(payload, success=False)  # stale expected state, no duplicate
+                assert len(manual_calls) == 1
+                hass.states.async_set("switch.sim_manual", "unavailable")
+                await command({**payload,"expected_state":"on","desired_on":False}, success=False)
+                assert len(manual_calls) == 1
             ordinary = await hass.auth.async_create_user("Simulated reader", group_ids=["system-users"])
             refresh = await hass.auth.async_create_refresh_token(ordinary, client_id="https://example.local")
             access = hass.auth.async_create_access_token(refresh)
@@ -429,6 +457,9 @@ async def validate(config_dir):
                 await ws.send_json({"id": 6, "type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 public_snapshot = await ws.receive_json()
                 assert public_snapshot["success"] and "settings" not in public_snapshot["result"]
+                await ws.send_json({"id":7,"type":"ehome_ems/manual_control","entry_id":entry.entry_id,"identifier":manual_identifier,"revision":entry.modified_at.isoformat(),"desired_on":True,"expected_state":"off"})
+                assert not (await ws.receive_json())["success"]
+                assert len(manual_calls) == 1
 
 
         assert await hass.config_entries.async_unload(entry.entry_id)

@@ -3,9 +3,14 @@ from math import isfinite
 from .measurement import PowerReading, normalize_power
 
 
-def normalize_usage(raw, unit, role):
+def normalize_usage(raw, unit, role, *, negative_tolerance_w=5):
     if role == "power":
-        return normalize_power(raw, unit, "home_power")
+        reading = normalize_power(raw, unit, "home_power")
+        if reading.quality == "unexpected_direction":
+            value = float(raw) * (1000 if unit == "kW" else 1)
+            if -negative_tolerance_w <= value < 0:
+                return PowerReading(0, "valid")
+        return reading
     if raw is None or raw in ("unknown", "unavailable"):
         return PowerReading(None, "unavailable")
     if role == "status":

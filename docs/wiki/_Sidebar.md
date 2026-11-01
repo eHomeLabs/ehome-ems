@@ -1,4 +1,4 @@
-# eHome EMS 0.2.1
+# eHome EMS 0.2.2
 
 - [Accueil](Home.md)
 - [Installation](03-Installation-Home-Assistant.md)

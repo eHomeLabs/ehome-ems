@@ -1,4 +1,7 @@
 export const PRODUCT_ICONS = ["auto","mdi:power-plug","mdi:washing-machine","mdi:dishwasher","mdi:tumble-dryer","mdi:fridge","mdi:radiator","mdi:air-conditioner","mdi:pool","mdi:coffee-maker","mdi:printer-3d-nozzle","mdi:lightbulb","mdi:television","mdi:desktop-classic","mdi:water-boiler","mdi:ev-station"];
+export function dailyGoalPercent(energy,goal) {
+  return typeof energy==="number"&&Number.isFinite(energy)&&energy>=0&&typeof goal==="number"&&Number.isFinite(goal)&&goal>0?energy/goal*100:null;
+}
 export function productIcon(config={}) {
   if(PRODUCT_ICONS.includes(config.icon)&&config.icon!=="auto")return config.icon;
   if(config.kind==="solar_router")return "mdi:water-boiler";
@@ -8,7 +11,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.1";
+export const UI_VERSION = "0.2.2";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -422,7 +425,7 @@ export class EhomeEmsPanel extends BaseElement {
       const bins=quarterTrends(this._history[entity]||[]),direction=bins.at(-1).direction;
       head.textContent=direction===1?"↗":direction===-1?"↘":"→";
       head.setAttribute("aria-label",direction===null?this._t("Tendance inconnue : flèche horizontale","Unknown trend: horizontal arrow"):direction>0?this._t("En hausse","Rising"):direction<0?this._t("En baisse","Falling"):this._t("Stable","Stable"));
-      note.textContent=bins.some(b=>b.value!==null)?this._t("6 h · pas de 15 min","6 h · fifteen-minute intervals"):this._t("Aucune donnée sur 6 h · flèche neutre","No data over 6 h · neutral arrow");
+      note.textContent=this._t("Tendance sur 15 mn","15 min trend");note.title=bins.some(b=>b.value!==null)?this._t("Comparaison des moyennes par quart d’heure ; historique sur 6 h.","Quarter-hour mean comparison; 6 h history."):this._t("Données insuffisantes : flèche horizontale.","Insufficient data: horizontal arrow.");
     });return box;
   }
   _dayStart() {
@@ -451,10 +454,11 @@ export class EhomeEmsPanel extends BaseElement {
     const result=dailyFromCounter(records,value,unit,start);this._dayEnergyCache.set(config.energy,{records,source,value,unit,start,result});return result;
   }
   _usageEnergy(config) {
-    const box=this._node("div",undefined,"usage-energy"),daily=this._node("p",undefined,"energy-value"),caption=this._node("p",undefined,"note"),raw=this._node("p",undefined,"note");box.append(daily,caption,raw);
+    const box=this._node("div",undefined,"usage-energy"),daily=this._node("p",undefined,"energy-value"),caption=this._node("p",undefined,"note"),raw=this._node("p",undefined,"note");const progress=this._node("p",undefined,"note goal-progress");box.append(daily,caption,raw,progress);
     this._flowUpdates.push(()=>{const n=this._dayEnergy(config),session=config.energy_period==="session";
       daily.textContent=session?reading(this._hass?.states,config.energy,undefined,this._hass?.language).text:n===null?this._t("Jour indisponible","Daily unavailable"):displayNumber(n,this._hass?.language)+" kWh";
       daily.classList.toggle("bad",!session&&n===null);
+      const goal=dailyGoalPercent(n,config.daily_energy_goal_kwh);progress.hidden=!config.daily_energy_goal_kwh;progress.textContent=goal===null?this._t("Objectif : données du jour indisponibles","Goal: daily data unavailable"):percent(goal,this._hass?.language)+this._t(" % de l’objectif quotidien ("," % of daily goal (")+displayNumber(config.daily_energy_goal_kwh,this._hass?.language)+" kWh)";
       caption.textContent=session?this._t("Énergie de session · pas un compteur du jour","Session energy · not a daily counter"):this._t("Aujourd’hui · calcul depuis le compteur","Today · calculated from counter");
       raw.textContent=(session?this._t("Énergie de session : ","Session energy: "):this._t("Énergie Totale : ","Total energy: "))+reading(this._hass?.states,config.energy,undefined,this._hass?.language).text+(n===null&&!session?this._t(" · référence à minuit absente"," · missing midnight baseline"):"");
     });if(config.energy)this._editable(box,config.energy);return box;
@@ -487,7 +491,7 @@ export class EhomeEmsPanel extends BaseElement {
     const root=this._node("section",undefined,"stack");
     root.append(this._node("h2",appliances?this._t("Mes Appareils","My Appliances"):this._t("Usages","Loads")),
 
-      this._node("p",this._t("Sous-comptages : ne pas les additionner au total maison. Aucun appareil commandé.", "Submetering: do not add to home total. No device commands."),"note"));
+      this._node("p",this._t("Sous-comptages inclus dans le total maison. On/Off manuel uniquement si associé et activé.", "Submetering included in home total. Manual On/Off only when mapped and enabled."),"note"));
     if(this._hass?.user?.is_admin)root.append(this._button(appliances?this._t("Ajouter un appareil","Add appliance"):this._t("Ajouter un usage","Add load"),()=>this._settingsDialog(appliances?"appliances":"usages")));
     const grid=this._node("div",undefined,"cards");
     const usages=(snapshot.flow?.usages||[]).filter(u => (u.kind === "appliance") === appliances);
@@ -497,11 +501,31 @@ export class EhomeEmsPanel extends BaseElement {
       const tile=this._metricTile(u.name,u.power,productIcon(u),this._tone(u.power));
       tile.classList.add("appliance-card");
       tile.append(this._usageEnergy(u),this._usageCost(u));
-      const status=this._node("p",undefined,"note equipment-status");if(u.status)this._bind(status,u.status);tile.append(status);
+      tile.append(this._manualControl(u,appliances?"appliances":"usages"));
       this._equipmentActions(tile,u,appliances?"appliances":"usages");grid.append(tile);
     }
     if(!usages.length)grid.append(this._node("p",this._t("Aucun appareil associé. Utilisez Ajouter un appareil.","No appliances mapped. Use Add appliance."),"note"));
     root.append(grid);return root;
+  }
+  _manualControl(config,section="usages") {
+    const root=this._node("div",undefined,"equipment-status"),note=this._node("span",undefined,"note");
+    if(!config.control_enabled||!config.control_entity){
+      if(config.status)this._bind(note,config.status);root.append(note);
+      if(this._hass?.user?.is_admin)root.append(this._button(this._t("Associer On/Off","Map On/Off"),()=>this._settingsDialog(section,config.id)));
+      return root;
+    }
+    let pending=false;
+    const button=this._button("",async()=>{
+      const state=this._hass?.states?.[config.control_entity]?.state;
+      if(pending||!["on","off"].includes(state)||!this._hass?.user?.is_admin)return;
+      pending=true;update();note.textContent=this._t("Commande en cours…","Sending command…");
+      try{await this._hass.callWS({type:"ehome_ems/manual_control",entry_id:this._panel.config.entry_id,identifier:config.id,revision:this._snapshotData.revision,desired_on:state!=="on",expected_state:state});note.textContent=this._t("Commande envoyée ; état HA affiché.","Command sent; showing HA state.");}
+      catch(error){note.textContent=error.code==="state_changed"||error.code==="conflict"?this._t("État ou configuration modifié : actualisez.","State or settings changed: refresh."):this._t("Commande refusée ou en échec. Vérifiez l’association.","Command rejected or failed. Check the mapping.");}
+      finally{pending=false;update();}
+    });
+    button.classList.add("manual-toggle");
+    const update=()=>{const state=this._hass?.states?.[config.control_entity]?.state,known=["on","off"].includes(state);button.textContent=pending?this._t("En cours…","Sending…"):known?(state==="on"?"On":"Off"):this._t("Indisponible","Unavailable");button.disabled=pending||!known||!this._hass?.user?.is_admin;button.setAttribute("aria-pressed",String(state==="on"));button.setAttribute("aria-label",(state==="on"?this._t("Éteindre ","Turn off "):this._t("Allumer ","Turn on "))+config.name);button.classList.toggle("ok",state==="on");};
+    note.setAttribute("role","status");root.append(button,note);this._flowUpdates.push(update);update();return root;
   }
   _vessel(config, thermal=false) {
     const card=this._node("section",undefined,"card vessel-card");
@@ -513,7 +537,7 @@ export class EhomeEmsPanel extends BaseElement {
     visual.append(this._icon(mdi));
     const fill=this._node("div",undefined,"vessel-fill");fill.append(this._icon(thermal ? mdi : "mdi:battery"));visual.append(fill);
     const details=this._node("div",undefined,"vessel-details");
-    const main=this._node("div",undefined,"vessel-main");if(!thermal)this._bind(main,config.soc);else this._flowUpdates.push(()=>{const value=reading(this._hass?.states,config.temperature,undefined,this._hass?.language);main.textContent=value.number!==null?value.text:config.temperature?this._t("Température indisponible","Temperature unavailable"):this._t("Température non associée","Temperature not mapped");main.classList.toggle("bad",!!config.temperature&&value.number===null);main.style.fontSize=value.number===null?"20px":"";});this._editable(main,thermal?config.temperature:config.soc);
+    const main=this._node("div",undefined,"vessel-main");if(!thermal)this._bind(main,config.soc);else this._flowUpdates.push(()=>{const value=reading(this._hass?.states,config.temperature,undefined,this._hass?.language),goal=config.daily_energy_goal_kwh,progress=dailyGoalPercent(this._dayEnergy(config),goal);main.textContent=goal?progress===null?this._t("Objectif : données indisponibles","Goal: data unavailable"):percent(progress,this._hass?.language)+" %":value.number!==null?value.text:config.temperature?this._t("Température indisponible","Temperature unavailable"):this._t("Température non associée","Temperature not mapped");main.classList.toggle("bad",goal?progress===null:!!config.temperature&&value.number===null);main.style.fontSize=(goal?progress===null:value.number===null)?"20px":"";});if(!thermal||!config.daily_energy_goal_kwh)this._editable(main,thermal?config.temperature:config.soc);
     const direction=this._node("p",undefined,"vessel-direction"),mode=this._node("p",undefined,"note"),energy=this._node("p",undefined,"energy-value");
     if(!thermal){this._bind(energy,config.remaining_energy);this._editable(energy,config.remaining_energy);}
     const caption=this._node("p",thermal?this._t("Énergie · ","Energy · ") + ({today:this._t("aujourd’hui","today"),session:"session",total:this._t("compteur cumulé","lifetime counter")}[config.energy_period]||this._t("non associée","not mapped")):this._t("disponibles · énergie mesurée","available · measured energy"),"note");
@@ -521,7 +545,7 @@ export class EhomeEmsPanel extends BaseElement {
     this._flowUpdates.push(() => {
       const soc=reading(this._hass?.states,config.soc).number;
       const temperature = reading(this._hass?.states,config.temperature).number;
-      const level = thermal ? temperature : soc;
+      const level = thermal ? config.daily_energy_goal_kwh?dailyGoalPercent(this._dayEnergy(config),config.daily_energy_goal_kwh):temperature : soc;
       visual.style.setProperty("--fill",level!==null?`${Math.max(0,Math.min(100,level))}%`:"0%");
       fill.style.clipPath = !thermal && soc !== null ? `inset(${88 - Math.max(0,Math.min(100,soc)) * .72}% 0 12% 0)` : "";
       visual.style.color=thermal?"#ffa000":soc===null?"#8291a2":soc<20?"#ff5959":soc<50?"#ffbf44":"#42dca4";
@@ -535,11 +559,12 @@ export class EhomeEmsPanel extends BaseElement {
       if(!thermal) {
         const stock=this._energy(config.remaining_energy),load=flowPower(this._hass?.states,this._snapshotData?.flow?.entities?.home_power);
         autonomy.textContent=stock!==null&&load>=10?this._t("Autonomie indicative ≈ ","Indicative runtime ≈ ")+ (stock*1000/load).toFixed(1)+" h · "+this._t("charge maison actuelle, pertes exclues","current home load, losses excluded"):this._t("Autonomie : données insuffisantes","Runtime: insufficient data");
-      } else autonomy.textContent=this._t("Échelle température : 0–100 °C, pas un stock thermique.","Temperature scale: 0–100 °C, not thermal energy storage.");
+      } else autonomy.textContent=config.daily_energy_goal_kwh?this._t("Objectif quotidien : ","Daily goal: ")+displayNumber(config.daily_energy_goal_kwh,this._hass?.language)+this._t(" kWh · énergie consommée, pas chaleur restante. Température : "," kWh · consumed energy, not remaining heat. Temperature: ")+reading(this._hass?.states,config.temperature,undefined,this._hass?.language).text:this._t("Échelle température : 0–100 °C, pas un stock thermique.","Temperature scale: 0–100 °C, not thermal energy storage.");
     });
     details.append(main,direction,mode,thermal?this._usageEnergy(config):energy,thermal?this._usageCost(config):caption);
     if(!thermal)details.append(autonomy);
     if(thermal)details.append(autonomy);else details.append(this._node("p",`${config.role === "active"?this._t("Active","Active"):this._t("Secours","Backup")} · ${config.coupling?.toUpperCase()}`,"note"));
+    if(thermal)details.append(this._manualControl(config));
     layout.append(visual,details);card.append(layout);return card;
   }
   _storage(snapshot) {
@@ -547,7 +572,7 @@ export class EhomeEmsPanel extends BaseElement {
     const grid=this._node("div",undefined,"cards");
     for(const b of snapshot.flow?.batteries||[]){const card=this._vessel(b);this._equipmentActions(card,b,"batteries");grid.append(card);}
     if(this._hass?.user?.is_admin)root.append(this._button(this._t("Ajouter une batterie","Add battery"),()=>this._settingsDialog("batteries")));
-    for(const u of snapshot.flow?.usages||[])if(u.kind==="solar_router")grid.append(this._vessel(u,true));
+    for(const u of snapshot.flow?.usages||[])if(u.kind==="solar_router"){const card=this._vessel(u,true);this._equipmentActions(card,u,"usages");grid.append(card);}
     if(!grid.childElementCount)grid.append(this._integrationLink(this._t("Associer des batteries ou un cumulus","Map batteries or a water heater")));
     root.append(grid);return root;
   }
@@ -682,7 +707,7 @@ export class EhomeEmsPanel extends BaseElement {
       else panel.append(this._node("p", this._t("Aucun équipement inclus dans un scénario.", "No equipment included in a scenario."), "note"));
       panel.append(this._button(this._t("Ouvrir Stratégie", "Open Strategy"), () => { this._tab = 6; this._render(); }));
     }
-    panel.append(this._node("p", this._t("Aucune commande envoyée", "No commands sent"), "note")); return panel;
+    panel.append(this._node("p", this._t("Aucune commande automatique", "No automatic commands"), "note")); return panel;
   }
   _simulationResult(result) {
     const root = this._node("div", undefined, "scenario-result");
@@ -814,7 +839,7 @@ export class EhomeEmsPanel extends BaseElement {
     const layout=this._node("div",undefined,"vessel-layout"),visual=this._node("div",undefined,"charger-icon");visual.append(this._icon("mdi:ev-station"));
     const details=this._node("div"),power=this._node("div",undefined,"vessel-main"),energy=this._node("div",undefined,"energy-value"),status=this._node("p",undefined,"note");
     this._bind(power,config.power);this._editable(power,config.power);
-    if(config.status)this._bind(status,config.status);
+    status.append(this._manualControl(config));
     const mode=this._node("p",undefined,"note");this._flowUpdates.push(()=>{const watts=flowPower(this._hass?.states,config.power);mode.textContent=watts===null?this._t("Puissance indisponible","Power unavailable"):watts>=10?this._t("Puissance mesurée ≥ 10 W","Measured power ≥ 10 W"):this._t("Veille / faible puissance","Idle / low power");});
     details.append(power,mode,this._usageEnergy(config),this._usageCost(config),status);
     layout.append(visual,details);root.append(layout);return root;
@@ -868,7 +893,13 @@ export class EhomeEmsPanel extends BaseElement {
         add("icon","Icône du produit","Product icon","select",PRODUCT_ICONS.map(icon=>[icon,icon==="auto"?this._t("Automatique selon le nom","Automatic by name"):icon]),null,current.icon||"auto");
         source("power","Puissance (W/kW)","Power (W/kW)");source("energy","Énergie (Wh/kWh)","Energy (Wh/kWh)",["Wh","kWh"]);
         add("energy_period","Période du compteur d’énergie","Energy counter period","select",[["today",this._t("Aujourd’hui (remis à zéro chaque jour)","Today (resets daily)")],["session",this._t("Session","Session")],["total",this._t("Compteur cumulé","Lifetime counter")]],null,current.energy_period||"total");
+        const tolerance=add("negative_power_tolerance_w","Tolérance puissance négative (W)","Negative power tolerance (W)","number",null,null,current.negative_power_tolerance_w??5);tolerance.max="20";
+        const goal=add("daily_energy_goal_kwh","Objectif énergie quotidien (kWh, facultatif)","Daily energy goal (kWh, optional)","number");goal.min="0.001";goal.max="1000";
         source("status","État (facultatif)","Status (optional)",[]);
+        const controlOptions=[["",this._t("Non associé","Not mapped")],...Object.entries(this._hass?.states||{}).filter(([id])=>["switch","input_boolean","light","fan"].includes(id.split(".")[0])).map(([id,state])=>[id,(state.attributes?.friendly_name||id)+" · "+id])];
+        add("control_entity","Entité de commande On/Off","On/Off control entity","select",controlOptions,null,current.control_entity||(["switch","input_boolean","light","fan"].includes(current.status?.split(".")[0])?current.status:""));
+        add("control_enabled","Activer la commande manuelle On/Off pour cet appareil","Enable manual On/Off for this device","checkbox");
+        form.append(this._node("p",this._t("Chaque clic On/Off envoie une commande réelle à l’entité choisie. Aucun scénario ni rafraîchissement ne commande automatiquement cet appareil. L’objectif quotidien mesure la progression d’énergie consommée, pas la chaleur restante.","Each On/Off click sends a real command to the chosen entity. Scenarios and refreshes never command this device automatically. Daily goal tracks consumed energy, not remaining heat."),"note"));
         if(section==="usages")source("temperature","Température de l’eau (facultatif)","Water temperature (optional)",["°C","°F"]);
         add("included_in_home","Sous-comptage inclus dans le périmètre maison","Submetering included in the home boundary","checkbox");
         form.append(this._node("p",this._t("Le compteur cumulé permet de calculer le jour par différence depuis minuit via History/Recorder. Sans référence à minuit, l’énergie et le coût du jour restent indisponibles. Un compteur de session ne devient pas un compteur journalier.","Lifetime counters can yield daily usage from the midnight difference using History/Recorder. Without a midnight baseline, daily energy and cost remain unavailable. Session energy is not daily energy."),"note"));

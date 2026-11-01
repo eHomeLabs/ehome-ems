@@ -25,6 +25,8 @@ GROUPS = {
 
 def positive_capacity(value):
     """Reject NaN/infinite and non-positive configured capacities."""
+    if isinstance(value, bool):
+        raise vol.Invalid("invalid_capacity")
     value = vol.Coerce(float)(value)
     if not isfinite(value) or value <= 0:
         raise vol.Invalid("invalid_capacity")
@@ -77,6 +79,10 @@ def usage_schema(existing):
         vol.Required("kind", default=existing.get("kind", "solar_router")): selector.SelectSelector(
             selector.SelectSelectorConfig(options=["solar_router", "ev_charger", "other", "appliance"],
                                           translation_key="usage_kind")),
+        vol.Optional("negative_power_tolerance_w", default=existing.get("negative_power_tolerance_w", 5)): vol.All(vol.Coerce(float), vol.Range(min=0, max=20)),
+        vol.Optional("daily_energy_goal_kwh", description={"suggested_value": existing["daily_energy_goal_kwh"]} if existing.get("daily_energy_goal_kwh") else None): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1000)),
+        vol.Optional("control_enabled", default=existing.get("control_enabled", False)): bool,
+        vol.Optional("control_entity", description={"suggested_value": existing["control_entity"]} if existing.get("control_entity") else None): selector.EntitySelector(selector.EntitySelectorConfig(domain=["switch", "input_boolean", "light", "fan"])),
         vol.Optional("icon", default=existing.get("icon", "auto")): selector.SelectSelector(selector.SelectSelectorConfig(options=["auto","mdi:power-plug","mdi:washing-machine","mdi:dishwasher","mdi:tumble-dryer","mdi:fridge","mdi:radiator","mdi:air-conditioner","mdi:pool","mdi:coffee-maker","mdi:printer-3d-nozzle","mdi:lightbulb","mdi:television","mdi:desktop-classic","mdi:water-boiler","mdi:ev-station"])),
         vol.Required("energy_period", default=existing.get("energy_period", "total")): selector.SelectSelector(
             selector.SelectSelectorConfig(options=["today", "session", "total"], translation_key="usage_energy_period")),
@@ -156,6 +162,16 @@ class PowerWizard:
                 )
                 if reading.quality in ("cumulative_energy", "exceeds_capacity"):
                     errors[key] = reading.quality
+        for identifier, usage in candidate.get(CONF_USAGES, {}).items():
+            for field, minimum, maximum in (("negative_power_tolerance_w", 0, 20), ("daily_energy_goal_kwh", 0.001, 1000)):
+                value = usage.get(field)
+                if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value) or not minimum <= value <= maximum):
+                    errors[f"usages.{identifier}.{field}"] = "invalid_value"
+            target = usage.get("control_entity")
+            if target and (not isinstance(target, str) or target.split(".")[0] not in ("switch", "input_boolean", "light", "fan") or self.hass.states.get(target) is None):
+                errors[f"usages.{identifier}.control_entity"] = "missing_source"
+            if usage.get("control_enabled") and not target:
+                errors[f"usages.{identifier}.control_entity"] = "missing_source"
         return errors
 
     async def _power_step(self, step, next_step, user_input):
@@ -441,7 +457,7 @@ class PowerWizard:
                 usage = self._draft[CONF_USAGES][key.split(".")[1]]
                 field = role.removeprefix("usage_")
                 reading = normalize_usage(state.state if state else None,
-                                          state.attributes.get("unit_of_measurement") if state else None, field)
+                                          state.attributes.get("unit_of_measurement") if state else None, field, negative_tolerance_w=usage.get("negative_power_tolerance_w", 5))
                 unit = "W" if field == "power" else "kWh" if field == "energy" else "°C" if field == "temperature" else ""
                 rows.append(f"- {usage['name']} / {field}: {reading.value if reading.value is not None else '—'} {unit} [{reading.quality}]")
                 continue

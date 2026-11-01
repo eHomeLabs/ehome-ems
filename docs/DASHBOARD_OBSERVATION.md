@@ -1,6 +1,6 @@
 # Observation et qualité des données
 
-La version 0.2.1 lit les sources HA, normalise les mesures et présente les flux. Les modifications du panneau enregistrent des paramètres EMS ; elles ne commandent pas les appareils.
+La version 0.2.2 lit les sources HA, normalise les mesures et présente les flux. Enregistrer les réglages ne commande rien. Les seuls ordres réels de cette version sont les boutons On/Off manuels, associés et activés par appareil, réservés aux administrateurs. Aucun automatisme EMS n’est lancé.
 
 Une valeur **valid** signifie que la valeur et son unité sont exploitables pour le rôle demandé. Elle ne prouve pas que la pince est au bon endroit ni que plusieurs capteurs ont le même périmètre. Le résumé de vérification affiche valid en vert et les autres qualités en rouge, avec leur libellé explicite.
 

@@ -1,11 +1,11 @@
 # eHome EMS — Instructions de développement
 
-La version 0.2.1 consolide le suivi énergétique en observation. Les références produit sont [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md) et [docs/ROADMAP.md](docs/ROADMAP.md).
+La version 0.2.2 consolide le suivi énergétique en observation. Les références produit sont [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md) et [docs/ROADMAP.md](docs/ROADMAP.md).
 
 - Développer une intégration Home Assistant distribuée via HACS / Marketplace ; réutiliser les intégrations HA existantes.
 - Aucun serveur autonome ni matériel dédié n'est requis. Validation de référence sur HA avec RPi4 et SSD, sans exclusivité matérielle.
 - Garder la documentation alignée sur les fonctions livrées. Ne pas changer la version pour une simple correction documentaire, sauf demande explicite de release.
-- Aucun pilotage en observation ou simulation. L'automatique reste futur et devra être explicitement activé par équipement.
+- Aucune commande automatique en observation ou simulation. Les commandes manuelles On/Off sont autorisées sur clic administrateur, après association et activation explicites par équipement. Le pilotage automatique reste futur.
 - Ne jamais modifier une instance HA réelle sans autorisation explicite.
 - Ne pas committer de secrets, jetons, URL privées ou inventaires réels d'entités ; utiliser les jeux simulés.
 - Distinguer W/kW, Wh/kWh, SOC, import/export, charge/décharge, stock/cumul, mesure/calcul/estimation et qualité.

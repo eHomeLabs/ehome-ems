@@ -64,11 +64,11 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".flow").screenshot({path:path.join(output,viewport.width<600?"flow-night-mobile.png":"flow-night-desktop.png")});
       await page.clock.setFixedTime(new Date("2026-11-01T10:00:00Z"));
       await page.evaluate(()=>{fixturePanel._historyAt=0;fixturePanel._history={};fixturePanel.hass={...fixtureHass};});
-      await page.locator(".kpis .spark-note").first().getByText("6 h · pas de 15 min",{exact:true}).waitFor();
+      await page.locator(".kpis .spark-note").first().getByText("Tendance sur 15 mn",{exact:true}).waitFor();
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-1").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-2").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -144,7 +144,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(),0);
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="lovelace/dashboards/create"||call.type==="call_service")),false);
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
-      assert.equal(await page.getByText("Aucune commande envoyée", { exact: true }).count(), 1);
+      assert.equal(await page.getByText("Aucune commande automatique", { exact: true }).count(), 1);
       await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).check();
       await page.getByRole("spinbutton",{name:"Plafond (W) · Zendure",exact:true}).fill("1000");
       assert.equal(await page.getByRole("button",{name:"Simuler ce budget",exact:true}).isDisabled(),true);
@@ -161,7 +161,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.1 · Intégration 0.2.1", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.2 · Intégration 0.2.2", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -185,6 +185,14 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByText("Frigo",{exact:true}).waitFor();
       await page.getByText("0,81 kWh",{exact:true}).waitFor();
       assert.ok(await page.getByText(/Énergie Totale : 1524,81 kWh/).count());
+      const toggle=page.getByRole("button",{name:"Éteindre Frigo",exact:true});await toggle.click();
+      await page.getByRole("button",{name:"Allumer Frigo",exact:true}).waitFor();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/manual_control").length),1);
+      await page.getByRole("button",{name:"Allumer Frigo",exact:true}).click();
+      await page.getByRole("button",{name:"Éteindre Frigo",exact:true}).waitFor();
+      await page.evaluate(()=>{fixtureHass.states["switch.fridge"].state="unavailable";fixturePanel.hass={...fixtureHass};});
+      assert.equal(await page.getByRole("button",{name:"Allumer Frigo",exact:true}).isDisabled(),true);
+      await page.evaluate(()=>{fixtureHass.states["switch.fridge"].state="on";fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator(".appliance-card .trend-head").first().textContent(),"→");
 
       assert.ok(await page.getByText(/0,17.*aujourd’hui.*estimation/).count());
@@ -227,7 +235,8 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.screenshot({path:path.join(output,viewport.width<600?"loads-mobile.png":"loads-desktop.png"),fullPage:true});
       await page.getByRole("button",{name:"Stockage",exact:true}).click();
       await page.getByRole("heading",{name:"Aferiy",exact:true}).waitFor();
-      assert.ok(await page.getByText("51 °C",{exact:true}).count());
+      await page.locator(".vessel-card").filter({has:page.getByRole("heading",{name:"Cumulus",exact:true})}).getByText("72 %",{exact:true}).waitFor();
+      assert.ok(await page.getByText(/Température : 51 °C/).count());
       await page.locator(".stack").first().screenshot({path:path.join(output,viewport.width<600?"storage-mobile.png":"storage-desktop.png")});
       await page.evaluate(() => {fixtureFlow.batteries[1].role="active";});
       await page.getByRole("button",{name:"Actualiser",exact:true}).click();

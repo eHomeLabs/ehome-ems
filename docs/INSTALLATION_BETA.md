@@ -1,6 +1,6 @@
 # Ancien guide d'installation bêta
 
-Le guide courant couvre désormais **eHome EMS 0.2.1**, y compris la migration depuis la b15, les redémarrages nécessaires et le retour arrière.
+Le guide courant couvre désormais **eHome EMS 0.2.2**, y compris la migration depuis la b15, les redémarrages nécessaires et le retour arrière.
 
 → [Installer et mettre à jour eHome EMS](INSTALLATION.md)
 

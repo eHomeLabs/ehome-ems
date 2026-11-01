@@ -81,6 +81,9 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                       for identifier, battery in mapping.get(CONF_BATTERIES, {}).items()],
         "usages": [{"id": identifier, "name": usage["name"], "kind": usage.get("kind", "other"),
                     "icon": usage.get("icon", "auto"),
+                    "daily_energy_goal_kwh": usage.get("daily_energy_goal_kwh"),
+                    "control_enabled": usage.get("control_enabled", False),
+                    "control_entity": usage.get("control_entity"),
                     "energy_period": usage.get("energy_period", "total"),
                     **{key: entities.get(f"usage_{identifier}_{key}") for key in USAGE_SOURCES}}
                    for identifier, usage in mapping.get(CONF_USAGES, {}).items()],

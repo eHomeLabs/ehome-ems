@@ -166,7 +166,11 @@
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
           "temperature": "Température de l’eau (facultatif)",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -176,7 +180,8 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "usage_details": {
@@ -191,7 +196,11 @@
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
           "temperature": "Température de l’eau (facultatif)",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -201,7 +210,8 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "edit_usage": {
@@ -238,7 +248,11 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -246,7 +260,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "appliance_details": {
@@ -259,7 +274,11 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -267,7 +286,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "edit_appliance": {
@@ -492,7 +512,11 @@
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
           "temperature": "Température de l’eau (facultatif)",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -502,7 +526,8 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "usage_details": {
@@ -517,7 +542,11 @@
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
           "temperature": "Température de l’eau (facultatif)",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -527,7 +556,8 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "edit_usage": {
@@ -564,7 +594,11 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -572,7 +606,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "appliance_details": {
@@ -585,7 +620,11 @@
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
           "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
-          "icon": "Icône du produit (auto ou MDI)"
+          "icon": "Icône du produit (auto ou MDI)",
+          "daily_energy_goal_kwh": "Objectif énergie quotidien (kWh, facultatif)",
+          "negative_power_tolerance_w": "Tolérance puissance négative (W)",
+          "control_entity": "Entité de commande On/Off",
+          "control_enabled": "Activer la commande manuelle On/Off"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -593,7 +632,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
       "edit_appliance": {

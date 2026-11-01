@@ -1,4 +1,4 @@
-# Assistant et validation — 0.2.1
+# Assistant et validation — 0.2.2
 
 L'assistant initialise les associations. Après la première configuration, les raccourcis du panneau permettent les modifications ciblées ; la roue de l'intégration permet volontairement de reprendre le parcours.
 
@@ -24,4 +24,4 @@ Pour le navigateur : installer les dépendances de test, préparer les icônes p
 
 Les tests couvrent bilans, signes, unités, refus des boucles de sources, stock batterie, SOC, droits administrateur, conflits de modification, préservation des associations, cycle reload/unload, tendances, calcul journalier, fuseau HA et rendu desktop/mobile. Les captures sont produites avec des données simulées, sans connexion à une installation personnelle.
 
-Le retour utilisateur confirme que la b15 fonctionne sur son installation. Cela ne constitue pas une certification de tous les matériels ni une validation officielle HACS. La 0.2.1 conserve ce socle fonctionnel ; les résultats détaillés de sa passe sont dans [REVUE_0_2_1.md](REVUE_0_2_1.md).
+Le retour utilisateur confirme que la b15 fonctionne sur son installation. Cela ne constitue pas une certification de tous les matériels ni une validation officielle HACS. La 0.2.2 conserve ce socle fonctionnel ; les résultats détaillés de sa passe sont dans [REVUE_0_2_2.md](REVUE_0_2_2.md).

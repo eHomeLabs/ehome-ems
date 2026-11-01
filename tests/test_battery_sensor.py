@@ -62,6 +62,17 @@ class BatterySensorTests(IsolatedAsyncioTestCase):
         sensor.writes = 0
         return sensor
 
+    async def test_usage_small_negative_offset_keeps_raw_value_and_outside_tolerance_invalid(self):
+        usage={"name":"AC","kind":"appliance","power":"sensor.source","negative_power_tolerance_w":5}
+        sensor=sensor_module.UsageSensor("entry","ac",usage,"power")
+        sensor.hass=self.hass
+        for raw,value in [("-1",0),("-5",0),("-6",None),("unavailable",None)]:
+            self.states["sensor.source"]=SimpleNamespace(state=raw,attributes={"unit_of_measurement":"W"})
+            sensor._update_from_source()
+            self.assertEqual(sensor._attr_native_value,value)
+            self.assertEqual(sensor._attr_extra_state_attributes["source_raw_value"],raw)
+            self.assertEqual(sensor._attr_extra_state_attributes["negative_offset_corrected"],value == 0)
+
     async def test_energy_stock_uses_kwh_and_measurement_class(self):
         sensor = self.make_sensor()
         await sensor.async_added_to_hass()
