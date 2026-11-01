@@ -38,6 +38,22 @@ class HomeBalanceTests(TestCase):
                "sensor.pv": ("719", "W"), "sensor.charge": ("247", "W"), "sensor.discharge": ("0", "W")})
         self.assertEqual(result.value, 425)
 
+    def test_signed_and_separate_agree_across_real_energy_paths(self):
+        for solar, grid, charge, discharge, expected in (
+            (0,900,300,0,600),  # Grid charging is not home consumption.
+            (0,0,0,600,600),    # House supplied entirely by storage.
+            (2000,-1400,0,0,600),
+            (0,-200,0,800,600), # Battery export is not a household load.
+            (0,0,0,0,0),
+            (2000,-300,500,0,1200),
+        ):
+            mapping=config(home_has_solar=True,solar_power='sensor.pv',home_has_storage=True,
+                           grid_power='sensor.grid',batteries={'b':{'role':'active','coupling':'ac','charge_power':'sensor.charge','discharge_power':'sensor.discharge'}})
+            values={'sensor.pv':(solar,'W'),'sensor.grid':(grid,'W'),'sensor.import':(max(grid,0),'W'),'sensor.export':(max(-grid,0),'W'),'sensor.charge':(charge,'W'),'sensor.discharge':(discharge,'W')}
+            for mode in ('signed','separate'):
+                with self.subTest(mode=mode,solar=solar,grid=grid,charge=charge,discharge=discharge):
+                    self.assertEqual(balance.calculate_home({**mapping,'home_grid_mode':mode},values).value,expected)
+
     def test_missing_reading_is_not_zero(self):
         result = balance.calculate_home(config(), {"sensor.import": ("500", "W")})
         self.assertIsNone(result.value)
