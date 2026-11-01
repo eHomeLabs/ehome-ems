@@ -6,7 +6,7 @@ LABELS = {
         "summary": "Synthèse", "storage": "Stockage", "history": "Historique",
         "quality": "Qualité des données", "power": "Puissances",
         "grid_power": "Réseau signé", "grid_import": "Import réseau",
-        "grid_export": "Injection réseau", "solar_power": "Production solaire",
+        "grid_export": "Export réseau", "solar_power": "Production solaire",
         "home_power": "Maison", "charge_power": "Charge", "discharge_power": "Décharge",
         "soc": "État de charge", "remaining_energy": "Énergie restante",
         "active": "Active", "backup": "Secours",

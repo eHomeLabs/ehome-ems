@@ -261,7 +261,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b11.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b12.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -276,9 +276,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.0b11"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-0b11"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.0b11.js"
+                assert snapshot["version"] == "0.2.0b12"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-0b12"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.0b12.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -292,6 +292,32 @@ async def validate(config_dir):
                                "entity_id": solar_id, "source_id": "sensor.sim_solar",
                                "expected_source": "sensor.sim_solar", "revision": old_revision}, success=False)
                 assert entry.options["solar_power"] == "sensor.sim_pv_new"
+                # b12 scoped administrator CRUD: IDs and unrelated mappings survive reload.
+                hass.states.async_set("sensor.sim_coffee", "35", {"unit_of_measurement": "W", "device_class": "power"})
+                hass.states.async_set("sensor.sim_coffee_day", ".123456789", {"unit_of_measurement": "kWh", "device_class": "energy"})
+                before = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
+                assert "settings" in before
+                old_revision = before["revision"]
+                values = {"name": "Simulated coffee", "power": "sensor.sim_coffee", "energy": "sensor.sim_coffee_day", "energy_period": "today", "included_in_home": True}
+                changes = []
+                stop_changes = hass.bus.async_listen("call_service", lambda event: changes.append(event.data))
+                created = await command({"type": "ehome_ems/manage_settings", "entry_id": entry.entry_id, "revision": old_revision, "section": "appliances", "action": "save", "values": values})
+                await hass.async_block_till_done()
+                appliance = created["identifier"]
+                stable_id, power = mirror(f"usage_{appliance}_power")
+                assert float(power.state) == 35
+                await command({"type": "ehome_ems/manage_settings", "entry_id": entry.entry_id, "revision": old_revision, "section": "appliances", "action": "remove", "identifier": appliance}, success=False)
+                await command({"type": "ehome_ems/manage_settings", "entry_id": entry.entry_id, "revision": entry.modified_at.isoformat(), "section": "appliances", "action": "save", "identifier": appliance, "values": {**values, "name": "Renamed coffee"}})
+                await hass.async_block_till_done()
+                assert mirror(f"usage_{appliance}_power")[0] == stable_id
+                assert entry.options["solar_power"] == "sensor.sim_pv_new"
+                await command({"type": "ehome_ems/manage_settings", "entry_id": entry.entry_id, "revision": entry.modified_at.isoformat(), "section": "appliances", "action": "remove", "identifier": appliance})
+                await hass.async_block_till_done()
+                assert appliance not in entry.options["usages"]
+                stop_changes()
+                assert not changes, changes
+                day = await session.get(f"http://127.0.0.1:{port}/ehome_ems_assets/house-day.webp")
+                assert day.status == 200 and day.headers["Content-Type"].startswith("image/webp")
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 targets = [{"id": item["id"], "enabled": True, "min_w": 0 if item["kind"] == "battery" else 800,
                             "max_w": 1000 if item["kind"] == "battery" else 1800}
@@ -347,6 +373,12 @@ async def validate(config_dir):
                                    "revision": entry.modified_at.isoformat(), "budget_w": 500})
                 scenario = await ws.receive_json()
                 assert scenario["success"] and not scenario["result"]["commands_sent"]
+                await ws.send_json({"id": 5, "type": "ehome_ems/manage_settings", "entry_id": entry.entry_id, "revision": entry.modified_at.isoformat(), "section": "daily", "action": "save", "values": {"tariff_eur_kwh": .2}})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id": 6, "type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
+                public_snapshot = await ws.receive_json()
+                assert public_snapshot["success"] and "settings" not in public_snapshot["result"]
+
 
         assert await hass.config_entries.async_unload(entry.entry_id)
         await hass.async_block_till_done()

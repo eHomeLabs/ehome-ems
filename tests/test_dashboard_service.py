@@ -59,7 +59,7 @@ class DashboardServiceTests(IsolatedAsyncioTestCase):
         self.assertIn("sensor.renamed", str(result))
         self.assertEqual(result["dashboard"]["views"][0]["title"], "Overview")
         self.assertEqual(self.entry.data, {"home_power": "sensor.source"})
-        self.assertEqual(result["version"], "0.2.0b11")
+        self.assertEqual(result["version"], "0.2.0b12")
         self.assertEqual(result["managed_url"], "/ehome-ems-entry")
         self.assertIn("/ehome-ems-entry", result["dashboard"]["views"][0]["cards"][0]["content"])
 
@@ -69,7 +69,8 @@ class DashboardServiceTests(IsolatedAsyncioTestCase):
             self.registered.config_entry_id = entry_id
             result = await self.handler(SimpleNamespace(data={}))
             self.assertEqual(result["missing_entities"], ["home_power"])
-            self.assertNotIn("sensor.source", str(result))
+            self.assertNotIn("sensor.source", str(result["flow"]))
+            self.assertNotIn("sensor.source", str(result["dashboard"]))
 
     async def test_no_entry_and_wrong_entry_fail_clearly(self):
         with self.assertRaises(RuntimeError):

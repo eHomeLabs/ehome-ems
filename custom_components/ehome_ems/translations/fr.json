@@ -3,14 +3,14 @@
     "step": {
       "grid": {
         "title": "1 — Réseau électrique",
-        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/injection, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et injection, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’injection ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
+        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/export, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et export, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’export ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
         "data": {
           "grid_power": "Puissance réseau signée",
           "grid_import": "Puissance importée du réseau",
           "grid_export": "Puissance injectée sur le réseau"
         },
         "data_description": {
-          "grid_power": "Facultatif. Doit changer de signe entre import et injection. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
+          "grid_power": "Facultatif. Doit changer de signe entre import et export. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
           "grid_import": "Puissance achetée au réseau, normalement positive ou nulle. Ce n’est pas la consommation totale de la maison.",
           "grid_export": "Puissance renvoyée vers le réseau. Un signe négatif fourni par la source est accepté et affiché en valeur positive."
         }
@@ -24,7 +24,7 @@
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/injection : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et injection séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
+        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/export : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et export séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
         "data": {
           "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
           "home_power_mode": "Origine de la consommation maison",
@@ -35,7 +35,7 @@
         },
         "data_description": {
           "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
-          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − injection − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − export − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
           "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
           "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
           "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
@@ -277,7 +277,7 @@
           "solar": "Production solaire du jour",
           "home": "Consommation maison du jour",
           "import": "Import réseau du jour",
-          "export": "Injection réseau du jour",
+          "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
           "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
@@ -288,7 +288,7 @@
       "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
       "duplicate_source": "Le même capteur est associé à plusieurs mesures du bilan.",
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
-      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, injection et toutes les puissances des équipements présents.",
+      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, export et toutes les puissances des équipements présents.",
       "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
       "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
       "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",
@@ -310,14 +310,14 @@
     "step": {
       "grid": {
         "title": "1 — Réseau électrique",
-        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/injection, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et injection, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’injection ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
+        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/export, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et export, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’export ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
         "data": {
           "grid_power": "Puissance réseau signée",
           "grid_import": "Puissance importée du réseau",
           "grid_export": "Puissance injectée sur le réseau"
         },
         "data_description": {
-          "grid_power": "Facultatif. Doit changer de signe entre import et injection. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
+          "grid_power": "Facultatif. Doit changer de signe entre import et export. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
           "grid_import": "Puissance achetée au réseau, normalement positive ou nulle. Ce n’est pas la consommation totale de la maison.",
           "grid_export": "Puissance renvoyée vers le réseau. Un signe négatif fourni par la source est accepté et affiché en valeur positive."
         }
@@ -331,7 +331,7 @@
       },
       "home": {
         "title": "3 — Consommation de la maison",
-        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/injection : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et injection séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
+        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/export : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et export séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
         "data": {
           "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
           "home_power_mode": "Origine de la consommation maison",
@@ -342,7 +342,7 @@
         },
         "data_description": {
           "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
-          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − injection − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − export − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
           "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
           "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
           "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
@@ -584,7 +584,7 @@
           "solar": "Production solaire du jour",
           "home": "Consommation maison du jour",
           "import": "Import réseau du jour",
-          "export": "Injection réseau du jour",
+          "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
           "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
@@ -595,7 +595,7 @@
       "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
       "duplicate_source": "Le même capteur est associé à plusieurs mesures du bilan.",
       "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
-      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, injection et toutes les puissances des équipements présents.",
+      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, export et toutes les puissances des équipements présents.",
       "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
       "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
       "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",

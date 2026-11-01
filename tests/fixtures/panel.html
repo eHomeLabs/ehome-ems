@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>eHome EMS — fixture simulée</title><style>html,body{margin:0;min-height:100%;--primary-background-color:#101820;--primary-text-color:#eef4fa;--card-background-color:#15222d;--divider-color:#3b536b;--primary-color:#70a246;--text-primary-color:#fff}</style>
+<title>eHome EMS — fixture simulée</title><style>html{background:#101820}html,body{margin:0;min-height:100%;--primary-background-color:#101820;--primary-text-color:#eef4fa;--card-background-color:#15222d;--divider-color:#3b536b;--primary-color:#70a246;--text-primary-color:#fff}</style>
 <script>customElements.define("ehome-ems-panel",class extends HTMLElement{});</script>
-<ehome-ems-panel-0-2-0b11></ehome-ems-panel-0-2-0b11>
+<ehome-ems-panel-0-2-0b12></ehome-ems-panel-0-2-0b12>
 <script type="module">
 import "../../custom_components/ehome_ems/frontend/ehome-panel.mjs";
 const icons=await (await fetch("./mdi.json")).json();
@@ -32,12 +32,16 @@ let simulation={schema_version:1,mode:"manual_scenario",targets:[
  {id:"usage:b",name:"Cumulus",kind:"solar_router",enabled:false,min_w:0,max_w:0},
  {id:"usage:c",name:"Véhicule",kind:"ev_charger",enabled:false,min_w:0,max_w:0}]};
 const simulation_history=[];
+const settings={home_power:"sensor.home",usages:{d:{name:"Frigo",kind:"appliance",power:"sensor.fridge",energy:"sensor.fridge_energy",energy_period:"today",included_in_home:true}},batteries:{}};
 const flow=window.fixtureFlow={entities:{solar_power:"sensor.pv",home_power:"sensor.home",grid_import:"sensor.import",grid_export:"sensor.export"},
- home_calculated:true,batteries:[{name:"Zendure",role:"active",coupling:"ac",charge_power:"sensor.charge",discharge_power:"sensor.discharge",soc:"sensor.soc",remaining_energy:"sensor.stock"},{name:"Aferiy",role:"backup",coupling:"ac",charge_power:"sensor.aferiy_in",discharge_power:"sensor.aferiy_out",soc:"sensor.aferiy_soc",remaining_energy:"sensor.aferiy_stock"}],
- usages:[{name:"Cumulus",kind:"solar_router",power:"sensor.cumulus",temperature:"sensor.water_temp",energy:"sensor.water_energy",energy_period:"today"},{name:"Véhicule",kind:"ev_charger",power:"sensor.ev"},{name:"Frigo",kind:"appliance",power:"sensor.fridge",energy:"sensor.fridge_energy",energy_period:"today"}]};
+ home_calculated:true,batteries:[{id:"a",name:"Zendure",role:"active",coupling:"ac",charge_power:"sensor.charge",discharge_power:"sensor.discharge",soc:"sensor.soc",remaining_energy:"sensor.stock"},{id:"backup",name:"Aferiy",role:"backup",coupling:"ac",charge_power:"sensor.aferiy_in",discharge_power:"sensor.aferiy_out",soc:"sensor.aferiy_soc",remaining_energy:"sensor.aferiy_stock"}],
+ usages:[{id:"b",name:"Cumulus",kind:"solar_router",power:"sensor.cumulus",temperature:"sensor.water_temp",energy:"sensor.water_energy",energy_period:"today"},{id:"c",name:"Véhicule",kind:"ev_charger",power:"sensor.ev"},{id:"d",name:"Frigo",kind:"appliance",power:"sensor.fridge",energy:"sensor.fridge_energy",energy_period:"today"}]};
+Object.assign(settings,{solar_power:"sensor.pv_source",grid_import:"sensor.import",grid_export:"sensor.export",home_power_mode:"existing"});
+for(const b of flow.batteries)settings.batteries[b.id]={...b};
+for(const u of flow.usages)settings.usages[u.id]={...u,included_in_home:true};
 window.fixtureHass={
  callApi:async()=>[Object.entries(Object.fromEntries(Array.from({length:25},(_,i)=>[i,350+120*Math.sin(i/2)]))).map(([i,value])=>({entity_id:"sensor.pv_source",state:String(value),last_changed:new Date(Date.now()-(24-Number(i))*10*60000).toISOString()}))],
- language:"fr",user:{is_admin:true},states:{
+ config:{time_zone:"Europe/Paris"},language:"fr",user:{is_admin:true},states:{
   "sensor.pv":{state:"1500",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}},
   "sensor.home":{state:"425",attributes:{unit_of_measurement:"W",friendly_name:"Maison"}},
   "sensor.grid":{state:"-47",attributes:{unit_of_measurement:"W"}},
@@ -47,7 +51,16 @@ window.fixtureHass={
  callWS:async message=>{
   window.calls.push(message);
   if(message.type==="ehome_ems/dashboard")return {
-    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.0b11",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history)};
+    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.0b12",settings:structuredClone(settings),time_zone:"Europe/Paris",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home",import:"sensor.daily_import",export:"sensor.daily_export"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history)};
+  if(message.type==="ehome_ems/manage_settings"){
+    if(!fixtureHass.user.is_admin)throw {code:"unauthorized"};
+    const key=message.identifier||"new-appliance";
+    if(message.section==="appliances"){
+      if(message.action==="remove"){delete settings.usages[key];flow.usages=flow.usages.filter(u=>u.id!==key);}
+      else{const value={...message.values,kind:"appliance"};settings.usages[key]=value;flow.usages=flow.usages.filter(u=>u.id!==key);flow.usages.push({id:key,...value});}
+    }else if(message.section==="solar")settings.solar_power=message.values.solar_power;
+    revision="settings-"+calls.length;return{updated:true,identifier:key};
+  }
   if(message.type==="ehome_ems/save_simulation"){
     simulation.targets=message.targets.map(t=>({...simulation.targets.find(old=>old.id===t.id),...t}));revision="scenario-saved";return {updated:true};
   }
@@ -71,8 +84,8 @@ fixtureHass.states["sensor.pv_source"]={state:"1500",attributes:{unit_of_measure
 fixtureHass.states["sensor.pv_alternative"]={state:"2000",attributes:{unit_of_measurement:"W",friendly_name:"Source alternative"}};
 for(const [id,value] of Object.entries({import:0,export:75,charge:1000,discharge:0,cumulus:200}))
  fixtureHass.states["sensor."+id]={state:String(value),attributes:{unit_of_measurement:"W"}};
-for(const [id,value,unit] of [["stock",.16,"kWh"],["aferiy_in",0,"W"],["aferiy_out",0,"W"],["aferiy_soc",72,"%"],["aferiy_stock",1.6,"kWh"],["water_temp",51,"°C"],["water_energy",.62,"kWh"],["fridge",85,"W"],["fridge_energy",.8,"kWh"],["daily_pv",2.1,"kWh"],["daily_home",6.6,"kWh"]])
+for(const [id,value,unit] of [["stock",.16,"kWh"],["aferiy_in",0,"W"],["aferiy_out",0,"W"],["aferiy_soc",72,"%"],["aferiy_stock",1.6,"kWh"],["water_temp",51,"°C"],["water_energy",.62,"kWh"],["fridge",85,"W"],["fridge_energy",.8,"kWh"],["daily_pv",2.1,"kWh"],["daily_home",8.176,"kWh"],["daily_import",6.112,"kWh"],["daily_export",.274,"kWh"]])
  fixtureHass.states["sensor."+id]={state:String(value),attributes:{unit_of_measurement:unit}};
-window.fixturePanel=document.querySelector("ehome-ems-panel-0-2-0b11");
+window.fixturePanel=document.querySelector("ehome-ems-panel-0-2-0b12");
 fixturePanel.hass=fixtureHass;fixturePanel.panel={config:{entry_id:"simulated",revision:"one"}};
 </script></html>
