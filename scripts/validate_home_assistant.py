@@ -4,6 +4,7 @@ Run in an environment with a supported Home Assistant version installed.
 Never connects to or loads a user's Home Assistant configuration.
 """
 import asyncio
+from datetime import datetime, timedelta, timezone
 import json
 from importlib.metadata import version
 from pathlib import Path
@@ -261,7 +262,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b13.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b14.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -276,9 +277,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.0b13"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-0b13"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.0b13.js"
+                assert snapshot["version"] == "0.2.0b14"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-0b14"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.0b14.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -341,6 +342,29 @@ async def validate(config_dir):
                 hass.states.async_set("sensor.sim_grid", "-300", {"unit_of_measurement": "W"})
                 await hass.async_block_till_done()
                 assert float(mirror("home_power")[1].state) == 1200
+                # b14 stable sources remain visible in observation; real errors still block.
+                await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"home","action":"save","values":{"home_power_mode":"calculated","home_grid_mode":"signed","home_has_solar":True,"home_has_storage":True,"home_boundary_confirmed":True,"home_max_age_seconds":300,"home_freshness_policy":"warn"}})
+                await hass.async_block_till_done()
+                with patch("custom_components.ehome_ems.sensor.datetime") as clock:
+                    clock.now.return_value=datetime.now(timezone.utc)+timedelta(hours=1)
+                    hass.states.async_set("sensor.sim_grid","-301",{"unit_of_measurement":"W"})
+                    await hass.async_block_till_done()
+                    assert float(mirror("home_power")[1].state)==1199
+                    assert mirror("home_power")[1].attributes["source_age_warning"]
+                    assert mirror("home_power")[1].attributes["freshness_policy"]=="warn"
+                hass.states.async_set("sensor.sim_grid","-300",{"unit_of_measurement":"W"})
+                await hass.async_block_till_done()
+                assert float(mirror("home_power")[1].state)==1200
+                hass.states.async_set("sensor.sim_portable_stock","1.8",{"unit_of_measurement":"kWh","device_class":"energy","state_class":"total_increasing"})
+                portable={"name":"Portable storage","role":"backup","coupling":"ac","capacity_kwh":2.3,"remaining_energy":"sensor.sim_portable_stock"}
+                denied=await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"batteries","action":"save","values":portable},success=False)
+                added=await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"batteries","action":"save","values":{**portable,"remaining_energy_is_stock":True}})
+                await hass.async_block_till_done()
+                assert float(mirror(added["identifier"]+"_remaining_energy")[1].state)==1.8
+                hass.states.async_set("weather.sim_home","cloudy",{"temperature":16,"temperature_unit":"°C"})
+                await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"daily","action":"save","values":{**entry.options.get("daily",{}),"tariff_eur_kwh":.215,"weather_entity":"weather.sim_home"}})
+                await hass.async_block_till_done()
+                assert (await command({"type":"ehome_ems/dashboard","entry_id":entry.entry_id}))["weather_entity"]=="weather.sim_home"
                 stop_changes()
                 assert not changes, changes
                 day = await session.get(f"http://127.0.0.1:{port}/ehome_ems_assets/house-day.webp")

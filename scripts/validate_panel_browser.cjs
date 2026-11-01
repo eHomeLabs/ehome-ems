@@ -36,6 +36,11 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.evaluate(() => customElements.get("ehome-ems-panel") !== fixturePanel.constructor), true);
       const navLabels=await page.getByRole("navigation",{name:"Vues énergie"}).getByRole("button").allTextContents();
       assert.deepEqual(navLabels,["Vue d’ensemble","Mes Appareils","Stockage","Usages","Historique","Aujourd’hui","Stratégie","Configuration"]);
+      await page.locator(".trend-steps").first().waitFor();
+      assert.equal(await page.locator(".kpis canvas").count(),0);
+      assert.equal(await page.locator(".kpis .trend-steps").first().locator("span").count(),24);
+      const aligned=await page.locator(".kpis .kpi").evaluateAll(cards=>cards.slice(0,5).map(c=>({top:c.querySelector(".value").getBoundingClientRect().top-c.getBoundingClientRect().top,height:c.getBoundingClientRect().height})));
+      assert.ok(aligned.every(c=>Math.abs(c.top-aligned[0].top)<1&&Math.abs(c.height-aligned[0].height)<1));
       const navBox = await page.getByRole("navigation", { name: "Vues énergie" }).boundingBox();
       const flowBox = await page.locator(".flow").boundingBox();
       assert.ok(navBox.y < flowBox.y);
@@ -50,11 +55,12 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.ok(Math.abs(dayBounds.width-nightBounds.width)<1 && Math.abs(dayBounds.height-nightBounds.height)<1);
       await page.locator(".flow").screenshot({path:path.join(output,viewport.width<600?"flow-night-mobile.png":"flow-night-desktop.png")});
       await page.clock.setFixedTime(new Date("2026-11-01T10:00:00Z"));
-      await page.evaluate(()=>{fixturePanel.hass={...fixtureHass};});
+      await page.evaluate(()=>{fixturePanel._historyAt=0;fixturePanel._history={};fixturePanel.hass={...fixtureHass};});
+      await page.locator(".kpis .spark-note").first().getByText("6 h · 24 pas de 15 min",{exact:true}).waitFor();
 
       assert.equal(await page.locator(".flow-links path.active").count(), 4);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b13").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b14").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -145,7 +151,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.0b13 · Intégration 0.2.0b13", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.0b14 · Intégration 0.2.0b14", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -167,6 +173,10 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button", { name: "Annuler", exact: true }).click();
       await page.getByRole("button",{name:"Mes Appareils",exact:true}).click();
       await page.getByText("Frigo",{exact:true}).waitFor();
+      await page.getByText("0,81 kWh",{exact:true}).waitFor();
+      assert.ok(await page.getByText(/Capteur : 1524,81 kWh/).count());
+      assert.equal(await page.locator(".appliance-card .trend-head").first().textContent(),"→");
+
       assert.ok(await page.getByText(/0,17.*aujourd’hui.*estimation/).count());
       assert.equal(await page.getByRole("heading",{name:"Cumulus",exact:true}).count(),0);
       await page.screenshot({path:path.join(output,viewport.width<600?"appliances-mobile.png":"appliances-desktop.png"),fullPage:true});
@@ -192,6 +202,11 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.ok(await page.getByText("2,1 kWh",{exact:true}).count());
       assert.ok(await page.getByText("8,18 kWh",{exact:true}).count());
       await page.getByText("Autonomie apparente",{exact:true}).waitFor();
+      await page.locator(".weather-card").getByText("Éclaircies",{exact:true}).waitFor();
+      assert.ok(await page.locator(".weather-card").getByText(/9 \/ 19 °C/).count());
+      assert.equal(await page.locator(".daily-ratios .ratio-value").first().textContent(),"25 %");
+      assert.equal(await page.evaluate(()=>window.weatherSubscriptions),1);
+
       await page.getByRole("heading",{name:"Part Import / Export dans les échanges réseau",exact:true}).waitFor();
       await page.screenshot({path:path.join(output,viewport.width<600?"today-mobile.png":"today-desktop.png"),fullPage:true});
       await page.getByRole("button",{name:"Usages",exact:true}).click();

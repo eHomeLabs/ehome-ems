@@ -104,3 +104,32 @@ test("daily ratios handle missing, zero and physically inconsistent inputs",asyn
   const t=Date.UTC(2026,0,1);const values=curveSegments([0,100,20].map((state,i)=>({state:String(state),last_changed:new Date(t+i*60000).toISOString()})));
   assert.equal(values[0].length,1);assert.equal(values[0][0].value,40);
 });
+
+test("percent readings have no decimals while keeping full calculation precision",async()=>{
+ const {reading,percent}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");
+ const r=reading({s:{state:"35.69",attributes:{unit_of_measurement:"%"}}},"s");assert.equal(r.text,"36 %");assert.equal(r.number,35.69);assert.equal(percent(93.47),"93");
+});
+test("15 minute trend arrows cover 24 completed quarters and keep missing bins neutral",async()=>{
+ const {quarterTrends}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");
+ const end=Date.UTC(2026,10,1,12),step=900000;
+ assert.equal(quarterTrends([],end).length,24);assert.ok(quarterTrends([],end).every(b=>b.direction===null));
+ const data=[100,200,50,50].map((state,i)=>({state:String(state),last_changed:new Date(end-4*step+i*step).toISOString()}));
+ assert.deepEqual(quarterTrends(data,end).slice(-4).map(b=>b.direction),[null,1,-1,0]);
+ assert.ok(quarterTrends([{state:"123",last_changed:new Date(end-7*3600000).toISOString()}],end).every(b=>b.value===null));
+});
+test("daily energy from lifetime counter uses midnight baseline, units and resets",async()=>{
+ const {dailyFromCounter}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");const t=Date.UTC(2026,10,1),row=(offset,state)=>({state:String(state),last_changed:new Date(t+offset).toISOString()});
+ assert.equal(dailyFromCounter([row(0,1524),row(3600000,1524.5)],1524.81,"kWh",t,t+7200000),.81);
+ assert.equal(dailyFromCounter([row(0,1524000)],1524810,"Wh",t,t+7200000),.81);
+ assert.equal(dailyFromCounter([row(0,100),row(3600000,101),row(4000000,0),row(5000000,.3)],.5,"kWh",t,t+7200000),1.5);
+ assert.equal(dailyFromCounter([row(1000,100)],101,"kWh",t,t+7200000),null);
+ assert.equal(dailyFromCounter([],1524.81,"kWh",t,t+7200000),null);
+ assert.equal(dailyFromCounter([row(0,100)],NaN,"kWh",t,t+7200000),null);
+});
+test("HA midnight follows Paris timezone including 23 and 25 hour days",async()=>{
+ const {localDayStart}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");
+ assert.equal(new Date(localDayStart(new Date("2026-11-01T16:00:00Z"),"Europe/Paris")).toISOString(),"2026-10-31T23:00:00.000Z");
+ const day=d=>localDayStart(new Date(d),"Europe/Paris");
+ assert.equal((day("2026-03-30T12:00:00Z")-day("2026-03-29T12:00:00Z"))/3600000,23);
+ assert.equal((day("2026-10-26T12:00:00Z")-day("2026-10-25T12:00:00Z"))/3600000,25);
+});

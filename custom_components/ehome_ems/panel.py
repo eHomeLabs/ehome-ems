@@ -74,7 +74,7 @@ def websocket_manage_settings(hass, connection, msg):
     try:
         result = update_settings(hass, entry, msg["section"], msg["action"], msg["values"], msg.get("identifier"), msg["revision"])
     except SettingsError as error:
-        connection.send_error(msg["id"], str(error), "Settings rejected; check sources and refresh. " + ", ".join(error.fields))
+        connection.send_error(msg["id"], str(error), "Settings rejected; check sources and refresh. " + ", ".join(f"{field}: {reason}" for field,reason in error.fields.items()))
         return
     connection.send_result(msg["id"], result)
 

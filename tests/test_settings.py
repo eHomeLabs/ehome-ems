@@ -80,3 +80,20 @@ class SettingsTests(TestCase):
         for value in (1,29,-1,3601):
             with self.assertRaises(settings.SettingsError):
                 self.save('home',{'home_power_mode':'calculated','home_boundary_confirmed':True,'home_max_age_seconds':value})
+
+    def test_stock_override_is_explicit_and_preserves_capacity_checks(self):
+        self.states['sensor.stock']=state('1.8','kWh')
+        self.states['sensor.stock'].attributes['state_class']='total_increasing'
+        values={'name':'Portable storage','role':'backup','coupling':'ac','remaining_energy':'sensor.stock','capacity_kwh':2.3}
+        with self.assertRaises(settings.SettingsError):self.save('batteries',values)
+        result=self.save('batteries',{**values,'remaining_energy_is_stock':True})
+        self.assertTrue(self.entry.options['batteries'][result['identifier']]['remaining_energy_is_stock'])
+        self.states['sensor.stock'].state='9'
+        with self.assertRaises(settings.SettingsError):self.save('batteries',{**values,'remaining_energy_is_stock':True},result['identifier'])
+
+    def test_weather_mapping_is_scoped_and_validated(self):
+        self.states['weather.home']=state('cloudy',None)
+        self.save('daily',{'weather_entity':'weather.home'})
+        self.assertEqual(self.entry.options['weather_entity'],'weather.home')
+        self.assertEqual(self.entry.options['home_power'],'sensor.home')
+        with self.assertRaises(settings.SettingsError):self.save('daily',{'weather_entity':'sensor.home'})

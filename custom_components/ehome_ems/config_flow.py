@@ -45,6 +45,7 @@ def battery_schema(existing):
                          vol.Coerce(float), vol.Range(min=0.001)
                      ),
     }
+    schema[vol.Optional("remaining_energy_is_stock", default=existing.get("remaining_energy_is_stock", False))] = bool
     for key in BATTERY_SOURCES:
         device_class = "battery" if key == "soc" else "energy" if key == "remaining_energy" else "power"
         schema[vol.Optional(key, description={"suggested_value": existing[key]}
@@ -111,6 +112,7 @@ class PowerWizard:
         self._draft[CONF_USAGES] = deepcopy((existing or {}).get(CONF_USAGES, {}))
         self._draft["daily"] = deepcopy((existing or {}).get("daily", {}))
         self._draft["tariff_eur_kwh"] = (existing or {}).get("tariff_eur_kwh")
+        self._draft["weather_entity"] = (existing or {}).get("weather_entity")
         if "simulation" in (existing or {}):
             self._draft["simulation"] = deepcopy(existing["simulation"])
         for key in HOME_SETTINGS:
@@ -137,7 +139,10 @@ class PowerWizard:
                 errors[key] = "recursive_source"
             elif state is None:
                 errors[key] = "missing_source"
-            elif role != "usage_status" and state.attributes.get("unit_of_measurement") not in units:
+            elif role != "usage_status" and not (
+                state.attributes.get("unit_of_measurement") in units or
+                role in ("remaining_energy", "usage_energy") and str(state.attributes.get("unit_of_measurement", "")).strip().lower() in ("wh", "kwh")
+            ):
                 errors[key] = "unsupported_unit"
             elif role == "remaining_energy":
                 battery = candidate[CONF_BATTERIES][key.split(".")[1]]
@@ -145,6 +150,7 @@ class PowerWizard:
                     state.state, state.attributes.get("unit_of_measurement"), role,
                     capacity_kwh=battery.get("capacity_kwh"),
                     state_class=state.attributes.get("state_class"),
+                    stock_confirmed=battery.get("remaining_energy_is_stock", False),
                 )
                 if reading.quality in ("cumulative_energy", "exceeds_capacity"):
                     errors[key] = reading.quality
@@ -183,6 +189,7 @@ class PowerWizard:
                          "home_power": user_input.get("home_power") if mode == "existing" else None}
             for key in HOME_SETTINGS[1:4]:
                 candidate[key] = user_input.get(key, False)
+            candidate["home_freshness_policy"] = user_input.get("home_freshness_policy", "warn")
             candidate["home_grid_mode"] = user_input.get("home_grid_mode", "auto")
             candidate["home_max_age_seconds"] = user_input.get("home_max_age_seconds", 300)
             errors = {key: reason for key, reason in self._errors(candidate).items()
@@ -204,6 +211,9 @@ class PowerWizard:
         }
         for key, default in defaults.items():
             schema[vol.Optional(key, default=existing.get(key, default))] = bool
+        schema[vol.Optional("home_freshness_policy", default=existing.get("home_freshness_policy", "warn"))] = selector.SelectSelector(
+            selector.SelectSelectorConfig(options=["warn", "strict"], translation_key="home_freshness_policy")
+        )
         schema[vol.Optional("home_grid_mode", default=existing.get("home_grid_mode", "auto"))] = selector.SelectSelector(
             selector.SelectSelectorConfig(options=["auto", "signed", "separate"], translation_key="home_grid_mode")
         )
@@ -331,7 +341,7 @@ class PowerWizard:
 
     async def async_step_daily(self, user_input=None):
         errors = {}
-        existing = {**self._draft.get("daily", {}), "tariff_eur_kwh": self._draft.get("tariff_eur_kwh")}
+        existing = {**self._draft.get("daily", {}), "tariff_eur_kwh": self._draft.get("tariff_eur_kwh"), "weather_entity": self._draft.get("weather_entity")}
         if user_input is not None:
             candidate = deepcopy(self._draft)
             candidate["daily"] = {k: user_input[k] for k in DAILY_SOURCES if user_input.get(k)}
@@ -339,6 +349,10 @@ class PowerWizard:
             if tariff is not None and (isinstance(tariff, bool) or not isinstance(tariff, (int, float)) or not isfinite(tariff) or not 0 <= tariff <= 10):
                 errors["tariff_eur_kwh"] = "invalid_tariff"
             candidate["tariff_eur_kwh"] = tariff
+            weather = user_input.get("weather_entity")
+            if weather and (not isinstance(weather,str) or not weather.startswith("weather.") or not self.hass.states.get(weather)):
+                errors["weather_entity"] = "invalid_weather"
+            candidate["weather_entity"] = weather
             errors.update({k.removeprefix("daily."): v for k, v in self._errors(candidate).items() if k.startswith("daily.")})
             if not errors:
                 self._draft = candidate
@@ -347,6 +361,7 @@ class PowerWizard:
         schema = {vol.Optional(k, description={"suggested_value": existing[k]} if existing.get(k) else None):
                   selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor", device_class="energy")) for k in DAILY_SOURCES}
         schema[vol.Optional("tariff_eur_kwh", description={"suggested_value": existing["tariff_eur_kwh"]} if existing.get("tariff_eur_kwh") is not None else None)] = vol.All(vol.Coerce(float), vol.Range(min=0, max=10))
+        schema[vol.Optional("weather_entity", description={"suggested_value": existing["weather_entity"]} if existing.get("weather_entity") else None)] = selector.EntitySelector(selector.EntitySelectorConfig(domain="weather"))
         return self.async_show_form(step_id="daily", data_schema=vol.Schema(schema), errors=errors)
 
     async def async_step_add_usage(self, user_input=None):
@@ -433,6 +448,7 @@ class PowerWizard:
             details = {
                 "capacity_kwh": battery.get("capacity_kwh"),
                 "state_class": state.attributes.get("state_class") if state else None,
+                "stock_confirmed": battery.get("remaining_energy_is_stock", False),
             } if battery else {}
             reading = normalize(
                 state.state if state else None,

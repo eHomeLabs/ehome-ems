@@ -56,7 +56,7 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                 items[identifier] = clean
         elif action == "save" and section in ("grid", "solar", "home", "daily"):
             allowed = {"grid": {"grid_power", "grid_import", "grid_export"}, "solar": {"solar_power"},
-                       "home": {"home_power", *HOME_SETTINGS}, "daily": {*DAILY_SOURCES, "tariff_eur_kwh"}}[section]
+                       "home": {"home_power", *HOME_SETTINGS}, "daily": {*DAILY_SOURCES, "tariff_eur_kwh", "weather_entity"}}[section]
             if set(values) - allowed:
                 raise SettingsError("invalid_settings")
             if section == "daily":
@@ -65,6 +65,10 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                     raise SettingsError("invalid_tariff")
                 candidate["daily"] = {key: values[key] for key in DAILY_SOURCES if values.get(key)}
                 candidate["tariff_eur_kwh"] = tariff
+                weather = values.get("weather_entity")
+                if weather and (not isinstance(weather,str) or not weather.startswith("weather.") or not hass.states.get(weather)):
+                    raise SettingsError("invalid_weather")
+                candidate["weather_entity"] = weather
             else:
                 for key in allowed:
                     candidate[key] = values.get(key)
@@ -79,6 +83,10 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                         if type(values.get(key, False)) is not bool:
                             raise SettingsError("invalid_settings")
                         candidate[key] = values.get(key, False)
+                    policy = values.get("home_freshness_policy", "warn")
+                    if policy not in ("warn", "strict"):
+                        raise SettingsError("invalid_settings")
+                    candidate["home_freshness_policy"] = policy
                     grid_mode = values.get("home_grid_mode", "auto")
                     if grid_mode not in ("auto", "signed", "separate"):
                         raise SettingsError("grid_configuration")

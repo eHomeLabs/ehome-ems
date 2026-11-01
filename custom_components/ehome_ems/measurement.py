@@ -38,16 +38,16 @@ def normalize_power(raw: object, unit: str | None, role: str) -> PowerReading:
 
 def normalize_battery(raw: object, unit: str | None, role: str, *,
                       capacity_kwh: float | None = None,
-                      state_class: str | None = None) -> PowerReading:
+                      state_class: str | None = None, stock_confirmed: bool = False) -> PowerReading:
     """Normalize separate positive power, SOC %, or measured stored energy kWh."""
     if role in ("charge_power", "discharge_power"):
         return normalize_power(raw, unit, role)
-    if role == "remaining_energy" and state_class in ("total", "total_increasing"):
+    if role == "remaining_energy" and state_class in ("total", "total_increasing") and not stock_confirmed:
         return PowerReading(None, "cumulative_energy")
     if raw is None or raw in ("unknown", "unavailable"):
         return PowerReading(None, "unavailable")
     factors = {"%": 1} if role == "soc" else {"Wh": 0.001, "kWh": 1}
-    factor = factors.get(unit)
+    factor = factors.get(unit if role == "soc" else {"wh":"Wh", "kwh":"kWh"}.get(str(unit).strip().lower()))
     if factor is None:
         return PowerReading(None, "unsupported_unit")
     try:

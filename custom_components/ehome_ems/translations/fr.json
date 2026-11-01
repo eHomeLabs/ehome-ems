@@ -32,7 +32,8 @@
           "home_has_storage": "Calcul automatique : stockage actif présent",
           "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
           "home_max_age_seconds": "Âge maximal des sources (secondes, 0 désactive le contrôle)",
-          "home_grid_mode": "Réseau utilisé dans le bilan"
+          "home_grid_mode": "Réseau utilisé dans le bilan",
+          "home_freshness_policy": "Source ancienne : signaler ou bloquer"
         },
         "data_description": {
           "home_power": "Doit inclure cumulus, borne et tous les appareils. Une pince mesurant tous les départs usages, ou un template conforme au bilan, convient. Si votre ancien template soustrait le cumulus, corrigez-le. Ignoré en mode calcul EMS.",
@@ -40,8 +41,9 @@
           "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
           "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
           "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
-          "home_max_age_seconds": "Défaut 300 s, contrôle toutes les 30 s. Certaines intégrations publient seulement les changements, notamment pour 0 W : adaptez le délai, ou choisissez explicitement 0 pour ne plus bloquer sur l’âge. L’âge reste visible dans le détail du calcul. Une source absente, invalide ou indisponible bloque toujours le résultat.",
-          "home_grid_mode": "Auto conserve Import/Export si les deux sont associés, sinon utilise le réseau signé. Un seul mode entre dans le bilan, jamais les deux. En mode signé, vérifier impérativement + import / − export ; un capteur import uniquement ne convient pas."
+          "home_max_age_seconds": "Défaut 300 s, contrôle toutes les 30 s. Avec Signaler, les sources anciennes sont indiquées sans effacer le bilan ; avec Strict, elles bloquent. Le réglage 0 désactive le contrôle d’âge. Un 0 W stable reste une valeur valide.",
+          "home_grid_mode": "Auto conserve Import/Export si les deux sont associés, sinon utilise le réseau signé. Un seul mode entre dans le bilan, jamais les deux. En mode signé, vérifier impérativement + import / − export ; un capteur import uniquement ne convient pas.",
+          "home_freshness_policy": "En observation, le mode Signaler conserve le bilan avec un avertissement sur les âges. Le mode Strict bloque après le délai. Les valeurs absentes, invalides ou indisponibles bloquent toujours."
         }
       },
       "review": {
@@ -86,7 +88,8 @@
           "charge_power": "Puissance de charge positive (W/kW)",
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
-          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -96,7 +99,8 @@
           "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
           "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
           "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
-          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente.",
+          "remaining_energy_is_stock": "À cocher uniquement pour un vrai stock restant mal classé dans HA. Accepte Wh/kWh ; les limites de capacité continuent de s’appliquer. Un total d’énergie consommée ne convient pas."
         }
       },
       "battery_details": {
@@ -110,7 +114,8 @@
           "charge_power": "Puissance de charge positive (W/kW)",
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
-          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -120,7 +125,8 @@
           "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
           "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
           "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
-          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente.",
+          "remaining_energy_is_stock": "À cocher uniquement pour un vrai stock restant mal classé dans HA. Accepte Wh/kWh ; les limites de capacité continuent de s’appliquer. Un total d’énergie consommée ne convient pas."
         }
       },
       "edit_battery": {
@@ -282,7 +288,11 @@
           "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
-          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)",
+          "weather_entity": "Météo du jour (entité météo HA)"
+        },
+        "data_description": {
+          "weather_entity": "Résumé du jour dans Aujourd’hui, via les prévisions journalières de cette entité. Si elles ne sont pas fournies, seules les conditions actuelles sont indiquées explicitement."
         }
       }
     },
@@ -304,7 +314,8 @@
       "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
       "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh.",
       "missing_grid_source": "Associez un réseau signé ou les deux capteurs Import/Export.",
-      "grid_configuration": "Vérifiez le mode réseau choisi pour Conso Maison."
+      "grid_configuration": "Vérifiez le mode réseau choisi pour Conso Maison.",
+      "invalid_weather": "Choisissez une entité weather existante."
     },
     "abort": {
       "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
@@ -343,7 +354,8 @@
           "home_has_storage": "Calcul automatique : stockage actif présent",
           "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
           "home_max_age_seconds": "Âge maximal des sources (secondes, 0 désactive le contrôle)",
-          "home_grid_mode": "Réseau utilisé dans le bilan"
+          "home_grid_mode": "Réseau utilisé dans le bilan",
+          "home_freshness_policy": "Source ancienne : signaler ou bloquer"
         },
         "data_description": {
           "home_power": "Doit inclure cumulus, borne et tous les appareils. Une pince mesurant tous les départs usages, ou un template conforme au bilan, convient. Si votre ancien template soustrait le cumulus, corrigez-le. Ignoré en mode calcul EMS.",
@@ -351,8 +363,9 @@
           "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
           "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
           "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
-          "home_max_age_seconds": "Défaut 300 s, contrôle toutes les 30 s. Certaines intégrations publient seulement les changements, notamment pour 0 W : adaptez le délai, ou choisissez explicitement 0 pour ne plus bloquer sur l’âge. L’âge reste visible dans le détail du calcul. Une source absente, invalide ou indisponible bloque toujours le résultat.",
-          "home_grid_mode": "Auto conserve Import/Export si les deux sont associés, sinon utilise le réseau signé. Un seul mode entre dans le bilan, jamais les deux. En mode signé, vérifier impérativement + import / − export ; un capteur import uniquement ne convient pas."
+          "home_max_age_seconds": "Défaut 300 s, contrôle toutes les 30 s. Avec Signaler, les sources anciennes sont indiquées sans effacer le bilan ; avec Strict, elles bloquent. Le réglage 0 désactive le contrôle d’âge. Un 0 W stable reste une valeur valide.",
+          "home_grid_mode": "Auto conserve Import/Export si les deux sont associés, sinon utilise le réseau signé. Un seul mode entre dans le bilan, jamais les deux. En mode signé, vérifier impérativement + import / − export ; un capteur import uniquement ne convient pas.",
+          "home_freshness_policy": "En observation, le mode Signaler conserve le bilan avec un avertissement sur les âges. Le mode Strict bloque après le délai. Les valeurs absentes, invalides ou indisponibles bloquent toujours."
         }
       },
       "review": {
@@ -397,7 +410,8 @@
           "charge_power": "Puissance de charge positive (W/kW)",
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
-          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -407,7 +421,8 @@
           "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
           "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
           "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
-          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente.",
+          "remaining_energy_is_stock": "À cocher uniquement pour un vrai stock restant mal classé dans HA. Accepte Wh/kWh ; les limites de capacité continuent de s’appliquer. Un total d’énergie consommée ne convient pas."
         }
       },
       "battery_details": {
@@ -421,7 +436,8 @@
           "charge_power": "Puissance de charge positive (W/kW)",
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
-          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -431,7 +447,8 @@
           "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
           "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
           "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
-          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente.",
+          "remaining_energy_is_stock": "À cocher uniquement pour un vrai stock restant mal classé dans HA. Accepte Wh/kWh ; les limites de capacité continuent de s’appliquer. Un total d’énergie consommée ne convient pas."
         }
       },
       "edit_battery": {
@@ -593,7 +610,11 @@
           "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
-          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)",
+          "weather_entity": "Météo du jour (entité météo HA)"
+        },
+        "data_description": {
+          "weather_entity": "Résumé du jour dans Aujourd’hui, via les prévisions journalières de cette entité. Si elles ne sont pas fournies, seules les conditions actuelles sont indiquées explicitement."
         }
       }
     },
@@ -615,7 +636,8 @@
       "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
       "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh.",
       "missing_grid_source": "Associez un réseau signé ou les deux capteurs Import/Export.",
-      "grid_configuration": "Vérifiez le mode réseau choisi pour Conso Maison."
+      "grid_configuration": "Vérifiez le mode réseau choisi pour Conso Maison.",
+      "invalid_weather": "Choisissez une entité weather existante."
     }
   },
   "selector": {
@@ -657,6 +679,12 @@
         "auto": "Auto : Import/Export complets, sinon signé",
         "signed": "Réseau signé (+ import / − export)",
         "separate": "Deux capteurs Import et Export"
+      }
+    },
+    "home_freshness_policy": {
+      "options": {
+        "warn": "Signaler sans bloquer (observation)",
+        "strict": "Bloquer après le délai (strict)"
       }
     }
   },
