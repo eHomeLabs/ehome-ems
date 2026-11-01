@@ -1,4 +1,4 @@
-# eHome EMS 0.2.1 — contrôle de l'interface
+# eHome EMS 0.2.2 — contrôle de l'interface
 
 Les captures desktop/mobile sont générées avec des données simulées depuis le panneau réel. Les cartes conservent des emplacements alignés pour le titre, la valeur et la tendance ; les appareils réservent aussi énergie, état et actions.
 
@@ -9,3 +9,5 @@ Les produits ont des icônes natives MDI déduites de leur nom ou sélectionnée
 Les contrôles navigateur couvrent l'alignement, les couleurs lors d'une variation de puissance, les droits et formulaires, les onglets, la météo, le calcul du jour depuis cumul, les liens natifs d'historique et les illustrations jour/nuit. Les pourcentages visibles sont entiers. Les tests ne certifient pas les sources physiques d'une installation personnelle.
 
 [Captures du panneau](docs/DASHBOARD_AUTOMATIQUE.md) · [Revue de release](docs/REVUE_0_2_1.md)
+
+La 0.2.2 affiche « Tendance sur 15 mn » sur toutes les cartes. La carte cumulus utilise l’objectif quotidien déclaré et présente température et énergie séparément. Les boutons On/Off ne deviennent actifs qu’après association et activation manuelles ; le rendu utilise l’état HA réel, sans l’inventer après un ordre. Les fixtures comprennent un cumulus à 2,16 / 3 kWh (72 %) et une commande de frigo simulée.

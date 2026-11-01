@@ -1,4 +1,4 @@
-# Le panneau eHome EMS 0.2.1
+# Le panneau eHome EMS 0.2.2
 
 Le panneau géré apparaît dans la barre latérale HA après confirmation de l'assistant. Il suit les associations et respecte les droits administrateur pour les modifications. Aucun YAML à copier, ni intégration graphique externe à installer.
 

@@ -4,11 +4,12 @@ from datetime import datetime, timezone
 import voluptuous as vol
 from homeassistant.components import frontend, panel_custom, websocket_api
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.core import callback
+from homeassistant.core import callback, Context
 from homeassistant.exceptions import HomeAssistantError
 
 from .dashboard_service import dashboard_snapshot, power_scale
 from .const import DOMAIN, VERSION
+from .manual_control import async_control
 from .source_editor import remap_source
 from .simulation import save_plan, allocate
 from .settings import update_settings, SettingsError
@@ -87,6 +88,7 @@ async def async_setup_panel_domain(hass):
     websocket_api.async_register_command(hass, websocket_dashboard)
     websocket_api.async_register_command(hass, websocket_remap)
     websocket_api.async_register_command(hass, websocket_manage_settings)
+    websocket_api.async_register_command(hass, websocket_manual_control)
     websocket_api.async_register_command(hass, websocket_save_simulation)
     websocket_api.async_register_command(hass, websocket_simulate)
 
@@ -146,3 +148,25 @@ async def async_setup_entry_panel(hass, entry):
         config={"entry_id": entry.entry_id, "revision": entry.modified_at.isoformat()},
     )
     entry.async_on_unload(lambda: frontend.async_remove_panel(hass, path))
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({
+    "type": "ehome_ems/manual_control", "entry_id": str, "identifier": str,
+    "desired_on": bool, "expected_state": vol.In(["on", "off"]), "revision": str,
+})
+@websocket_api.async_response
+async def websocket_manual_control(hass, connection, msg):
+    entry = hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain != DOMAIN:
+        connection.send_error(msg["id"], "not_ready", "eHome EMS is not ready.")
+        return
+    try:
+        result = await async_control(hass, entry, msg["identifier"], msg["desired_on"],
+                                     msg["expected_state"], msg["revision"], Context(user_id=connection.user.id))
+    except ValueError as error:
+        connection.send_error(msg["id"], str(error), "Manual command rejected; refresh and check configuration.")
+    except HomeAssistantError:
+        connection.send_error(msg["id"], "command_failed", "Home Assistant could not execute the manual command.")
+    else:
+        connection.send_result(msg["id"], result)

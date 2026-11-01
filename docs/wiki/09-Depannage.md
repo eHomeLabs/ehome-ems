@@ -17,3 +17,7 @@
 Pour un signalement, fournir version EMS, version HA, étape reproduite, qualité affichée et extrait de journal expurgé. Ne pas publier URL privée, jeton ni inventaire d'entités personnelles. Les sources se diagnostiquent d'abord dans leurs intégrations HA ; EMS ne remplace pas leur fonctionnement.
 
 [Diagnostic du bilan](../CONSOMMATION_MAISON.md) · [Installation](../INSTALLATION.md)
+
+Un On/Off désactivé indique un état inconnu, une commande en cours ou des droits insuffisants. Si la configuration ou l’état a changé entre affichage et clic, actualiser. Les actions manuelles se configurent séparément des capteurs de puissance.
+
+Pour une petite valeur négative de consommation d’un appareil, vérifier le réglage de tolérance (5 W par défaut). Ne pas utiliser ce réglage pour masquer une véritable production ou modifier le signe du réseau.

@@ -31,6 +31,19 @@ class SettingsTests(TestCase):
     def save(self,section,values,identifier=None,action='save',revision=None):
         return settings.update_settings(self.hass,self.entry,section,action,values,identifier,revision or self.entry.modified_at.isoformat())
 
+    def test_daily_goal_tolerance_and_manual_control_are_explicit_and_preserved(self):
+        self.states['switch.load']=state('off',None)
+        result=self.save('appliances',{'name':'Load','power':'sensor.fridge','included_in_home':True,'daily_energy_goal_kwh':3,'negative_power_tolerance_w':5,'control_entity':'switch.load','control_enabled':True})
+        item=self.entry.options['usages'][result['identifier']]
+        self.assertEqual(item['daily_energy_goal_kwh'],3)
+        self.assertEqual(item['control_entity'],'switch.load')
+        self.assertTrue(item['control_enabled'])
+        for goal in (0,-1,float('nan'),float('inf')):
+            with self.assertRaises(settings.SettingsError):self.save('appliances',{'name':'Bad','power':'sensor.other','included_in_home':True,'daily_energy_goal_kwh':goal})
+        with self.assertRaises(settings.SettingsError):self.save('appliances',{'name':'Bad','power':'sensor.other','included_in_home':True,'control_enabled':True})
+        for tolerance in (-1,21,float('nan'),True):
+            with self.assertRaises(settings.SettingsError):self.save('appliances',{'name':'Bad','power':'sensor.other','included_in_home':True,'negative_power_tolerance_w':tolerance})
+
     def test_add_update_and_remove_keeps_other_settings_and_id(self):
         data={'name':'Fridge','power':'sensor.fridge','energy':'sensor.fridge_day','included_in_home':True,'energy_period':'today'}
         result=self.save('appliances',data)

@@ -11,7 +11,7 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'docs/screenshots');
   await page.goto('http://127.0.0.1:'+server.address().port+'/tests/fixtures/panel.html');
   await page.getByRole('button',{name:'Vue d’ensemble',exact:true}).waitFor();
   await page.locator('.flow-house img').evaluate(img=>img.decode());
-  await page.locator('.kpis .spark-note').first().getByText('6 h · pas de 15 min',{exact:true}).waitFor();
+  await page.locator('.kpis .spark-note').first().getByText('Tendance sur 15 mn',{exact:true}).waitFor();
   await page.locator('main').screenshot({path:path.join(out,'overview.png')});
   await page.locator('.flow').screenshot({path:path.join(out,'energy-flow.png')});
   await page.locator('.home-diagnostic summary').click();await page.locator('.home-diagnostic').screenshot({path:path.join(out,'home-balance.png')});
@@ -24,6 +24,6 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'docs/screenshots');
   await page.getByRole('button',{name:'Historique',exact:true}).click();await page.locator('.history-chart svg').first().waitFor();await page.locator('main').screenshot({path:path.join(out,'history.png')});
   await page.getByRole('button',{name:'Configuration',exact:true}).click();await page.locator('.settings-shortcuts').waitFor();
   await page.locator('main').screenshot({path:path.join(out,'configuration.png')});
-  console.log('Captured 8 actual 0.2.1 UI screenshots with simulated data.');
+  console.log('Captured 8 actual 0.2.2 UI screenshots with simulated data.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

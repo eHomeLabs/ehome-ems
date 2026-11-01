@@ -135,3 +135,5 @@ test("HA midnight follows Paris timezone including 23 and 25 hour days",async()=
 });
 
 test("native product icons infer French names and permit explicit overrides",async()=>{const {productIcon}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");for(const [name,icon] of [["Lave Linge","washing-machine"],["Sèche Serviette","radiator"],["Filtration Piscine","pool"],["Clim Labo","air-conditioner"],["Frigo/Congélateur","fridge"],["Expresso","coffee-maker"]])assert.equal(productIcon({name}),"mdi:"+icon);assert.equal(productIcon({name:"Frigo",icon:"mdi:pool"}),"mdi:pool");assert.equal(productIcon({name:"unknown",icon:"javascript:bad"}),"mdi:power-plug");});
+
+test("daily goal is consumed energy progress, distinct from SOC and can exceed target",async()=>{const {dailyGoalPercent}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");assert.ok(Math.abs(dailyGoalPercent(2.16,3)-72)<1e-9);assert.ok(Math.abs(dailyGoalPercent(4,3)-400/3)<1e-9);for(const [energy,goal] of [[null,3],[2,0],[2,-1],[2,NaN],[-1,3]])assert.equal(dailyGoalPercent(energy,goal),null);});

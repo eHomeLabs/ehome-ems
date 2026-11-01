@@ -1,4 +1,4 @@
-# Installer et mettre à jour eHome EMS 0.2.1
+# Installer et mettre à jour eHome EMS 0.2.2
 
 L'intégration utilise votre Home Assistant et les entités de vos équipements déjà intégrés. Aucun serveur supplémentaire n'est nécessaire. Le dépôt est public ; son ajout comme dépôt personnalisé HACS / Marketplace ne constitue pas une validation officielle au catalogue.
 
@@ -12,7 +12,7 @@ L'intégration utilise votre Home Assistant et les entités de vos équipements 
 ## HACS / Marketplace
 
 1. Ajouter `https://github.com/eHomeLabs/ehome-ems` aux dépôts personnalisés, catégorie **Intégration**.
-2. Installer la version **0.2.1** depuis la [release](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.1).
+2. Installer la version **0.2.2** depuis la [release](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.2).
 3. À la première installation ou après remplacement du code Python, redémarrer **Home Assistant Core** une fois. Aucun redémarrage du système hôte n'est demandé.
 4. Ouvrir **Paramètres → Appareils et services → Ajouter une intégration → eHome EMS**.
 5. Parcourir l'assistant : réseau, solaire, Conso Maison, batteries, usages, appareils et compteurs du jour. Vérifier les mesures puis confirmer en dernière position.
@@ -20,11 +20,11 @@ L'intégration utilise votre Home Assistant et les entités de vos équipements 
 
 ## Installation manuelle
 
-Télécharger `ehome-ems-0.2.1.zip` et son fichier `.sha256` depuis la release. Extraire le dossier `custom_components/ehome_ems` dans `/config/custom_components/ehome_ems`, vérifier `manifest.json` puis redémarrer HA Core. Ne pas créer un second niveau de dossier `ehome_ems/ehome_ems`.
+Télécharger `ehome-ems-0.2.2.zip` et son fichier `.sha256` depuis la release. Extraire le dossier `custom_components/ehome_ems` dans `/config/custom_components/ehome_ems`, vérifier `manifest.json` puis redémarrer HA Core. Ne pas créer un second niveau de dossier `ehome_ems/ehome_ems`.
 
 ## Migrer depuis la b15
 
-Mettre à jour les fichiers sans supprimer l'entrée existante : les associations et identifiants restent conservés. Redémarrer HA Core pour charger le code, puis recharger le navigateur. Dans **Configuration**, vérifier que les versions Interface et Intégration indiquent toutes deux **0.2.1**.
+Mettre à jour les fichiers sans supprimer l'entrée existante : les associations et identifiants restent conservés. Redémarrer HA Core pour charger le code, puis recharger le navigateur. Dans **Configuration**, vérifier que les versions Interface et Intégration indiquent toutes deux **0.2.2**.
 
 ## Quand faut-il redémarrer ?
 
@@ -40,7 +40,7 @@ Recharger une entrée HA ne remplace pas les modules Python déjà chargés. Les
 
 ## Retour arrière
 
-Conserver la sauvegarde et la release précédente. Si nécessaire, réinstaller les fichiers de la b15 puis redémarrer HA Core et recharger le navigateur. Si un format de configuration a changé dans une future version, utiliser une sauvegarde compatible ; la 0.2.1 ne change pas le schéma d'associations de la b15. Ne pas supprimer l'intégration pour un simple rafraîchissement du panneau.
+Conserver la sauvegarde et la release précédente. Si nécessaire, réinstaller les fichiers de la b15 puis redémarrer HA Core et recharger le navigateur. Si un format de configuration a changé dans une future version, utiliser une sauvegarde compatible ; la 0.2.2 lit les associations existantes et ajoute des champs facultatifs. Ne pas supprimer l'intégration pour un simple rafraîchissement du panneau.
 
 ![Raccourcis de configuration](screenshots/configuration.png)
 

@@ -166,7 +166,11 @@
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
           "temperature": "Water temperature (optional)",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -176,7 +180,8 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred."
+          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "usage_details": {
@@ -191,7 +196,11 @@
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
           "temperature": "Water temperature (optional)",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -201,7 +210,8 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred."
+          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "edit_usage": {
@@ -238,7 +248,11 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -246,7 +260,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "appliance_details": {
@@ -259,7 +274,11 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -267,7 +286,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "edit_appliance": {
@@ -492,7 +512,11 @@
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
           "temperature": "Water temperature (optional)",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -502,7 +526,8 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred."
+          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "usage_details": {
@@ -517,7 +542,11 @@
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
           "temperature": "Water temperature (optional)",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -527,7 +556,8 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred."
+          "temperature": "Temperature sensor in °C or °F. No thermal energy stock is inferred.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "edit_usage": {
@@ -564,7 +594,11 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -572,7 +606,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "appliance_details": {
@@ -585,7 +620,11 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "icon": "Product icon (auto or MDI)"
+          "icon": "Product icon (auto or MDI)",
+          "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
+          "negative_power_tolerance_w": "Negative power tolerance (W)",
+          "control_entity": "On/Off control entity",
+          "control_enabled": "Enable manual On/Off"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -593,7 +632,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
       "edit_appliance": {

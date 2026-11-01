@@ -250,6 +250,7 @@ class UsageSensor(MappedPowerSensor):
             state.state if state else None,
             state.attributes.get("unit_of_measurement") if state else None,
             self._usage_key,
+            negative_tolerance_w=self._usage.get("negative_power_tolerance_w", 5),
         )
         self._attr_native_value = reading.value
         self._attr_available = reading.value is not None
@@ -257,5 +258,8 @@ class UsageSensor(MappedPowerSensor):
             "source_entity_id": self._source, "data_quality": reading.quality,
             "value_origin": "external_source", "usage_id": self._usage_id,
             "usage_kind": self._usage["kind"], "included_in_home": True,
+            "source_raw_value": state.state if state else None,
+            "negative_power_tolerance_w": self._usage.get("negative_power_tolerance_w", 5) if self._usage_key == "power" else None,
+            "negative_offset_corrected": self._usage_key == "power" and reading.value == 0 and state is not None and float(state.state) < 0,
             "energy_period": self._usage.get("energy_period", "total") if self._usage_key == "energy" else None,
         }

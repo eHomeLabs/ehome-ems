@@ -1,8 +1,8 @@
-# eHome EMS — Wiki 0.2.1
+# eHome EMS — Wiki 0.2.2
 
 **Votre installation. Vos équipements. Votre énergie. Un EMS sur mesure.**
 
-Ce wiki décrit l'intégration Home Assistant disponible en **0.2.1**, issue du socle b15 validé en usage. Elle fonctionne en observation et propose des scénarios manuels, sans commande physique. Aucun serveur ou ordinateur supplémentaire n'est requis.
+Ce wiki décrit l'intégration Home Assistant disponible en **0.2.2**, issue du socle b15 validé en usage. Elle fonctionne en observation et propose des scénarios manuels, avec commandes manuelles On/Off facultatives. Aucun serveur ou ordinateur supplémentaire n'est requis.
 
 ![Vue d'ensemble du panneau](../screenshots/overview.png)
 
@@ -29,4 +29,4 @@ Ce wiki décrit l'intégration Home Assistant disponible en **0.2.1**, issue du 
 
 Jour de 07:00 à 18:59, nuit de 19:00 à 06:59 dans le fuseau HA. Voir [Illustrations maison](../HOUSE_ASSETS.md).
 
-[README](../../README.md) · [Notes 0.2.1](../RELEASE_0_2_1.md) · [Feuille de route](../ROADMAP.md)
+[README](../../README.md) · [Notes 0.2.2](../RELEASE_0_2_2.md) · [Feuille de route](../ROADMAP.md)

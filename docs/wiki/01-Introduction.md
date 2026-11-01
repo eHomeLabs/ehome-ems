@@ -6,7 +6,7 @@ eHome EMS rassemble les mesures déjà intégrées à Home Assistant : solaire, 
 
 **Conso Maison = Solaire + Réseau signé − Charge batterie + Décharge batterie.** Le cumulus et la borne restent inclus. Une source maison existante peut être utilisée à la place du calcul EMS.
 
-Le mode observation ne commande aucun équipement. Les scénarios répartissent un budget hypothétique saisi manuellement et ne sont pas exécutés. Prévisions énergétiques et pilotage coordonné restent dans la feuille de route.
+L’observation ne déclenche aucune commande automatique. Les boutons On/Off explicitement activés envoient une commande sur clic administrateur. Les scénarios répartissent un budget hypothétique saisi manuellement et ne sont pas exécutés. Prévisions énergétiques et pilotage coordonné restent dans la feuille de route.
 
 ![Flux énergétique](../screenshots/energy-flow.png)
 

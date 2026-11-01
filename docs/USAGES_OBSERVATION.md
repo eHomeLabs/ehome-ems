@@ -26,6 +26,20 @@ La borne affiche sa puissance et l'énergie selon la période déclarée, avec u
 
 ## Tendances
 
-Une seule flèche par carte : hausse, baisse ou stabilité entre moyennes de quarts d'heure sur six heures. Sans données suffisantes, flèche horizontale et mention explicite. Rouge pour une charge consommant une puissance positive, bleue sinon ; production, export et décharge restent bleus. Le seuil de 10 W concerne seulement l'animation des flux, pas la couleur de consommation.
+Libellé **Tendance sur 15 mn**. Une seule flèche par carte : hausse, baisse ou stabilité entre moyennes de quarts d'heure sur six heures. Sans données suffisantes, flèche horizontale et mention explicite. Rouge pour une charge consommant une puissance positive, bleue sinon ; production, export et décharge restent bleus. Le seuil de 10 W concerne seulement l'animation des flux, pas la couleur de consommation.
 
-Même si une source `switch` est choisie pour son état, EMS ne fait que la lire. Aucune consigne ni commande n'est envoyée.
+## Commandes manuelles On/Off
+
+Une source d’état reste une lecture. Pour commander, associer séparément une entité switch, input_boolean, light ou fan et activer explicitement la commande manuelle. L’association seule ne commande rien. Le bouton remplace l’état textuel pour les appareils activés ; sans association, « Associer On/Off » ouvre les réglages.
+
+Seul un administrateur peut envoyer l’action. Le serveur résout l’entité enregistrée, impose turn_on ou turn_off, vérifie la révision et l’état attendu, conserve le contexte utilisateur HA et refuse les commandes concurrentes ou les états inconnus/indisponibles. Une réponse positive signifie ordre transmis ; le bouton continue d’afficher l’état réellement publié par HA. Aucun scénario, rafraîchissement ou calcul d’objectif n’envoie d’ordre.
+
+## Décalage de mesure à faible puissance
+
+La tolérance négative est réglable de 0 à 20 W, 5 W par défaut. De −5 W inclus à 0 W, la mesure d’un appareil est corrigée en 0 W ; en dessous de la tolérance elle reste invalide. L’attribut source_raw_value conserve la lecture originale, negative_offset_corrected signale la correction. Aucune tolérance n’est appliquée au réseau signé, aux puissances de batterie ni au bilan Maison.
+
+## Objectif énergétique du cumulus
+
+Renseigner l’objectif quotidien en kWh dans Modifier l’usage, accessible aussi depuis la carte du cumulus dans Stockage. Avec 3 kWh d’objectif et 2,16 kWh du jour, l’avancement vaut **72 %**, sans décimale. La silhouette utilise cet avancement et la température reste distincte. Sans objectif, le visuel conserve son échelle de température. Sans énergie quotidienne exploitable, aucun pourcentage n’est inventé. Un compteur de session ne fournit pas cet indicateur journalier.
+
+Cet objectif ne mesure pas la chaleur encore disponible : les soutirages et pertes thermiques ne sont pas déduits. Les batteries électriques continuent d’afficher leur SOC mesuré et leur stock réel ; leur capacité n’est pas un objectif journalier.

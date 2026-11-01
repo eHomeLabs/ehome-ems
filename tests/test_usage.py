@@ -15,7 +15,11 @@ with patch.dict(sys.modules, {"ems_usage_test": package}):
 class UsageTests(TestCase):
     def test_power_units_and_negative_consumption(self):
         self.assertEqual(normalize("1.8", "kW", "power").value, 1800)
-        self.assertIsNone(normalize("-1", "W", "power").value)
+        for value, unit in [("-1","W"),("-5","W"),("-0.005","kW")]:
+            self.assertEqual(normalize(value, unit, "power").value, 0)
+        for value, unit in [("-5.001","W"),("-5.01","W"),("-0.006","kW"),("unavailable","W"),("nan","W")]:
+            self.assertIsNone(normalize(value, unit, "power").value)
+        self.assertIsNone(normalize("-1", "W", "power", negative_tolerance_w=0).value)
 
     def test_energy_is_mirrored_without_period_conversion(self):
         self.assertEqual(normalize("1250", "Wh", "energy").value, 1.25)
