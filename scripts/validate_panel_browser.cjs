@@ -24,7 +24,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   let browser;
   try {
-    browser = await chromium.launch({ executablePath: chromium.executablePath(), headless: true, args: ["--no-sandbox"] });
+    browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
     for (const viewport of [{ width: 1440, height: 1600 }, { width: 390, height: 844 }]) {
       const page = await browser.newPage({ viewport });
       const errors = [];
@@ -61,7 +61,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
         return shadow.querySelector(".flow-usage-title").getBoundingClientRect().top >=
           shadow.querySelector(".flow-battery").getBoundingClientRect().bottom + 8;
       });
-      assert.equal(await page.evaluate(() => fixturePanel.shadowRoot.querySelector(".home-outgoing").getBoundingClientRect().top >= fixturePanel.shadowRoot.querySelector(".flow-house").getBoundingClientRect().bottom + 8),true);
+      await page.waitForFunction(() => {const r=fixturePanel.shadowRoot;return r.querySelector(".home-outgoing").getBoundingClientRect().top >= r.querySelector(".flow-house").getBoundingClientRect().bottom + 8;});
       assert.equal(await page.locator(".flow-links path.active").count(),2);
       assert.equal(await page.locator(".flow-branches path.active").count(),0);
       assert.ok(await page.locator(".flow-usages").getByText("1 W",{exact:true}).count());
@@ -133,6 +133,27 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button", { name: "Changer la source", exact: true }).first().click();
       await page.getByRole("dialog").waitFor();
       await page.getByRole("button", { name: "Annuler", exact: true }).click();
+      await page.getByRole("button",{name:"Mes Appareils",exact:true}).click();
+      await page.getByText("Frigo",{exact:true}).waitFor();
+      assert.ok(await page.getByText(/0,17.*aujourd’hui.*estimation/).count());
+      assert.equal(await page.getByRole("heading",{name:"Cumulus",exact:true}).count(),0);
+      await page.screenshot({path:path.join(output,viewport.width<600?"appliances-mobile.png":"appliances-desktop.png"),fullPage:true});
+      await page.getByRole("button",{name:"Aujourd’hui",exact:true}).click();
+      await page.getByText("J’ai produit",{exact:true}).waitFor();
+      assert.ok(await page.getByText("2.1 kWh",{exact:true}).count());
+      await page.screenshot({path:path.join(output,viewport.width<600?"today-mobile.png":"today-desktop.png"),fullPage:true});
+      await page.getByRole("button",{name:"Stockage",exact:true}).click();
+      await page.getByRole("heading",{name:"Aferiy",exact:true}).waitFor();
+      assert.ok(await page.getByText("51 °C",{exact:true}).count());
+      await page.locator(".stack").first().screenshot({path:path.join(output,viewport.width<600?"storage-mobile.png":"storage-desktop.png")});
+      await page.evaluate(() => {fixtureFlow.batteries[1].role="active";});
+      await page.getByRole("button",{name:"Actualiser",exact:true}).click();
+      await page.getByRole("button",{name:"Vue d’ensemble",exact:true}).click();
+      assert.equal(await page.locator(".flow-battery").count(),2);
+      await page.waitForFunction(()=>{const r=fixturePanel.shadowRoot;return r.querySelectorAll(".flow-battery")[1].getBoundingClientRect().top>=r.querySelectorAll(".flow-battery")[0].getBoundingClientRect().bottom+8;});
+      assert.equal(await page.evaluate(()=>fixturePanel.shadowRoot.querySelector("main").scrollWidth<=innerWidth),true);
+      await page.screenshot({path:path.join(output,viewport.width<600?"two-batteries-mobile.png":"two-batteries-desktop.png"),fullPage:true});
+      await page.evaluate(()=>{fixtureFlow.batteries[1].role="backup";});
       await page.evaluate(() => { window.omitFlow = true; });
       await page.getByRole("button", { name: "Actualiser", exact: true }).click();
       await page.getByRole("button", { name: "Vue d’ensemble", exact: true }).click();

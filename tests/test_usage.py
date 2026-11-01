@@ -28,3 +28,11 @@ class UsageTests(TestCase):
     def test_status_is_read_only_raw_text_and_unavailable_is_preserved(self):
         self.assertEqual(normalize("charging", None, "status").value, "charging")
         self.assertIsNone(normalize("unavailable", None, "status").value)
+
+
+class TemperatureTests(TestCase):
+    def test_temperature_is_not_energy_and_handles_conversion(self):
+        self.assertEqual(normalize("123.8", "°F", "temperature").value, 51)
+        self.assertEqual(normalize("0", "°C", "temperature").value, 0)
+        for raw, unit in [("nan", "°C"), ("201", "°C"), ("51", "W"), ("unknown", "°C")]:
+            self.assertIsNone(normalize(raw, unit, "temperature").value)
