@@ -144,7 +144,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(),0);
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="lovelace/dashboards/create"||call.type==="call_service")),false);
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
-      assert.equal(await page.getByText("Aucune commande envoyée", { exact: true }).count(), 1);
+      assert.equal(await page.getByText("Aucune commande automatique", { exact: true }).count(), 1);
       await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).check();
       await page.getByRole("spinbutton",{name:"Plafond (W) · Zendure",exact:true}).fill("1000");
       assert.equal(await page.getByRole("button",{name:"Simuler ce budget",exact:true}).isDisabled(),true);

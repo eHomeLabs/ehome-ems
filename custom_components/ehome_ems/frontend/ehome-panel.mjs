@@ -707,7 +707,7 @@ export class EhomeEmsPanel extends BaseElement {
       else panel.append(this._node("p", this._t("Aucun équipement inclus dans un scénario.", "No equipment included in a scenario."), "note"));
       panel.append(this._button(this._t("Ouvrir Stratégie", "Open Strategy"), () => { this._tab = 6; this._render(); }));
     }
-    panel.append(this._node("p", this._t("Aucune commande envoyée", "No commands sent"), "note")); return panel;
+    panel.append(this._node("p", this._t("Aucune commande automatique", "No automatic commands"), "note")); return panel;
   }
   _simulationResult(result) {
     const root = this._node("div", undefined, "scenario-result");

@@ -42,6 +42,9 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                     sources = ("charge_power", "discharge_power", "soc", "remaining_energy")
                 else:
                     values = dict(values)
+                    for field in ("negative_power_tolerance_w", "daily_energy_goal_kwh"):
+                        if field in values and isinstance(values[field], bool):
+                            raise SettingsError("invalid_settings")
                     if section == "appliances":
                         values["kind"] = "appliance"
                     elif values.get("kind") == "appliance":

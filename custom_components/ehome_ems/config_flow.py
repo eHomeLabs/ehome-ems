@@ -33,15 +33,6 @@ def positive_capacity(value):
     return value
 
 
-def negative_tolerance(value):
-    if isinstance(value, bool):
-        raise vol.Invalid("invalid_tolerance")
-    value = vol.Coerce(float)(value)
-    if not isfinite(value) or not 0 <= value <= 20:
-        raise vol.Invalid("invalid_tolerance")
-    return value
-
-
 def battery_schema(existing):
     """Separate charge/discharge sources; no vendor-specific sign guesses."""
     schema = {
@@ -88,8 +79,8 @@ def usage_schema(existing):
         vol.Required("kind", default=existing.get("kind", "solar_router")): selector.SelectSelector(
             selector.SelectSelectorConfig(options=["solar_router", "ev_charger", "other", "appliance"],
                                           translation_key="usage_kind")),
-        vol.Optional("negative_power_tolerance_w", default=existing.get("negative_power_tolerance_w", 5)): negative_tolerance,
-        vol.Optional("daily_energy_goal_kwh", description={"suggested_value": existing["daily_energy_goal_kwh"]} if existing.get("daily_energy_goal_kwh") else None): vol.All(positive_capacity, vol.Range(max=1000)),
+        vol.Optional("negative_power_tolerance_w", default=existing.get("negative_power_tolerance_w", 5)): vol.All(vol.Coerce(float), vol.Range(min=0, max=20)),
+        vol.Optional("daily_energy_goal_kwh", description={"suggested_value": existing["daily_energy_goal_kwh"]} if existing.get("daily_energy_goal_kwh") else None): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1000)),
         vol.Optional("control_enabled", default=existing.get("control_enabled", False)): bool,
         vol.Optional("control_entity", description={"suggested_value": existing["control_entity"]} if existing.get("control_entity") else None): selector.EntitySelector(selector.EntitySelectorConfig(domain=["switch", "input_boolean", "light", "fan"])),
         vol.Optional("icon", default=existing.get("icon", "auto")): selector.SelectSelector(selector.SelectSelectorConfig(options=["auto","mdi:power-plug","mdi:washing-machine","mdi:dishwasher","mdi:tumble-dryer","mdi:fridge","mdi:radiator","mdi:air-conditioner","mdi:pool","mdi:coffee-maker","mdi:printer-3d-nozzle","mdi:lightbulb","mdi:television","mdi:desktop-classic","mdi:water-boiler","mdi:ev-station"])),
@@ -172,6 +163,10 @@ class PowerWizard:
                 if reading.quality in ("cumulative_energy", "exceeds_capacity"):
                     errors[key] = reading.quality
         for identifier, usage in candidate.get(CONF_USAGES, {}).items():
+            for field, minimum, maximum in (("negative_power_tolerance_w", 0, 20), ("daily_energy_goal_kwh", 0.001, 1000)):
+                value = usage.get(field)
+                if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value) or not minimum <= value <= maximum):
+                    errors[f"usages.{identifier}.{field}"] = "invalid_value"
             target = usage.get("control_entity")
             if target and (not isinstance(target, str) or target.split(".")[0] not in ("switch", "input_boolean", "light", "fan") or self.hass.states.get(target) is None):
                 errors[f"usages.{identifier}.control_entity"] = "missing_source"
