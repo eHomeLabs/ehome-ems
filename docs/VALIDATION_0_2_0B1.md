@@ -1,5 +1,7 @@
 # Validation backend eHome EMS 0.2.0b1
 
+> Rapport historique de la première bêta. Pour la version actuelle, voir [validation 0.2.1](VALIDATION_ASSISTANT.md) et [revue du dépôt](REVUE_0_2_1.md).
+
 Préparation du 31 octobre 2026. Cibles exécutées : Home Assistant Core 2026.9.1
 et 2026.11.0b0, Python 3.14.8, Linux. Environnements temporaires distincts de toute
 installation utilisateur, sans équipement ni automatisation physique.

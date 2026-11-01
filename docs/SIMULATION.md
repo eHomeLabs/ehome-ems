@@ -1,4 +1,4 @@
-# Priorités et scénarios manuels — 0.2.0b10
+# Priorités et scénarios manuels — 0.2.1
 
 Dans Stratégie, un administrateur peut préparer une répartition hypothétique
 entre les usages configurés et les batteries actives AC. Les batteries de secours

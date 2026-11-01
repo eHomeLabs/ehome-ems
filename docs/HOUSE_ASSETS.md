@@ -1,12 +1,23 @@
-# Illustrations maison — b12
+# Illustrations maison — jour et nuit
 
-L’illustration de nuit existante reste `custom_components/ehome_ems/frontend/assets/house.webp`.
-La déclinaison de jour est enregistrée dans `custom_components/ehome_ems/frontend/assets/house-day.webp` (768 × 384, WebP avec transparence), puis incluse dans le paquet HA. Aucun chargement externe n’est nécessaire.
+Ces deux illustrations sont celles utilisées par le flux eHome EMS. Elles sont incluses dans l'intégration : aucun téléchargement externe n'est requis au fonctionnement.
 
-Création avec l’outil intégré Image Gen, mode édition, à partir de l’asset nuit. Conversion et réduction au format WebP pour limiter la taille du paquet. L’original généré n’est pas une dépendance du runtime.
+## Mode jour
 
-Prompt de création :
+![Maison solaire en journée](../custom_components/ehome_ems/frontend/assets/house-day.webp)
 
-> Use case: lighting-weather. Edit this exact house illustration into its daytime version for an energy dashboard. Preserve the exact architecture, roof with solar panels, garage, front battery unit, trees, camera perspective and wide composition. Change only lighting and time of day: clear natural daylight, sunlit roof and walls, green foliage, windows no warm nighttime glow. Preserve sophisticated blue/slate house materials. Keep the entire silhouette and framing unchanged so it can replace the night asset without moving any flow connections. Isolated house cutout, genuinely transparent background, no sky rectangle, no text, no labels, no arrows, no extra objects. Wide 2:1 image.
+**07:00 à 18:59**, dans le fuseau de Home Assistant. Fichier : `custom_components/ehome_ems/frontend/assets/house-day.webp`.
 
-La sélection utilise le fuseau de Home Assistant, jamais celui du terminal ou du téléphone : jour à partir de 07:00, nuit à partir de 19:00. Tests des bornes, de l’heure d’été/hiver et de la stabilité de la géométrie du flux.
+## Mode nuit
+
+![Maison solaire de nuit](../custom_components/ehome_ems/frontend/assets/house.webp)
+
+**19:00 à 06:59**, dans le fuseau de Home Assistant. Fichier : `custom_components/ehome_ems/frontend/assets/house.webp`.
+
+La commutation utilise les heures fixes demandées, pas le lever/coucher du soleil ni la météo. Les limites horaires, le changement d'heure et la stabilité de la géométrie sont testés.
+
+Les visuels ont été produits avec Image Gen, la version jour dérivée de la maison de nuit en conservant architecture, cadrage, panneaux, garage et batterie. Ils restent des illustrations : aucune valeur énergétique n'y est représentée. Les assets WebP transparents limitent la taille du paquet.
+
+![Illustration intégrée au flux réel](screenshots/energy-flow.png)
+
+[Le panneau](DASHBOARD_AUTOMATIQUE.md) · [Wiki illustré](wiki/Home.md)

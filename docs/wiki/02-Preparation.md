@@ -1,42 +1,18 @@
-# 02 — Préparer le matériel et les accès
+# 02 — Prérequis et préparation
 
-[Accueil](Home.md) · [Suite : installation](03-Installation-RPi5-NVMe.md)
+[Accueil](Home.md) · [Suite : installation](03-Installation-Home-Assistant.md)
 
-## Ce que nous savons
+Utiliser Home Assistant existant, version 2026.9.1 minimum. La référence de validation comprend un RPi4 avec SSD, sans matériel imposé par EMS. Les appareils doivent déjà fournir leurs entités via leurs intégrations habituelles.
 
-- Raspberry Pi 5 dédié.
-- SSD **NVMe** monté sur HAT PCIe.
-- PC Windows et adaptateur USB pour le SSD disponibles.
-- Home Assistant OS sur un RPi4 distinct.
-- Références exactes du SSD, du HAT, de l’alimentation et quantité de RAM non encore renseignées.
-
-## Avant de commencer
-
-- [ ] Relever la marque, le modèle et la capacité du SSD.
-- [ ] Vérifier que l’adaptateur USB accepte le NVMe, et pas seulement les SSD SATA M.2.
-- [ ] Retrouver la notice du HAT : format de SSD accepté, montage de la nappe, alimentation et conformité HAT+.
-- [ ] Prévoir une alimentation adaptée au RPi5, au HAT et au SSD, ainsi qu’un refroidissement adapté.
-- [ ] Prévoir un câble Ethernet pour le premier démarrage si possible.
-- [ ] Garder une microSD de secours et son lecteur pour régler le démarrage si nécessaire.
-- [ ] Sauvegarder toute donnée déjà présente sur le SSD : l’écriture de l’OS l’effacera.
-- [ ] Débrancher du PC les autres disques externes non nécessaires pour réduire le risque de confusion.
-
-## Choix à consigner
-
-| Élément | Exemple proposé / valeur à choisir |
+| Source | Unité et précaution |
 | --- | --- |
-| Nom du RPi5 | `ehome-ems` |
-| Compte Linux | `emsadmin` — exemple, pas un compte existant |
-| Fuseau horaire | `Europe/Paris` si adapté au lieu d’installation |
-| Réseau | Ethernet au départ ; Wi-Fi si nécessaire |
-| Adresse stable | Réservation DHCP dans le routeur |
-| Accès SSH | Clé publique recommandée ; mot de passe possible pour démarrer |
-| Accès Internet entrant | Aucun prévu |
+| Solaire | Total AC en W/kW ; ne pas additionner total et sous-ensembles |
+| Réseau | Signé : import positif, export négatif ; ou deux capteurs séparés |
+| Maison existante | Total réel des usages ; pas uniquement l'arrivée réseau |
+| Batterie | Charge et décharge séparées, SOC %, stock restant Wh/kWh |
+| Appareil | Puissance réelle et, si disponible, compteur d'énergie avec période connue |
+| Météo | Entité `weather` HA avec prévisions quotidiennes si disponibles |
 
-Ne pas inscrire de mot de passe, de clé privée, d’URL interne réelle ou de jeton dans le dépôt. Conserver les détails de l’installation dans une copie locale du [journal](10-Journal-installation.md).
+Activer la conservation des sources dans History/Recorder pour les courbes et la référence de minuit des cumuls. Prévoir une sauvegarde HA et noter les périodes des compteurs avant de lancer l'assistant. Ne pas publier les identifiants de votre installation dans le dépôt.
 
-## Outils
-
-Télécharger [Raspberry Pi Imager pour Windows](https://www.raspberrypi.com/software/). PowerShell servira ensuite à la connexion SSH. Git et Docker seront installés sur le RPi5 à la phase 3.
-
-Le guide ne modifie pas Home Assistant et ne nécessite aucune intervention sur le câblage électrique des équipements énergétiques.
+[Guide d'installation](../INSTALLATION.md)

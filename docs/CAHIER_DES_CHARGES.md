@@ -1,17 +1,17 @@
-# Cahier des charges eHome EMS V2
-Version de cadrage proposée — 31 octobre 2026
+# Cahier des charges eHome EMS
+Référence produit — mise à jour du 1er novembre 2026 ; état livré : 0.2.1
 
 ## Vision
 eHome EMS — Universal Energy Manager. Votre installation. Vos équipements. Votre énergie. Un EMS sur mesure.
 
 Intégration Home Assistant distribuée via HACS, associant un assistant de configuration, un dashboard énergétique généré, des analyses, des prévisions et, sur activation explicite, un pilotage coordonné. Le fonctionnement local de base doit rester indépendant d'un abonnement ou d'une IA distante. Les équipements restent accessibles par leurs intégrations HA existantes.
 
-Cette V2 désigne le nouveau périmètre produit. Elle ne présume pas d'un numéro de release 2.0. Le code V0.1 et son état réel devront être audités avant de chiffrer les développements.
+Ce document distingue le socle livré en 0.2.1 des objectifs futurs. Le suivi en observation, les historiques, le calcul du jour depuis les cumuls et les scénarios manuels sont disponibles. Prévisions énergétiques, conseils avancés et pilotage restent à développer.
 
 ## Acquis et banc de validation de référence
-Architecture exclusivement intégration HA, abandon du serveur autonome RPi5. Tests sur HA RPi4 avec SSD. V0.1 en lecture seule et rechargement propre des paramètres. Aucune modification implicite des automatisations existantes.
+Architecture exclusivement intégration HA, sur l'instance existante. Référence de test RPi4 avec SSD. Version 0.2.1 en observation et rechargement propre des paramètres. Aucune modification implicite des automatisations existantes.
 
-Sources fonctionnelles : puissance réseau signée, import, injection, production solaire et consommation maison. Les unités et le périmètre physique sont contrôlés dans l'assistant ; les identifiants réels restent dans la configuration locale de l'utilisateur.
+Sources fonctionnelles : puissance réseau signée, import, export, production solaire et consommation maison. Les unités et le périmètre physique sont contrôlés dans l'assistant ; les identifiants réels restent dans la configuration locale de l'utilisateur.
 
 Référence initiale : PV 3,24 kWc, Zendure SolarFlow 2400 AC+ de 8,2 kWh selon la dernière correction du 30 octobre, Aferiy P210 de 2,3 kWh en secours et exclue par défaut du bilan actif, cumulus 150 L 1800 W avec routeur F1ATB, VE Zoé et borne annoncée 7,2 kW maximum. Le courant réellement autorisé pour la borne reste un paramètre propre à l'installation, distinct de sa puissance commerciale. L'extension PV reste un projet tant qu'elle n'est pas déclarée installée.
 
@@ -20,7 +20,7 @@ Référence initiale : PV 3,24 kWc, Zendure SolarFlow 2400 AC+ de 8,2 kWh selon 
 1. Présenter le mode observation, choisir les modules et permettre de reprendre le parcours sans perdre les étapes validées.
 2. Réseau : sélectionner puissance signée ou deux capteurs import/export, convention de signe, mono/triphasé, compteurs d'énergie et puissance souscrite facultative.
 3. Photovoltaïque : un ou plusieurs champs/onduleurs, puissance totale, compteurs, puissance crête et mesures AC/DC. Éviter de sommer un total avec ses sous-ensembles.
-4. Maison : mesure directe ou calcul par bilan, inclusion ou exclusion des batteries et sous-compteurs. Prévisualisation des valeurs et contrôle des incohérences.
+4. Maison : mesure directe ou calcul par bilan, périmètre AC des batteries ; cumulus, borne et autres usages toujours inclus dans le total. Prévisualisation des valeurs et contrôle des incohérences.
 5. Stockage : ajouter plusieurs batteries, rôle actif ou secours, SOC, énergie utile, charge/décharge, couplage AC/DC, capacités et limites. Un profil constructeur propose les correspondances mais l'utilisateur les valide.
 6. Usages : ECS, routeur, VE, piscine, chauffage/PAC et autres charges. Distinguer mesure seule, marche/arrêt et consigne modulable.
 7. Tarifs et objectifs : Base, HP/HC, calendriers tels que Tempo si source disponible, prix achat/vente, réserve batterie, confort et échéances.
@@ -31,13 +31,13 @@ Référence initiale : PV 3,24 kWc, Zendure SolarFlow 2400 AC+ de 8,2 kWh selon 
 Les réglages restent modifiables sans réinstallation ni redémarrage complet de HA. Une première installation ou certaines mises à jour peuvent nécessiter un redémarrage.
 
 ## Dashboard
-Vue Synthèse : flux animé inspiré de la lisibilité Zendure, avec solaire, réseau, maison, batteries distinctes et usages principaux. Sens et valeurs explicites, état global et date de mise à jour. Affichage mobile, tablette et PC ; animation réduite disponible et sens compréhensible sans couleur.
+Vue Synthèse : flux animé lisible, avec solaire, réseau, maison, batteries distinctes et usages principaux. Sens et valeurs explicites, état global et date de mise à jour. Affichage mobile, tablette et PC ; animation réduite disponible et sens compréhensible sans couleur.
 
 Jauges de puissance en W/kW, charge et décharge séparées, jauges d'énergie en kWh avec période et objectif explicites, SOC et réserve. Les échelles et seuils sont configurables.
 
 Vues complémentaires : Aujourd'hui, Historique, Stockage, Usages, Prévisions, Conseils et Réglages. Courbes production/consommation/import/export/batterie synchronisées ; périodes jour/semaine/mois/année ; répartition des usages avec reliquat non mesuré.
 
-Dashboard géré automatiquement avec personnalisation persistante ; possibilité de créer une copie librement éditable. Une régénération ne doit jamais écraser une copie personnelle.
+Le panneau géré suit les associations. Les anciennes copies personnelles et les exports restent indépendants et préservés ; aucun bouton de création de copie n'est proposé dans le panneau.
 
 ## Modèle énergétique et indicateurs
 Convention interne AC : réseau positif à l'import, batterie positive en décharge. Si toutes les mesures partagent le même périmètre :
@@ -67,7 +67,7 @@ Un seul arbitre répartit la puissance disponible entre charges et stockage. Il 
 Prévoir reprise manuelle temporaire, expiration du forçage, pause du pilotage EMS et journal des raisons. Une pause stoppe les nouvelles décisions et applique le mode de restitution configuré ; elle ne signifie pas couper toute la maison. En cas de capteur essentiel périmé, suspendre l'optimisation et appliquer un comportement de repli propre à l'équipement. Vérifier les retours d'état et limiter les répétitions de commandes. Préserver les fonctions de confort et de sécurité natives des équipements.
 
 ## Architecture et qualité
-Backend Python pour configuration, normalisation, états et règles ; frontend pour flux, jauges et génération du dashboard. Prototyper la distribution et l'enregistrement des ressources avant de promettre un seul paquet HACS. Les stratégies de dashboard HA fournissent une piste officielle pour la génération.
+Backend Python pour configuration, normalisation, états et règles ; frontend pour flux, jauges et génération du dashboard. Le paquet HACS unique contient backend, frontend et assets locaux. Les évolutions doivent conserver les interfaces publiques HA.
 
 Écouter les changements d'état des sources plutôt que multiplier les appels matériels. Calculs rapides distincts des bilans historiques et des prévisions ; aucun solveur lourd obligatoire sur le RPi4. Statistiques HA réutilisées, requêtes bornées et fréquence d'affichage limitée.
 
@@ -82,7 +82,7 @@ Lot C — orchestration : simulation puis pilotage ECS/batterie/VE selon capacit
 
 Lot D — optimisation : profils de consommation, scénarios et optimisation avancée facultative. Acceptation : comparaison à une stratégie de référence, temps de calcul mesuré sur RPi4 et fonctionnement du socle sans ce moteur.
 
-Le premier prototype produit doit couvrir le lot A sur l'installation réelle ; l'architecture doit dès maintenant réserver les interfaces des lots B et C.
+Le socle du lot A et une partie des historiques/coûts sont disponibles en 0.2.1. Les lots B à D restent des objectifs au-delà des fonctions explicitement listées dans le README.
 
 ## Décisions restant à prendre
 Priorités confort/ECS/batterie/VE selon saison ; autonomie ou coût comme objectif par défaut ; seuils et réserve batterie ; rôle précis de l'Aferiy ; périmètre électrique des mesures ; courant maximal réellement autorisé à la borne ; topologies AC/DC du premier lot. Le cadrage s'appuie sur les besoins exprimés et la documentation publique.

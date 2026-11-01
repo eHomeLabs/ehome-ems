@@ -1,35 +1,19 @@
-# Feuille de route eHome EMS V2
+# Feuille de route après la 0.2.1
 
-Le périmètre produit V2 remplace la feuille de route V0.1 à V0.5. Les numéros des futures releases seront attribués selon les livraisons réelles. Le code actuel reste V0.1.
+La 0.2.1 consolide le socle d'observation validé avec la b15. Le numéro 0.2.1 ne signifie pas que tout le périmètre produit est livré.
 
-## Lot A — Socle visuel
+| Domaine | Disponible | Suite envisagée |
+| --- | --- | --- |
+| Sources et bilan | Assistant, normalisation, Conso Maison AC, diagnostics | Topologies hybrides/DC plus complètes |
+| Interface | Flux, tendances, historiques 24 h, appareils, stockage, météo | Analyses et comparaisons de périodes |
+| Énergie et coûts | Compteurs du jour, différence depuis cumul, tarif fixe | Tarification avancée, bilans historiques plus complets |
+| Stratégie | Priorités et scénarios manuels sans commande | Conseils explicables, prévisions énergétiques |
+| Pilotage | Aucune commande physique | Activation explicite par équipement, repli et arbitrage coordonné |
 
-Assistant guidé, réseau/PV/maison et batteries, normalisation, flux, jauges, statistiques et personnalisation du dashboard. Lecture seule.
+## Critères avant d'aller plus loin
 
-Acceptation : unités et signes vérifiés ; bilan cohérent sur mesures synchronisées avec tolérance documentée ; batterie de secours exclue par défaut ; données indisponibles visibles ; associations rechargeables sans redémarrer HA ; aucune commande ; personnalisation conservée.
+Conserver le socle local léger, les régulations natives et les identifiants. Ne pas attribuer automatiquement toute décharge au solaire. Pour le futur pilotage : retour d'état, temporisations, hystérésis, réserve, limites réelles, pause et restitution explicite ; un seul arbitre doit éviter les doubles allocations.
 
-Premières tâches : auditer le prototype, détailler les écrans et le schéma des données, prototyper la génération et la distribution frontend, vérifier les topologies supportées, puis valider sur RPi4 avec SSD.
+Les scénarios actuels ne valident pas un pilotage réel : ils répartissent un budget saisi manuellement. Les prévisions de production/consommation, le suivi de l'origine du stock et les économies réelles demandent des développements et validations distincts.
 
-## Lot B — Compréhension
-
-Coûts, historiques comparés, prévisions externes, consommation estimée et conseils déterministes.
-
-Acceptation : tarifs vérifiés sur données de référence ; origine batterie incertaine signalée ; prévisions facultatives ; hypothèses et erreurs réel/prévu visibles ; économies simulées séparées des résultats mesurés.
-
-## Lot C — Orchestration
-
-Simulation puis pilotage explicite ECS, batterie et VE selon les capacités exposées. Priorités, réserves, échéances, temporisations et arbitrage unique. Coordination avec F1ATB et les EMS existants.
-
-Acceptation : aucune commande en observation/simulation ; pas de double allocation ; forçages et priorités respectés ; retour d'état vérifié ; repli sur données périmées et restitution après pause testés.
-
-## Lot D — Optimisation
-
-Profils de consommation, scénarios et planification avancée facultative.
-
-Acceptation : comparaison à une stratégie de référence ; calcul mesuré sur RPi4 ; fonctionnement du socle sans moteur avancé.
-
-## Décisions de conception
-
-Priorités saisonnières, objectif coût ou autonomie, réserve batterie, périmètre des mesures, limites réelles des usages et topologies AC/DC du premier lot restent à fixer avant leur implémentation.
-
-[Lire le cahier des charges complet](CAHIER_DES_CHARGES.md)
+[Cahier des charges](CAHIER_DES_CHARGES.md) · [Fonctions actuelles](../README.md)
