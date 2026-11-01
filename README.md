@@ -6,28 +6,161 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : cadrage V2, développement à poursuivre.** Cette documentation remplace le cadrage V0.1. Le code présent dans `custom_components/ehome_ems` reste le prototype V0.1 de lecture seule ; les fonctions V2 décrites ici ne sont pas encore livrées. V2 désigne le périmètre produit, pas une release logicielle 2.0.
+**Statut : première bêta 0.2.0b11 en observation, préparée pour les essais.**
+Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
+et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
+en développement, et non une release logicielle 2.0.
+
+## Installer la bêta publique
+
+Ajouter [ce dépôt](https://github.com/eHomeLabs/ehome-ems) au Marketplace/HACS en **Intégration** et sélectionner la préversion **0.2.0b11**. L’affichage des versions bêta peut être nécessaire. Conserver l’entrée eHome EMS existante lors du passage depuis le ZIP.
+
+**Nouveautés :** cartes de puissance et historique colorés, stockage visuel, Mes Appareils, compteurs Aujourd’hui et tarif estimatif configurable, flux central plus lisible et suivi de plusieurs batteries.
+Voir les [notes et limites de la b11](docs/RELEASE_0_2_0B11.md). Observation uniquement ; aucune commande d’équipement.
 
 ## Où en est le projet ? — Repères au 31 octobre 2026
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible | Prototype V0.1 en lecture seule, conservé dans `custom_components/ehome_ems` |
+| Code disponible sur cette branche | Bêta 0.2.0b11 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
-| Assistant pas à pas et dashboard V2 | Prévus ; pas encore livrés |
+| Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
+| Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
+| Usages | Routeur solaire/ECS, borne VE et autres charges : puissance, énergie avec période déclarée et état en lecture seule |
+| Dashboard | Vue automatique en barre latérale et copie native modifiable sans YAML ; rendu en application HA à valider |
 | Prévisions, conseils et pilotage V2 | Prévus dans les lots suivants ; pas encore livrés |
-| Prochaine étape | Développer et valider le lot A : assistant, mesures fiables, flux, jauges et statistiques |
+| Prochaine étape | Installer la bêta au moment choisi puis valider les écrans et mesures sur l'installation réelle |
 | Ancien serveur autonome RPi5 | Abandonné ; ses guides sont historiques |
 
-**V2 est la vision produit en préparation. Elle n'est pas une version installable du logiciel à ce stade.**
+**La bêta est une première version de test. Les bilans journaliers,
+les prévisions, conseils et commandes ne sont pas encore disponibles.**
 
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b11](docs/INSTALLATION_BETA.md).
+- **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
 
 Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour la suite du développement, les références sont le cahier des charges V2 et la feuille de route.
+
+## Premier incrément du lot A — en développement
+
+### Retour des premiers essais — 0.2.0b11
+
+[Priorités et scénarios manuels](docs/SIMULATION.md) dans Stratégie : inclure des
+équipements, déclarer minimum/plafond, changer l'ordre, enregistrer puis répartir
+un budget hypothétique saisi en W. Chaque allocation est expliquée, sans commande.
+Le budget n'est pas déduit de l'injection réseau. Les équipements sont exclus
+par défaut ; le journal garde 20 scénarios en mémoire, distincts des décisions
+réellement exécutées.
+
+Animation des flux à partir de 10 W, sans effacer les petites consommations.
+La hauteur réelle des cartes évite le recouvrement du texte avec une batterie
+au repos ; Configuration compare les valeurs source/EMS et explique les qualités
+disponibles. Les tests navigateur reproduisent le cas borne à 1 W/batterie à zéro.
+
+Le dashboard est organisé autour d'une navigation haute et d'un flux central :
+puissances principales en haut, usages secondaires en bas, situation EMS à droite
+sur PC. Stratégie reste en observation ; Configuration expose les associations
+et les versions chargées. La b8 évite la réutilisation d'une ancienne classe du
+panneau dans une session HA restée ouverte pendant la mise à jour.
+
+Appui prolongé sur les mesures de la vue gérée pour changer leur source
+(administrateur, enregistrement explicite, identifiants EMS conservés).
+Une icône locale accompagne désormais l’intégration.
+
+Une [vue eHome EMS automatique](docs/DASHBOARD_AUTOMATIQUE.md) est ajoutée à la
+barre latérale après configuration. Elle suit les réglages, sans YAML, avec
+mesures, jauges, stockage et usages. Un administrateur peut créer une copie
+native indépendante modifiable en un clic, sans écraser les dashboards existants.
+L'historique du panneau ouvre les fiches natives ; la copie native contient
+la carte d'historique. La vue gérée contient désormais un synoptique animé à maison centrale.
+
+Une étape [Usages](docs/USAGES_OBSERVATION.md) suit les batteries : routeur
+solaire/ECS, recharge VE et autres charges facultatives. Elle associe puissance
+réelle, énergie existante (jour/session/cumul) et état lu uniquement. Le dashboard
+exporté présente une vue Usages. Ces mesures ne sont jamais ajoutées au total
+maison une seconde fois ; le module ne commande ni F1ATB ni la borne.
+
+L'écran Maison permet de choisir une source existante (mesurée ou déjà calculée)
+ou un calcul automatique EMS. Le calcul est limité aux topologies AC confirmées :
+import/injection séparés, PV déclaré et mesures charge/décharge de toutes les
+batteries actives. Il conserve l'identifiant du capteur Maison. Le résultat reste
+indisponible en cas de donnée manquante/périmée ou de bilan négatif.
+Voir [la définition de la consommation maison et les conditions du calcul](docs/CONSOMMATION_MAISON.md).
+
+Les écrans expliquent maintenant le choix entre réseau signé et import/injection,
+l'utilisation d'une consommation maison déjà calculée et la distinction entre
+énergie restante, capacité et compteurs cumulatifs. Une aide par champ accompagne
+les batteries. La confirmation explique la vue automatique et la copie indépendante.
+
+Le statut valid signifie valeur et unité lisibles, pas association physique garantie.
+Pour l'énergie restante, les sources déclarées total/total_increasing sont refusées.
+Un stock supérieur à la capacité déclarée de plus de 10 % est également refusé à
+la configuration et rendu indisponible pendant le suivi, avec une raison explicite.
+Cette tolérance couvre de petits écarts de capacité nominale/utile et de calibration ;
+elle ne prouve pas que les autres associations sont correctes.
+HA peut masquer les attributs supplémentaires d'une entité indisponible ; le
+motif détaillé reste visible dans l'aperçu de configuration.
+
+Cette branche fournit le premier paquet de test du lot A.
+Elle ne constitue pas une livraison complète du lot A ni une validation officielle HACS.
+
+- Conversion W/kW vers W.
+- Capteur réseau global signé conservé ; export présenté comme une magnitude
+  positive, y compris si le compteur source le publie en négatif.
+- Valeur négative sur import, solaire ou maison signalée indisponible.
+- Attributs `data_quality`, `source_unit` et `value_origin` sur les capteurs.
+- Donnée absente, unité incorrecte ou valeur non finie : aucune substitution par zéro.
+
+L'assistant sépare réseau, solaire, maison, batteries, aperçu et confirmation. Depuis
+l'aperçu, chaque étape peut être corrigée. Les réglages V0.1 sont proposés
+à nouveau dans les options ; un champ effacé reste effacé. Aucun changement
+n'est enregistré avant la validation finale. Les sources absentes, les unités
+autres que W/kW, les doublons et les capteurs miroirs eHome EMS sont refusés.
+Une source temporairement indisponible avec une unité valide reste configurable,
+avec un avertissement dans l'aperçu.
+
+Les batteries peuvent être ajoutées, modifiées et retirées du suivi avant la
+confirmation finale. Chaque batterie dispose d'un identifiant stable, d'un rôle
+actif ou secours (secours par défaut), d'un couplage AC/DC et d'une capacité utile
+facultative en kWh. Les mesures facultatives sont charge/décharge positives en
+W/kW, SOC en % et énergie restante mesurée en Wh/kWh. Au moins une mesure est
+nécessaire par batterie. Le SOC n'est pas converti artificiellement en énergie.
+
+Le rôle actif inclut la batterie dans le calcul Maison AC lorsqu'il est choisi
+et que ses mesures sont complètes. Les batteries de secours en sont exclues et
+une batterie active DC bloque ce bilan simple. Aucune commande n'est envoyée. L'origine de
+l'énergie stockée reste inconnue : décharger ne signifie pas produire du solaire.
+
+Les bilans énergétiques journaliers et la fraîcheur des autres miroirs
+restent à développer. Le synoptique animé de la vue gérée suit les états HA. Un premier [dashboard natif exportable](docs/DASHBOARD_OBSERVATION.md)
+est généré par l'action `ehome_ems.generate_dashboard`, sans écrire ni écraser de
+dashboard. Cet export reste une alternative à la vue automatique et au bouton de copie ; les copies
+personnalisées ne sont pas modifiées par une génération ultérieure. Les identifiants uniques
+existants sont conservés. Les automatismes utilisant le signe du miroir
+d'export doivent tenir compte de sa nouvelle convention positive.
+
+Installation des dépendances de test : `python -m pip install -r requirements-test.txt`.
+Tests de calcul et de parcours :
+`python -m unittest discover -s tests -v`.
+La CI vérifie aussi la syntaxe Python. Les tests du parcours utilisent les
+vrais schémas Voluptuous et des doubles des API HA ; ils ne remplacent pas
+un test de chargement/rechargement dans Home Assistant.
+Voir le [plan de validation de l'assistant](docs/VALIDATION_ASSISTANT.md).
+
+Une validation supplémentaire utilise un vrai Home Assistant Core dans un
+environnement temporaire avec sources simulées. Installer les dépendances
+de requirements-ha-test.txt dans un environnement Python 3.14 séparé, puis
+exécuter `python scripts/validate_home_assistant.py`.
+La cible actuelle est 2026.11.0b0 ; la CI vérifie aussi 2026.9.1.
+Elle vérifie les API réelles de configuration, les capteurs, les changements
+d'état, le renommage, l'action dashboard, les options, le rechargement,
+le déchargement et la compatibilité des anciennes données V0.1.
+La sérialisation du formulaire batterie pour l'interface HA est aussi vérifiée.
+Cela ne remplace pas les essais matériels et visuels sur l'installation réelle.
 
 ## Documentation de référence
 
@@ -118,4 +251,5 @@ Le [guide V0.1](docs/INSTALLATION_V0_1.md) et le [plan de validation V0.1](docs/
 
 Les pages numérotées de l'ancien guide RPi5 sont historiques et obsolètes. Le serveur autonome est abandonné ; consulter la [note correspondante](docs/DEPLOIEMENT_RPI5.md).
 
-Cette mise à jour porte sur le cahier des charges et la documentation ; elle ne modifie aucune installation Home Assistant.
+Cette branche contient du code en développement. Aucune installation Home Assistant
+réelle n'a été modifiée pendant son développement.

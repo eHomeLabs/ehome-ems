@@ -1,0 +1,7 @@
+{
+  "services": {
+    "generate_dashboard": {
+      "service": "mdi:view-dashboard"
+    }
+  }
+}

@@ -1,37 +1,667 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Configurer les sources énergétiques",
-        "description": "Sélectionnez les capteurs de puissance existants. Les valeurs et signes sont conservés.",
+      "grid": {
+        "title": "1 — Réseau électrique",
+        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/injection, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et injection, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’injection ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
         "data": {
           "grid_power": "Puissance réseau signée",
-          "grid_import": "Import réseau",
-          "grid_export": "Injection réseau",
-          "solar_power": "Production photovoltaïque",
-          "home_power": "Consommation maison"
+          "grid_import": "Puissance importée du réseau",
+          "grid_export": "Puissance injectée sur le réseau"
+        },
+        "data_description": {
+          "grid_power": "Facultatif. Doit changer de signe entre import et injection. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
+          "grid_import": "Puissance achetée au réseau, normalement positive ou nulle. Ce n’est pas la consommation totale de la maison.",
+          "grid_export": "Puissance renvoyée vers le réseau. Un signe négatif fourni par la source est accepté et affiché en valeur positive."
+        }
+      },
+      "solar": {
+        "title": "2 — Production photovoltaïque",
+        "description": "Choisissez la puissance totale produite par le photovoltaïque, en W ou kW. Un capteur calculé additionnant vos onduleurs convient. Ne choisissez ni une énergie journalière en kWh, ni le surplus injecté. Laissez vide si vous n’avez pas de photovoltaïque.",
+        "data": {
+          "solar_power": "Production photovoltaïque"
+        }
+      },
+      "home": {
+        "title": "3 — Consommation de la maison",
+        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/injection : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et injection séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
+        "data": {
+          "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
+          "home_power_mode": "Origine de la consommation maison",
+          "home_has_solar": "Calcul automatique : installation photovoltaïque présente",
+          "home_has_storage": "Calcul automatique : stockage actif présent",
+          "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
+          "home_max_age_seconds": "Calcul automatique : âge maximal des sources (secondes)"
+        },
+        "data_description": {
+          "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
+          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − injection − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
+          "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
+          "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
+          "home_max_age_seconds": "Défaut 300 s. Si une source nécessaire manque, est indisponible, a une unité invalide ou dépasse cet âge, le résultat reste indisponible. Aucune donnée manquante n’est remplacée par zéro. Le contrôle d’âge est refait toutes les 30 s."
+        }
+      },
+      "review": {
+        "title": "6 — Vérifier les mesures",
+        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape. Pour le calcul Maison, negative_balance indique un bilan négatif : vérifiez périmètre, signes et mesures. Le contrôle de fraîcheur est appliqué au capteur en fonctionnement.",
+        "menu_options": {
+          "confirm": "Continuer vers la confirmation",
+          "grid": "Modifier le réseau",
+          "solar": "Modifier le photovoltaïque",
+          "home": "Modifier la maison",
+          "batteries": "Modifier les batteries",
+          "usages": "Modifier les usages",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
+        }
+      },
+      "confirm": {
+        "title": "Enregistrer en mode observation",
+        "description": "{summary}\n\nEn confirmant, vous enregistrez les associations en observation. La vue eHome EMS est ajoutée automatiquement dans la barre latérale après le chargement de l’intégration ; elle suit ensuite vos réglages. Depuis cette vue, un administrateur peut créer une copie indépendante modifiable sans YAML. Les copies existantes ne sont jamais écrasées. Aucun équipement n’est commandé. Les flux animés et les bilans journaliers EMS restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
+        "data": {
+          "back_to_review": "Retourner à la vérification sans enregistrer"
+        }
+      },
+      "batteries": {
+        "title": "4 — Stockage",
+        "description": "Ajoutez vos batteries, ou continuez sans stockage. Chaque batterie possède ses propres mesures. Le rôle secours est proposé par défaut.\n\n{summary}",
+        "menu_options": {
+          "add_battery": "Ajouter une batterie",
+          "edit_battery": "Modifier une batterie",
+          "remove_battery": "Retirer une batterie du suivi",
+          "usages": "Continuer vers les usages"
+        }
+      },
+      "add_battery": {
+        "title": "Ajouter une batterie",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+        }
+      },
+      "battery_details": {
+        "title": "Modifier les mesures de la batterie",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+        }
+      },
+      "edit_battery": {
+        "title": "Choisir la batterie à modifier",
+        "data": {
+          "battery_id": "Batterie"
+        }
+      },
+      "remove_battery": {
+        "title": "Retirer une batterie du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne commande pas l’équipement et ne supprime pas son intégration constructeur.",
+        "data": {
+          "battery_id": "Batterie à retirer"
+        }
+      },
+      "usages": {
+        "title": "5 — Usages : routeur solaire, VE et autres charges",
+        "description": "Ajoutez les équipements à détailler, ou continuez sans usage. Leur consommation est déjà incluse dans le total maison : elle ne sera pas ajoutée une seconde fois. Ce suivi n’envoie aucune commande à F1ATB, à la borne ou aux autres équipements.\n\n{summary}",
+        "menu_options": {
+          "add_usage": "Ajouter un usage",
+          "edit_usage": "Modifier un usage",
+          "remove_usage": "Retirer un usage du suivi",
+          "review": "Continuer vers la vérification",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
+        }
+      },
+      "add_usage": {
+        "title": "Ajouter un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+        }
+      },
+      "usage_details": {
+        "title": "Modifier un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+        }
+      },
+      "edit_usage": {
+        "title": "Choisir l’usage à modifier",
+        "data": {
+          "usage_id": "Usage"
+        }
+      },
+      "remove_usage": {
+        "title": "Retirer un usage du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne supprime pas l’équipement ni son intégration et n’envoie aucune commande.",
+        "data": {
+          "usage_id": "Usage"
+        }
+      },
+      "appliances": {
+        "title": "Mes Appareils",
+        "description": "Suivez frigo, lave-vaisselle, expresso… Puissance W/kW et énergie Wh/kWh sont facultatives. Pour un coût du jour, sélectionnez un compteur remis à zéro chaque jour et la période Aujourd’hui. Ces sous-comptages ne sont jamais ajoutés au total maison.",
+        "menu_options": {
+          "add_appliance": "Ajouter un appareil",
+          "edit_appliance": "Modifier un appareil",
+          "remove_appliance": "Retirer un appareil",
+          "daily": "Aujourd’hui et tarif",
+          "review": "Vérifier et enregistrer"
+        }
+      },
+      "add_appliance": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "appliance_details": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "edit_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "remove_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "daily": {
+        "title": "Aujourd’hui et tarif",
+        "description": "Facultatif : associez uniquement des compteurs d’énergie DU JOUR, remis à zéro à minuit dans votre installation. Aucun compteur cumulé ou énergie restante batterie. Charge/restitution : total du jour de vos batteries, toutes origines confondues. Les € utilisent un prix fixe configurable (hors abonnement, heures creuses et revente), ce sont des équivalents estimatifs, pas des économies mesurées. Effacez le tarif pour masquer les €.",
+        "data": {
+          "solar": "Production solaire du jour",
+          "home": "Consommation maison du jour",
+          "import": "Import réseau du jour",
+          "export": "Injection réseau du jour",
+          "charge": "Charge batteries du jour",
+          "discharge": "Restitution batteries du jour",
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
         }
       }
     },
     "error": {
-      "select_source": "Sélectionnez au moins un capteur."
+      "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
+      "duplicate_source": "Le même capteur est associé à plusieurs mesures du bilan.",
+      "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
+      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, injection et toutes les puissances des équipements présents.",
+      "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
+      "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
+      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",
+      "cumulative_energy": "Ce capteur est déclaré comme un cumul d’énergie. Choisissez un stock restant instantané, ou laissez ce champ vide.",
+      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide.",
+      "boundary_unconfirmed": "Confirmez d’abord que les mesures du bilan partagent le même périmètre AC.",
+      "solar_configuration": "Vérifiez la présence déclarée du photovoltaïque et sa mesure à l’étape Solaire.",
+      "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
+      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
+      "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
+      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
+    },
+    "abort": {
+      "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
     }
   },
   "options": {
     "step": {
-      "init": {
-        "title": "Modifier les sources",
+      "grid": {
+        "title": "1 — Réseau électrique",
+        "description": "Choisissez de préférence UNE méthode : deux capteurs séparés import/injection, ou un véritable capteur réseau signé. Tous doivent exprimer une puissance instantanée en W ou kW. Si vous utilisez import et injection, vous pouvez laisser la puissance signée vide. Un capteur qui reste à zéro pendant l’injection ne décrit pas à lui seul les deux sens. Les mesures sélectionnées ne sont pas additionnées.",
         "data": {
           "grid_power": "Puissance réseau signée",
-          "grid_import": "Import réseau",
-          "grid_export": "Injection réseau",
-          "solar_power": "Production photovoltaïque",
-          "home_power": "Consommation maison"
+          "grid_import": "Puissance importée du réseau",
+          "grid_export": "Puissance injectée sur le réseau"
+        },
+        "data_description": {
+          "grid_power": "Facultatif. Doit changer de signe entre import et injection. Sa convention est conservée dans cette bêta ; ne choisissez pas un compteur d’énergie en kWh.",
+          "grid_import": "Puissance achetée au réseau, normalement positive ou nulle. Ce n’est pas la consommation totale de la maison.",
+          "grid_export": "Puissance renvoyée vers le réseau. Un signe négatif fourni par la source est accepté et affiché en valeur positive."
+        }
+      },
+      "solar": {
+        "title": "2 — Production photovoltaïque",
+        "description": "Choisissez la puissance totale produite par le photovoltaïque, en W ou kW. Un capteur calculé additionnant vos onduleurs convient. Ne choisissez ni une énergie journalière en kWh, ni le surplus injecté. Laissez vide si vous n’avez pas de photovoltaïque.",
+        "data": {
+          "solar_power": "Production photovoltaïque"
+        }
+      },
+      "home": {
+        "title": "3 — Consommation de la maison",
+        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/injection : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et injection séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
+        "data": {
+          "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
+          "home_power_mode": "Origine de la consommation maison",
+          "home_has_solar": "Calcul automatique : installation photovoltaïque présente",
+          "home_has_storage": "Calcul automatique : stockage actif présent",
+          "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
+          "home_max_age_seconds": "Calcul automatique : âge maximal des sources (secondes)"
+        },
+        "data_description": {
+          "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
+          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − injection − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
+          "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
+          "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
+          "home_max_age_seconds": "Défaut 300 s. Si une source nécessaire manque, est indisponible, a une unité invalide ou dépasse cet âge, le résultat reste indisponible. Aucune donnée manquante n’est remplacée par zéro. Le contrôle d’âge est refait toutes les 30 s."
+        }
+      },
+      "review": {
+        "title": "6 — Vérifier les mesures",
+        "description": "Vérifiez les associations et les valeurs :\n\n{summary}\n\n[valid] signifie valeur numérique et unité lisibles ; cela ne garantit pas le bon choix physique du capteur. [cumulative_energy] : compteur cumulé à remplacer. [exceeds_capacity] : énergie restante supérieure à capacité × 1,10. Les autres états indiquent une donnée absente, invalide ou un signe inattendu. Vous pouvez corriger chaque étape. Pour le calcul Maison, negative_balance indique un bilan négatif : vérifiez périmètre, signes et mesures. Le contrôle de fraîcheur est appliqué au capteur en fonctionnement.",
+        "menu_options": {
+          "confirm": "Continuer vers la confirmation",
+          "grid": "Modifier le réseau",
+          "solar": "Modifier le photovoltaïque",
+          "home": "Modifier la maison",
+          "batteries": "Modifier les batteries",
+          "usages": "Modifier les usages",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
+        }
+      },
+      "confirm": {
+        "title": "Enregistrer en mode observation",
+        "description": "{summary}\n\nEn confirmant, vous enregistrez les associations en observation. La vue eHome EMS est ajoutée automatiquement dans la barre latérale après le chargement de l’intégration ; elle suit ensuite vos réglages. Depuis cette vue, un administrateur peut créer une copie indépendante modifiable sans YAML. Les copies existantes ne sont jamais écrasées. Aucun équipement n’est commandé. Les flux animés et les bilans journaliers EMS restent à développer. Les réglages se rechargent sans redémarrage complet de HA.",
+        "data": {
+          "back_to_review": "Retourner à la vérification sans enregistrer"
+        }
+      },
+      "batteries": {
+        "title": "4 — Stockage",
+        "description": "Ajoutez vos batteries, ou continuez sans stockage. Chaque batterie possède ses propres mesures. Le rôle secours est proposé par défaut.\n\n{summary}",
+        "menu_options": {
+          "add_battery": "Ajouter une batterie",
+          "edit_battery": "Modifier une batterie",
+          "remove_battery": "Retirer une batterie du suivi",
+          "usages": "Continuer vers les usages"
+        }
+      },
+      "add_battery": {
+        "title": "Ajouter une batterie",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+        }
+      },
+      "battery_details": {
+        "title": "Modifier les mesures de la batterie",
+        "description": "Associez au moins une mesure et donnez un nom explicite à la batterie. Les champs absents peuvent rester vides. Charge et décharge sont deux puissances instantanées positives distinctes. Le SOC est un pourcentage ; l’énergie restante est le stock actuel, pas un cumul reçu depuis l’installation.",
+        "data": {
+          "name": "Nom de la batterie",
+          "role": "Rôle",
+          "coupling": "Couplage électrique",
+          "capacity_kwh": "Capacité utile déclarée (kWh, facultative)",
+          "charge_power": "Puissance de charge positive (W/kW)",
+          "discharge_power": "Puissance de décharge positive (W/kW)",
+          "soc": "État de charge (%)",
+          "remaining_energy": "Énergie restante mesurée (Wh/kWh)"
+        },
+        "data_description": {
+          "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
+          "role": "Active : batterie participant aux échanges quotidiens. Secours : suivie séparément, hors futur bilan actif. Aucun rôle ne déclenche de commande.",
+          "coupling": "AC : stockage raccordé côté alternatif. DC : suivi disponible mais bilan AC simple non applicable sans adaptateur de topologie.",
+          "capacity_kwh": "Capacité utile déclarée en kWh pour l’ensemble suivi. Ce n’est ni la puissance en W ni l’énergie restante. Exemple : 8,2 kWh.",
+          "charge_power": "Puissance entrant actuellement dans la batterie. Ne choisissez pas un compteur total d’énergie chargée.",
+          "discharge_power": "Puissance sortant actuellement de la batterie vers les usages. Une décharge n’est pas automatiquement d’origine solaire.",
+          "soc": "État de charge actuel entre 0 et 100 %, pas une énergie en kWh.",
+          "remaining_energy": "Facultatif : énergie actuellement disponible, en Wh/kWh. Ne choisissez pas Total Grid Energy, une énergie journalière ou un compteur total de charge/décharge. Sans capteur adapté, laissez vide. Les compteurs cumulatifs déclarés sont refusés ; au-delà de capacité × 1,10, l’association est signalée incohérente."
+        }
+      },
+      "edit_battery": {
+        "title": "Choisir la batterie à modifier",
+        "data": {
+          "battery_id": "Batterie"
+        }
+      },
+      "remove_battery": {
+        "title": "Retirer une batterie du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne commande pas l’équipement et ne supprime pas son intégration constructeur.",
+        "data": {
+          "battery_id": "Batterie à retirer"
+        }
+      },
+      "usages": {
+        "title": "5 — Usages : routeur solaire, VE et autres charges",
+        "description": "Ajoutez les équipements à détailler, ou continuez sans usage. Leur consommation est déjà incluse dans le total maison : elle ne sera pas ajoutée une seconde fois. Ce suivi n’envoie aucune commande à F1ATB, à la borne ou aux autres équipements.\n\n{summary}",
+        "menu_options": {
+          "add_usage": "Ajouter un usage",
+          "edit_usage": "Modifier un usage",
+          "remove_usage": "Retirer un usage du suivi",
+          "review": "Continuer vers la vérification",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
+        }
+      },
+      "add_usage": {
+        "title": "Ajouter un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+        }
+      },
+      "usage_details": {
+        "title": "Modifier un usage",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "kind": "Type d’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
+        }
+      },
+      "edit_usage": {
+        "title": "Choisir l’usage à modifier",
+        "data": {
+          "usage_id": "Usage"
+        }
+      },
+      "remove_usage": {
+        "title": "Retirer un usage du suivi",
+        "description": "Ce retrait sera appliqué à la confirmation finale. Il ne supprime pas l’équipement ni son intégration et n’envoie aucune commande.",
+        "data": {
+          "usage_id": "Usage"
+        }
+      },
+      "appliances": {
+        "title": "Mes Appareils",
+        "description": "Suivez frigo, lave-vaisselle, expresso… Puissance W/kW et énergie Wh/kWh sont facultatives. Pour un coût du jour, sélectionnez un compteur remis à zéro chaque jour et la période Aujourd’hui. Ces sous-comptages ne sont jamais ajoutés au total maison.",
+        "menu_options": {
+          "add_appliance": "Ajouter un appareil",
+          "edit_appliance": "Modifier un appareil",
+          "remove_appliance": "Retirer un appareil",
+          "daily": "Aujourd’hui et tarif",
+          "review": "Vérifier et enregistrer"
+        }
+      },
+      "add_appliance": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "appliance_details": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "edit_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "remove_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "daily": {
+        "title": "Aujourd’hui et tarif",
+        "description": "Facultatif : associez uniquement des compteurs d’énergie DU JOUR, remis à zéro à minuit dans votre installation. Aucun compteur cumulé ou énergie restante batterie. Charge/restitution : total du jour de vos batteries, toutes origines confondues. Les € utilisent un prix fixe configurable (hors abonnement, heures creuses et revente), ce sont des équivalents estimatifs, pas des économies mesurées. Effacez le tarif pour masquer les €.",
+        "data": {
+          "solar": "Production solaire du jour",
+          "home": "Consommation maison du jour",
+          "import": "Import réseau du jour",
+          "export": "Injection réseau du jour",
+          "charge": "Charge batteries du jour",
+          "discharge": "Restitution batteries du jour",
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
         }
       }
     },
     "error": {
-      "select_source": "Sélectionnez au moins un capteur."
+      "select_source": "Sélectionnez au moins un capteur avant d’enregistrer.",
+      "duplicate_source": "Le même capteur est associé à plusieurs mesures du bilan.",
+      "recursive_source": "Choisissez un capteur source, pas un capteur créé par eHome EMS.",
+      "missing_source": "Une mesure nécessaire manque. Pour le calcul EMS, associez import, injection et toutes les puissances des équipements présents.",
+      "unsupported_unit": "Unité incorrecte : W/kW pour une puissance, % pour le SOC, Wh/kWh pour l’énergie restante.",
+      "sources_changed": "Une association est incohérente : source absente, doublon, unité incorrecte, compteur cumulé ou stock supérieur à la capacité. Retournez à la vérification.",
+      "invalid_battery": "Vérifiez le nom, le rôle, le couplage et la capacité (nombre positif fini).",
+      "cumulative_energy": "Ce capteur est déclaré comme un cumul d’énergie. Choisissez un stock restant instantané, ou laissez ce champ vide.",
+      "exceeds_capacity": "Cette énergie dépasse la capacité déclarée de plus de 10 %. Vérifiez le capteur, l’unité et la capacité, ou laissez le champ vide.",
+      "boundary_unconfirmed": "Confirmez d’abord que les mesures du bilan partagent le même périmètre AC.",
+      "solar_configuration": "Vérifiez la présence déclarée du photovoltaïque et sa mesure à l’étape Solaire.",
+      "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
+      "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
+      "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
+      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
+    }
+  },
+  "selector": {
+    "battery_role": {
+      "options": {
+        "backup": "Secours — suivi séparé",
+        "active": "Active — candidate au bilan"
+      }
+    },
+    "battery_coupling": {
+      "options": {
+        "ac": "AC — côté alternatif",
+        "dc": "DC — suivi seul, hors bilan AC simple"
+      }
+    },
+    "home_power_mode": {
+      "options": {
+        "existing": "Utiliser mon capteur existant",
+        "calculated": "Calculer automatiquement dans eHome EMS"
+      }
+    },
+    "usage_kind": {
+      "options": {
+        "solar_router": "Routeur solaire / ECS",
+        "ev_charger": "Recharge véhicule électrique",
+        "other": "Autre usage",
+        "appliance": "Appareil suivi"
+      }
+    },
+    "usage_energy_period": {
+      "options": {
+        "today": "Aujourd’hui",
+        "session": "Session en cours ou dernière session",
+        "total": "Cumul total"
+      }
+    }
+  },
+  "services": {
+    "generate_dashboard": {
+      "name": "Générer le dashboard en observation",
+      "description": "Renvoie une configuration modifiable avec les cartes natives, sans créer ni écraser de dashboard.",
+      "fields": {
+        "entry_id": {
+          "name": "Installation eHome EMS",
+          "description": "Facultatif si une seule installation est configurée."
+        },
+        "language": {
+          "name": "Langue"
+        },
+        "max_power_w": {
+          "name": "Échelle des jauges de puissance",
+          "description": "Échelle indicative en watts ; ne commande aucune limite d’équipement."
+        }
+      }
     }
   }
 }

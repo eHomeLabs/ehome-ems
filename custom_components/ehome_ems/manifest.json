@@ -1,12 +1,12 @@
 {
   "domain": "ehome_ems",
   "name": "eHome EMS — Universal Energy Manager",
-  "version": "0.1.0",
+  "version": "0.2.0b11",
   "documentation": "https://github.com/eHomeLabs/ehome-ems",
   "issue_tracker": "https://github.com/eHomeLabs/ehome-ems/issues",
-  "codeowners": [],
+  "codeowners": ["@eHomeLabs"],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": ["panel_custom", "websocket_api"],
   "requirements": [],
   "iot_class": "local_push"
 }

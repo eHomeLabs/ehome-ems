@@ -1,4 +1,5 @@
 {
   "name": "eHome EMS",
-  "render_readme": true
+  "render_readme": true,
+  "homeassistant": "2026.9.1"
 }
