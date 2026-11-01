@@ -333,7 +333,7 @@ export class EhomeEmsPanel extends BaseElement {
     tile.style.setProperty("--tone", color || "#69b8ff");
     if (color) { value.style.color = color; tile.firstChild.style.color = color; }
     if(valueProvider)this._flowUpdates.push(()=>{const n=valueProvider();value.textContent=n===null?this._t("Indisponible","Unavailable"):displayNumber(n,this._hass?.language)+" kWh";value.classList.toggle("bad",n===null);});else this._bind(value, entity); tile.append(value);
-    if (["W", "kW"].includes(this._hass?.states?.[entity]?.attributes?.unit_of_measurement)) tile.append(this._spark(entity, color || "#69b8ff"));
+    if (["W", "kW", "%"].includes(this._hass?.states?.[entity]?.attributes?.unit_of_measurement)) tile.append(this._spark(entity, color || "#69b8ff"));
     if (entity) this._editable(tile, entity);
     return tile;
   }
@@ -358,7 +358,7 @@ export class EhomeEmsPanel extends BaseElement {
     if (this._historyBusy || Date.now() - this._historyAt < 300000 || !this._hass?.callApi) return;
     const flow = this._snapshotData?.flow;
     if (!flow) return;
-    const ids = [...new Set([...Object.values(flow.entities || {}), ...(flow.batteries || []).flatMap(b => [b.charge_power, b.discharge_power]), ...(flow.usages || []).map(u => u.power)].filter(Boolean))].slice(0, 100);
+    const ids = [...new Set([...Object.values(flow.entities || {}), ...(flow.batteries || []).flatMap(b => [b.charge_power, b.discharge_power,b.soc]), ...(flow.usages || []).map(u => u.power)].filter(Boolean))].slice(0, 100);
     const sources = ids.map(id => this._snapshotData.bindings?.[id]?.source || id);
     if (!ids.length) return;
     this._historyBusy = true;

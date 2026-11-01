@@ -41,6 +41,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.locator(".kpis .trend-steps").first().locator("span").count(),24);
       const aligned=await page.locator(".kpis .kpi").evaluateAll(cards=>cards.slice(0,5).map(c=>({top:c.querySelector(".value").getBoundingClientRect().top-c.getBoundingClientRect().top,height:c.getBoundingClientRect().height})));
       assert.ok(aligned.every(c=>Math.abs(c.top-aligned[0].top)<1&&Math.abs(c.height-aligned[0].height)<1));
+      assert.equal(await page.locator(".kpis .trend-head").count(),6);
       const navBox = await page.getByRole("navigation", { name: "Vues énergie" }).boundingBox();
       const flowBox = await page.locator(".flow").boundingBox();
       assert.ok(navBox.y < flowBox.y);
@@ -208,6 +209,8 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.evaluate(()=>window.weatherSubscriptions),1);
 
       await page.getByRole("heading",{name:"Part Import / Export dans les échanges réseau",exact:true}).waitFor();
+      const todayHeights=await page.locator(".today .cards>.kpi").evaluateAll(cards=>cards.map(c=>c.getBoundingClientRect().height));
+      assert.ok(todayHeights.every(h=>Math.abs(h-todayHeights[0])<1));
       await page.screenshot({path:path.join(output,viewport.width<600?"today-mobile.png":"today-desktop.png"),fullPage:true});
       await page.getByRole("button",{name:"Usages",exact:true}).click();
       await page.locator(".charger-card").getByRole("heading",{name:"Véhicule",exact:true}).waitFor();
@@ -236,6 +239,8 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.getByRole("button",{name:"Enregistrer les priorités de simulation",exact:true}).count(),0);
       assert.equal(await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).isDisabled(),true);
       assert.deepEqual(errors, []);
+      await page.evaluate(()=>fixturePanel.remove());
+      assert.equal(await page.evaluate(()=>window.weatherUnsubscriptions),1);
       await page.close();
     }
     console.log("PASS: desktop/mobile rendering, unavailable values, tabs, history event and guarded native copy");
