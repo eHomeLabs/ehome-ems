@@ -261,7 +261,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b12.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b13.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -276,9 +276,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.0b12"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-0b12"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.0b12.js"
+                assert snapshot["version"] == "0.2.0b13"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-0b13"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.0b13.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -314,6 +314,33 @@ async def validate(config_dir):
                 await command({"type": "ehome_ems/manage_settings", "entry_id": entry.entry_id, "revision": entry.modified_at.isoformat(), "section": "appliances", "action": "remove", "identifier": appliance})
                 await hass.async_block_till_done()
                 assert appliance not in entry.options["usages"]
+                # b13 exact reference: signed grid only, heater/EV remain included.
+                hass.states.async_set("sensor.sim_grid", "-300", {"unit_of_measurement": "W"})
+                hass.states.async_set("sensor.sim_pv_new", "2000", {"unit_of_measurement": "W"})
+                hass.states.async_set("sensor.sim_charge", "500", {"unit_of_measurement": "W"})
+                await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"grid","action":"save","values":{"grid_power":"sensor.sim_grid"}})
+                await hass.async_block_till_done()
+                await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"home","action":"save","values":{"home_power_mode":"calculated","home_grid_mode":"signed","home_has_solar":True,"home_has_storage":True,"home_boundary_confirmed":True,"home_max_age_seconds":0}})
+                await hass.async_block_till_done()
+                assert mirror("home_power")[0] == original_home_id
+                assert float(mirror("home_power")[1].state) == 1200
+                assert mirror("home_power")[1].attributes["grid_representation"] == "signed"
+                assert not mirror("home_power")[1].attributes["freshness_check_enabled"]
+                assert float(mirror("grid_import")[1].state) == 0
+                assert float(mirror("grid_export")[1].state) == 300
+                assert len(mirror("home_power")[1].attributes["balance_inputs"]) == 4
+                hass.states.async_set("sensor.sim_grid", "100", {"unit_of_measurement": "W"})
+                await hass.async_block_till_done()
+                assert float(mirror("home_power")[1].state) == 1600
+                assert float(mirror("grid_import")[1].state) == 100
+                assert float(mirror("grid_export")[1].state) == 0
+                hass.states.async_set("sensor.sim_grid", "unavailable", {"unit_of_measurement": "W"})
+                await hass.async_block_till_done()
+                assert mirror("home_power")[1].state == "unavailable"
+                assert mirror("grid_export")[1].state == "unavailable"
+                hass.states.async_set("sensor.sim_grid", "-300", {"unit_of_measurement": "W"})
+                await hass.async_block_till_done()
+                assert float(mirror("home_power")[1].state) == 1200
                 stop_changes()
                 assert not changes, changes
                 day = await session.get(f"http://127.0.0.1:{port}/ehome_ems_assets/house-day.webp")

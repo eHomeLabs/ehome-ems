@@ -23,23 +23,25 @@
         }
       },
       "home": {
-        "title": "3 — Consommation de la maison",
-        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/export : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et export séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
+        "title": "3 — Conso Maison",
+        "description": "Conso Maison est toute la puissance consommée par les usages de la maison, quelle que soit son origine : cumulus, borne de recharge, chauffage, réfrigérateur et autres appareils inclus. La charge des batteries électriques est séparée. Unités : W ou kW, pas kWh.\n\nConso Maison = Production solaire + Réseau − Charge batterie + Décharge batterie. Réseau signé : positif en import, négatif en export. Avec deux capteurs : Réseau = Import − Export. Ne jamais soustraire le cumulus ni ajouter les sous-compteurs une seconde fois. Exemple : solaire 2 000 W, export 300 W, charge 500 W → Conso Maison 1 200 W.\n\nChoisissez un capteur existant représentant ce total, ou le calcul EMS. Les puissances PV et batteries doivent être mesurées côté AC sur le même périmètre ; confirmez les équipements présents, puis associez toutes les batteries actives. Un capteur au seul point réseau ne mesure pas la consommation totale avec du solaire ou une batterie.",
         "data": {
-          "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
+          "home_power": "Capteur Conso Maison existant",
           "home_power_mode": "Origine de la consommation maison",
           "home_has_solar": "Calcul automatique : installation photovoltaïque présente",
           "home_has_storage": "Calcul automatique : stockage actif présent",
           "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
-          "home_max_age_seconds": "Calcul automatique : âge maximal des sources (secondes)"
+          "home_max_age_seconds": "Âge maximal des sources (secondes, 0 désactive le contrôle)",
+          "home_grid_mode": "Réseau utilisé dans le bilan"
         },
         "data_description": {
-          "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
-          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − export − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_power": "Doit inclure cumulus, borne et tous les appareils. Une pince mesurant tous les départs usages, ou un template conforme au bilan, convient. Si votre ancien template soustrait le cumulus, corrigez-le. Ignoré en mode calcul EMS.",
+          "home_power_mode": "Capteur existant : valeur reprise telle quelle. Calcul EMS : Conso Maison = solaire + réseau − charge + décharge, cumulus et borne inclus. Identifiant du capteur EMS conservé.",
           "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
           "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
           "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
-          "home_max_age_seconds": "Défaut 300 s. Si une source nécessaire manque, est indisponible, a une unité invalide ou dépasse cet âge, le résultat reste indisponible. Aucune donnée manquante n’est remplacée par zéro. Le contrôle d’âge est refait toutes les 30 s."
+          "home_max_age_seconds": "Défaut 300 s, contrôle toutes les 30 s. Certaines intégrations publient seulement les changements, notamment pour 0 W : adaptez le délai, ou choisissez explicitement 0 pour ne plus bloquer sur l’âge. L’âge reste visible dans le détail du calcul. Une source absente, invalide ou indisponible bloque toujours le résultat.",
+          "home_grid_mode": "Auto conserve Import/Export si les deux sont associés, sinon utilise le réseau signé. Un seul mode entre dans le bilan, jamais les deux. En mode signé, vérifier impérativement + import / − export ; un capteur import uniquement ne convient pas."
         }
       },
       "review": {
@@ -300,7 +302,9 @@
       "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
       "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
       "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
-      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh.",
+      "missing_grid_source": "Associez un réseau signé ou les deux capteurs Import/Export.",
+      "grid_configuration": "Vérifiez le mode réseau choisi pour Conso Maison."
     },
     "abort": {
       "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
@@ -330,23 +334,25 @@
         }
       },
       "home": {
-        "title": "3 — Consommation de la maison",
-        "description": "La consommation maison est la puissance instantanée utilisée par l’ensemble des usages : éclairage, appareils, chauffage, chauffe-eau, VE… quelle que soit l’origine de l’électricité. Le stockage dans la batterie est compté séparément. Elle s’exprime en W/kW, pas en kWh.\n\nDeux choix : reprendre un capteur existant (mesuré ou déjà calculé), ou calculer le bilan dans eHome EMS. Un compteur ou des pinces mesurant réellement tous les usages, ou leur somme cohérente, peut fournir cette mesure. Un compteur au point d’échange réseau ne mesure souvent que l’import/export : avec solaire et batterie, il ne donne pas seul la consommation des usages.\n\nLe calcul automatique initial est limité aux mesures AC cohérentes : import et export séparés, production solaire AC et charge/décharge AC de toutes les batteries actives. Confirmez ci-dessous les équipements présents et le périmètre, puis associez les batteries à l’étape suivante.",
+        "title": "3 — Conso Maison",
+        "description": "Conso Maison est toute la puissance consommée par les usages de la maison, quelle que soit son origine : cumulus, borne de recharge, chauffage, réfrigérateur et autres appareils inclus. La charge des batteries électriques est séparée. Unités : W ou kW, pas kWh.\n\nConso Maison = Production solaire + Réseau − Charge batterie + Décharge batterie. Réseau signé : positif en import, négatif en export. Avec deux capteurs : Réseau = Import − Export. Ne jamais soustraire le cumulus ni ajouter les sous-compteurs une seconde fois. Exemple : solaire 2 000 W, export 300 W, charge 500 W → Conso Maison 1 200 W.\n\nChoisissez un capteur existant représentant ce total, ou le calcul EMS. Les puissances PV et batteries doivent être mesurées côté AC sur le même périmètre ; confirmez les équipements présents, puis associez toutes les batteries actives. Un capteur au seul point réseau ne mesure pas la consommation totale avec du solaire ou une batterie.",
         "data": {
-          "home_power": "Capteur maison existant (mesuré ou déjà calculé)",
+          "home_power": "Capteur Conso Maison existant",
           "home_power_mode": "Origine de la consommation maison",
           "home_has_solar": "Calcul automatique : installation photovoltaïque présente",
           "home_has_storage": "Calcul automatique : stockage actif présent",
           "home_boundary_confirmed": "Je confirme le même périmètre AC pour toutes les mesures du bilan",
-          "home_max_age_seconds": "Calcul automatique : âge maximal des sources (secondes)"
+          "home_max_age_seconds": "Âge maximal des sources (secondes, 0 désactive le contrôle)",
+          "home_grid_mode": "Réseau utilisé dans le bilan"
         },
         "data_description": {
-          "home_power": "Mode capteur existant : sélectionnez votre mesure totale. Un capteur template déjà calculé convient. Il ne doit pas dépendre du capteur Maison créé par eHome EMS. En calcul automatique, ce champ est ignoré.",
-          "home_power_mode": "Capteur existant : valeur reprise sans nouveau bilan. Calcul EMS : maison = PV + import + décharge − export − charge. Le même identifiant de capteur EMS est conservé en changeant de mode.",
+          "home_power": "Doit inclure cumulus, borne et tous les appareils. Une pince mesurant tous les départs usages, ou un template conforme au bilan, convient. Si votre ancien template soustrait le cumulus, corrigez-le. Ignoré en mode calcul EMS.",
+          "home_power_mode": "Capteur existant : valeur reprise telle quelle. Calcul EMS : Conso Maison = solaire + réseau − charge + décharge, cumulus et borne inclus. Identifiant du capteur EMS conservé.",
           "home_has_solar": "Uniquement pour le calcul EMS. Si coché, la puissance PV doit être associée. Ne décochez pas pour contourner une mesure manquante sur une installation solaire.",
           "home_has_storage": "Uniquement pour le calcul EMS. Déclarez à l’étape suivante toutes les batteries participant aux flux quotidiens comme actives, avec charge ET décharge. Le rôle secours signifie hors de ce bilan quotidien. Une batterie DC active bloque le calcul AC simple.",
           "home_boundary_confirmed": "Vérifiez l’emplacement des compteurs, l’absence de doublons et des puissances batteries mesurées côté AC. Une puissance interne pack/DC n’est pas interchangeable avec la puissance AC. Sans cette confirmation, le calcul EMS n’est pas activable.",
-          "home_max_age_seconds": "Défaut 300 s. Si une source nécessaire manque, est indisponible, a une unité invalide ou dépasse cet âge, le résultat reste indisponible. Aucune donnée manquante n’est remplacée par zéro. Le contrôle d’âge est refait toutes les 30 s."
+          "home_max_age_seconds": "Défaut 300 s, contrôle toutes les 30 s. Certaines intégrations publient seulement les changements, notamment pour 0 W : adaptez le délai, ou choisissez explicitement 0 pour ne plus bloquer sur l’âge. L’âge reste visible dans le détail du calcul. Une source absente, invalide ou indisponible bloque toujours le résultat.",
+          "home_grid_mode": "Auto conserve Import/Export si les deux sont associés, sinon utilise le réseau signé. Un seul mode entre dans le bilan, jamais les deux. En mode signé, vérifier impérativement + import / − export ; un capteur import uniquement ne convient pas."
         }
       },
       "review": {
@@ -607,7 +613,9 @@
       "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
       "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
       "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
-      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh.",
+      "missing_grid_source": "Associez un réseau signé ou les deux capteurs Import/Export.",
+      "grid_configuration": "Vérifiez le mode réseau choisi pour Conso Maison."
     }
   },
   "selector": {
@@ -642,6 +650,13 @@
         "today": "Aujourd’hui",
         "session": "Session en cours ou dernière session",
         "total": "Cumul total"
+      }
+    },
+    "home_grid_mode": {
+      "options": {
+        "auto": "Auto : Import/Export complets, sinon signé",
+        "signed": "Réseau signé (+ import / − export)",
+        "separate": "Deux capteurs Import et Export"
       }
     }
   },

@@ -183,6 +183,7 @@ class PowerWizard:
                          "home_power": user_input.get("home_power") if mode == "existing" else None}
             for key in HOME_SETTINGS[1:4]:
                 candidate[key] = user_input.get(key, False)
+            candidate["home_grid_mode"] = user_input.get("home_grid_mode", "auto")
             candidate["home_max_age_seconds"] = user_input.get("home_max_age_seconds", 300)
             errors = {key: reason for key, reason in self._errors(candidate).items()
                       if key == "home_power"}
@@ -203,8 +204,11 @@ class PowerWizard:
         }
         for key, default in defaults.items():
             schema[vol.Optional(key, default=existing.get(key, default))] = bool
+        schema[vol.Optional("home_grid_mode", default=existing.get("home_grid_mode", "auto"))] = selector.SelectSelector(
+            selector.SelectSelectorConfig(options=["auto", "signed", "separate"], translation_key="home_grid_mode")
+        )
         schema[vol.Optional("home_max_age_seconds", default=existing.get("home_max_age_seconds", 300))] = vol.All(
-            vol.Coerce(int), vol.Range(min=30, max=3600)
+            vol.Coerce(int), vol.Any(0, vol.Range(min=30, max=3600))
         )
         return self.async_show_form(step_id="home", data_schema=vol.Schema(schema), errors=errors)
 

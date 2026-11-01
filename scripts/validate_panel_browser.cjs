@@ -54,10 +54,14 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 4);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b12").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b13").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
+      await page.locator(".home-diagnostic summary").click();
+      assert.ok(await page.locator(".home-diagnostic").getByText("+1500 W · Valide · 3 s",{exact:true}).count());
+      await page.locator(".home-diagnostic").screenshot({path:path.join(output,viewport.width<600?"home-balance-mobile.png":"home-balance-desktop.png")});
+      await page.locator(".home-diagnostic summary").click();
       await page.screenshot({ path: path.join(output, viewport.width < 600 ? "mobile.png" : "desktop.png"), fullPage: true });
       await page.locator(".flow").screenshot({ path: path.join(output, viewport.width < 600 ? "flow-mobile.png" : "flow-desktop.png") });
       // Reproduce the hardware report: idle storage has two visible zero rows,
@@ -71,7 +75,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
         fixturePanel.hass={...fixtureHass};
       });
       await page.getByRole("button",{name:"Actualiser",exact:true}).click();
-      await page.getByText("Maison · source existante",{exact:true}).first().waitFor();
+      await page.getByText("Conso Maison",{exact:true}).first().waitFor();
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(255, 101, 101)");
       await page.waitForFunction(() => {
         const shadow=fixturePanel.shadowRoot;
@@ -141,13 +145,21 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.0b12 · Intégration 0.2.0b12", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.0b13 · Intégration 0.2.0b13", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
+      await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
+      const homeDialog=page.getByRole("dialog",{name:"Conso Maison",exact:true});
+      await homeDialog.getByLabel("Origine de Conso Maison",{exact:true}).selectOption("calculated");
+      assert.equal(await homeDialog.getByLabel("Capteur Conso Maison",{exact:true}).isDisabled(),true);
+      await homeDialog.getByLabel("Réseau utilisé dans le bilan",{exact:true}).selectOption("signed");
+      await homeDialog.getByLabel("Ancienneté maximale (secondes, 0 = contrôle désactivé)",{exact:true}).fill("0");
+      assert.ok(await homeDialog.getByText(/Cumulus, borne, chauffage et appareils restent inclus/).count());
+      await homeDialog.getByRole("button",{name:"Annuler",exact:true}).click();
       await page.getByRole("button",{name:"Solaire",exact:true}).click();
       await page.getByRole("dialog",{name:"Solaire",exact:true}).waitFor();
       assert.equal(await page.getByLabel("Production solaire",{exact:true}).count(),1);
-      assert.equal(await page.getByLabel("Capteur de consommation maison",{exact:true}).count(),0);
+      assert.equal(await page.getByLabel("Capteur Conso Maison",{exact:true}).count(),0);
       await page.getByRole("button",{name:"Annuler",exact:true}).click();
 
       await page.getByRole("button", { name: "Changer la source", exact: true }).first().click();

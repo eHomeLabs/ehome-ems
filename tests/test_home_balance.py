@@ -44,10 +44,36 @@ class HomeBalanceTests(TestCase):
         self.assertEqual(result.quality, "unavailable")
 
     def test_missing_association_is_not_zero(self):
-        self.assertEqual(balance.home_sources(config(grid_export=None))[1], "missing_source")
+        self.assertEqual(balance.home_sources(config(grid_export=None))[1], "missing_grid_source")
 
-    def test_signed_grid_is_not_used_without_convention(self):
-        self.assertEqual(balance.home_sources(config(grid_import=None, grid_power="sensor.signed"))[1], "missing_source")
+    def test_signed_grid_import_positive_export_negative(self):
+        mapping = config(grid_import=None, grid_export=None, grid_power="sensor.signed",
+                         home_has_solar=True, solar_power="sensor.pv")
+        for grid, expected in (("300", 2300), ("-300", 1700), ("0", 2000)):
+            result = balance.calculate_home(mapping, {"sensor.signed": (grid, "W"), "sensor.pv": ("2", "kW")})
+            self.assertEqual(result.value, expected)
+
+    def test_explicit_grid_choice_never_double_counts_or_silently_falls_back(self):
+        mapping = config(grid_power="sensor.signed")
+        values = {"sensor.import": ("500", "W"), "sensor.export": ("0", "W"), "sensor.signed": ("900", "W")}
+        self.assertEqual(balance.calculate_home(mapping, values).value, 500)
+        self.assertEqual(balance.calculate_home({**mapping, "home_grid_mode": "signed"}, values).value, 900)
+        values["sensor.signed"] = ("unavailable", "W")
+        self.assertIsNone(balance.calculate_home({**mapping, "home_grid_mode": "signed"}, values).value)
+        self.assertEqual(balance.home_sources(config(home_grid_mode="signed"))[1], "missing_source")
+
+    def test_reference_1200w_keeps_cumulus_and_ev_included_with_two_active_batteries(self):
+        mapping = config(grid_power="sensor.signed", grid_import=None, grid_export=None,
+                         home_has_solar=True, solar_power="sensor.pv", home_has_storage=True,
+                         batteries={"a": {"role": "active", "coupling": "ac", "charge_power": "sensor.charge", "discharge_power": "sensor.discharge"},
+                                    "b": {"role": "active", "coupling": "ac", "charge_power": "sensor.charge_b", "discharge_power": "sensor.discharge_b"}},
+                         usages={"water": {"power": "sensor.water", "kind": "solar_router"}, "ev": {"power": "sensor.ev", "kind": "ev_charger"}})
+        values={"sensor.signed": ("-.3", "kW"), "sensor.pv": ("2000", "W"), "sensor.charge": (".5", "kW"), "sensor.discharge": ("0", "W"), "sensor.charge_b": ("0", "W"), "sensor.discharge_b": ("0", "W"), "sensor.water": ("800", "W"), "sensor.ev": ("100", "W")}
+        self.assertEqual(balance.calculate_home(mapping, values).value, 1200)
+        values["sensor.discharge_b"] = ("200", "W")
+        self.assertEqual(balance.calculate_home(mapping, values).value, 1400)
+        values["sensor.charge_b"] = ("150", "W")
+        self.assertEqual(balance.calculate_home(mapping, values).value, 1250)
 
     def test_boundary_and_declarations_are_explicit(self):
         self.assertEqual(balance.home_sources(config(home_boundary_confirmed=False))[1], "boundary_unconfirmed")

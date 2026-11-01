@@ -69,3 +69,14 @@ class SettingsTests(TestCase):
         self.save('daily',{'home':'sensor.fridge_day'})
         self.assertIsNone(self.entry.options['tariff_eur_kwh'])
         self.assertEqual(self.entry.options['home_power'],'sensor.home')
+
+    def test_signed_home_without_import_export_and_change_only_freshness(self):
+        self.entry.data.update(grid_power='sensor.other')
+        self.save('home',{'home_power_mode':'calculated','home_grid_mode':'signed','home_has_solar':False,'home_has_storage':False,'home_boundary_confirmed':True,'home_max_age_seconds':0})
+        self.assertEqual(self.entry.options['home_grid_mode'],'signed')
+        self.assertIsNone(self.entry.options['home_power'])
+        self.assertEqual(self.entry.options['grid_power'],'sensor.other')
+        self.assertEqual(self.entry.options['home_max_age_seconds'],0)
+        for value in (1,29,-1,3601):
+            with self.assertRaises(settings.SettingsError):
+                self.save('home',{'home_power_mode':'calculated','home_boundary_confirmed':True,'home_max_age_seconds':value})

@@ -11,6 +11,7 @@ from .const import DOMAIN, VERSION, SOURCES, CONF_BATTERIES, BATTERY_SOURCES
 from .const import CONF_USAGES, USAGE_SOURCES
 from .dashboard import build_dashboard
 from .source_editor import binding_metadata
+from .home_balance import grid_sources
 from .simulation import plan
 
 SERVICE_GENERATE = "generate_dashboard"
@@ -35,6 +36,9 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
     suffixes = [key for key in SOURCES if mapping.get(key)]
     if mapping.get("home_power_mode") == "calculated" and "home_power" not in suffixes:
         suffixes.append("home_power")
+    network, _ = grid_sources(mapping)
+    if mapping.get("home_power_mode") == "calculated" and network and network[0][0] == "grid_power":
+        suffixes += [key for key in ("grid_import", "grid_export") if key not in suffixes]
     suffixes += [
         f"{battery_id}_{key}"
         for battery_id, battery in mapping.get(CONF_BATTERIES, {}).items()
