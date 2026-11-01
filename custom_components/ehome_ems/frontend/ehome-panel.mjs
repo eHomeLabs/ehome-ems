@@ -1,5 +1,14 @@
+export const PRODUCT_ICONS = ["auto","mdi:power-plug","mdi:washing-machine","mdi:dishwasher","mdi:tumble-dryer","mdi:fridge","mdi:radiator","mdi:air-conditioner","mdi:pool","mdi:coffee-maker","mdi:printer-3d-nozzle","mdi:lightbulb","mdi:television","mdi:desktop-classic","mdi:water-boiler","mdi:ev-station"];
+export function productIcon(config={}) {
+  if(PRODUCT_ICONS.includes(config.icon)&&config.icon!=="auto")return config.icon;
+  if(config.kind==="solar_router")return "mdi:water-boiler";
+  if(config.kind==="ev_charger")return "mdi:ev-station";
+  const name=(config.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  for(const [pattern,icon] of [[/vaisselle|dishwash/,"dishwasher"],[/seche.*linge|dryer/,"tumble-dryer"],[/lave.*linge|washing/,"washing-machine"],[/frigo|congel|refriger|fridge|freezer/,"fridge"],[/serviette|radiateur|radiator/,"radiator"],[/clim|chaleur|heat.pump/,"air-conditioner"],[/piscine|pool|filtration/,"pool"],[/expresso|cafe|coffee/,"coffee-maker"],[/imprimante|printer/,"printer-3d-nozzle"],[/eclairage|lampe|light/,"lightbulb"],[/television|\btv\b/,"television"],[/ordinateur|informatique|computer/,"desktop-classic"]])if(pattern.test(name))return "mdi:"+icon;
+  return "mdi:power-plug";
+}
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.0b14";
+export const UI_VERSION = "0.2.0b15";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -269,7 +278,7 @@ export class EhomeEmsPanel extends BaseElement {
       .flow{background:#081827;border-color:#254b65;border-radius:18px}.flow-tile,.flow-usage{background:#0a1b29;border-color:currentColor;box-shadow:0 0 16px #0003}.flow-stage{aspect-ratio:auto;height:490px;max-width:none}.flow-solar,.flow-grid{width:25%;padding:12px}.flow-tile ha-icon{--mdc-icon-size:28px}.flow-title{font-size:15px}.flow-number{font-size:25px}.flow-small{font-size:12px}.flow-house{left:25%;top:20%;width:56%}.flow-house .flow-number{font-size:36px}.flow-battery{top:48%;width:23%;padding:12px}.flow-battery .flow-number{font-size:22px}.flow-extra .flow-usage{text-align:left;flex:0 1 250px}.flow-extra .flow-number{font-size:21px}.flow-usage-title{font-size:12px;margin:4px 0}.flow-usages{max-width:620px;margin:auto}.flow-usage{padding:12px;text-align:left}.flow-usage ha-icon{float:left;margin:0 12px 0 0}.flow-links path.active,.flow-branches path.active{stroke-width:4;stroke-dasharray:15 20;filter:drop-shadow(0 0 5px currentColor)}
       @media(min-width:1051px){.overview-grid .flow-stage{aspect-ratio:auto;height:440px}.overview-grid .flow-house{left:25%;top:22%;width:58%}.overview-grid .flow-solar,.overview-grid .flow-grid{width:26%}.overview-grid .flow-battery{top:47%;width:24%}}
       @media(max-width:700px){.vessel-card{padding:20px}.vessel-icon{height:220px}.vessel-icon>ha-icon,.vessel-fill>ha-icon{--mdc-icon-size:170px;width:170px;height:170px}.vessel-fill{width:170px;height:170px}.vessel-layout{gap:12px}.vessel-main{font-size:43px}.flow-stage{height:460px}.flow-house{left:17%;top:28%;width:80%}.flow-battery{top:60%;width:36%}.flow-solar{width:43%}.flow-grid{width:43%}.flow-house .flow-title{font-size:12px}.flow-house .flow-number{font-size:27px}.flow-tile .flow-number{font-size:21px}.flow-grid .flow-number{font-size:21px}.kpi-label{font-size:12px}.kpi ha-icon{--mdc-icon-size:24px}.flow-usage .flow-title{font-size:12px}.flow-usage .flow-number{font-size:21px}}
-      .kpi{display:flex;flex-direction:column;min-width:0;box-sizing:border-box}.kpi>ha-icon{position:absolute;right:16px;top:18px;margin:0}.kpi-label{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;box-sizing:border-box;min-height:42px;height:42px;line-height:21px;padding-right:40px;overflow-wrap:anywhere}.kpi>.value{display:block;min-height:38px;line-height:38px;margin:6px 0 10px}.spark{margin:0;min-height:100px;height:100px;box-sizing:border-box}.trend-head{font-size:29px;font-weight:700;line-height:30px}.trend-steps{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));font-size:15px;line-height:21px;text-align:center}.trend-steps .no-sample{opacity:.28}.spark-note{padding:3px 0 0;font-size:10px;min-height:24px}.appliance-card .usage-energy{min-height:105px}.appliance-card .cost{min-height:42px}.equipment-status{min-height:20px}.appliance-card .equipment-actions{margin-top:auto}.usage-energy .note{overflow-wrap:anywhere}.cards{align-items:stretch}.today .cards>.kpi{min-height:210px;height:210px}.weather-card .weather-detail{min-height:40px}.weather-card .value{font-size:24px}
+      .kpi{display:flex;flex-direction:column;min-width:0;box-sizing:border-box}.kpi>ha-icon{position:absolute;right:16px;top:18px;margin:0}.kpi-label{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;box-sizing:border-box;min-height:42px;height:42px;line-height:21px;padding-right:40px;overflow-wrap:anywhere}.kpi>.value{display:block;min-height:38px;line-height:38px;margin:6px 0 10px}.spark{margin:0;min-height:62px;height:62px;box-sizing:border-box}.trend-head{font-size:29px;font-weight:700;line-height:30px}.history-row{display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,3fr);gap:16px;align-items:center;margin:12px 0}.history-chart svg{width:100%;height:70px;display:block}@media(max-width:600px){.history-row{grid-template-columns:1fr}}.spark-note{padding:3px 0 0;font-size:10px;min-height:24px}.appliance-card .usage-energy{min-height:105px}.appliance-card .cost{min-height:42px}.equipment-status{min-height:20px}.appliance-card .equipment-actions{margin-top:auto}.usage-energy .note{overflow-wrap:anywhere}.cards{align-items:stretch}.today .cards>.kpi{min-height:210px;height:210px}.weather-card .weather-detail{min-height:40px}.weather-card .value{font-size:24px}
     `;
     this.shadowRoot.append(style);
     const main = this._node("main");
@@ -339,7 +348,7 @@ export class EhomeEmsPanel extends BaseElement {
   }
   _tone(entity) {
     const f = this._snapshotData?.flow;
-    if (entity === f?.entities?.solar_power) return "#ffc83d";
+    if (entity && entity === f?.entities?.solar_power) return "#ffc83d";
     if(entity && entity === f?.entities?.grid_import)return "#ff6565";
     if(entity && [f?.entities?.grid_export,f?.entities?.grid_power].includes(entity))return "#58aeff";
     if (f?.batteries?.some(b => Object.values(b).includes(entity))) return "#42dca4";
@@ -348,10 +357,10 @@ export class EhomeEmsPanel extends BaseElement {
   }
   _entityIcon(entity) {
     const f = this._snapshotData?.flow;
-    if (entity === f?.entities?.solar_power) return "mdi:white-balance-sunny";
+    if (entity && entity === f?.entities?.solar_power) return "mdi:white-balance-sunny";
     if (f?.batteries?.some(b => Object.values(b).includes(entity))) return "mdi:battery-high";
     const u = f?.usages?.find(u => Object.values(u).includes(entity));
-    return u?.kind === "solar_router" ? "mdi:water-boiler" : u?.kind === "ev_charger" ? "mdi:car-electric" : u ? "mdi:power-plug" : "mdi:home";
+    return u ? productIcon(u) : "mdi:home";
   }
   async _loadHistory() {
     // One bounded request per five minutes, using source history (also works just after installing).
@@ -378,17 +387,42 @@ export class EhomeEmsPanel extends BaseElement {
     } catch { this._history = {}; this._historyAt = Date.now(); }
     finally { this._historyBusy = false; }
   }
-  _spark(entity, color) {
-    const box=this._node("div",undefined,"spark trend"),head=this._node("div",undefined,"trend-head"),arrows=this._node("div",undefined,"trend-steps"),note=this._node("span",undefined,"spark-note");box.style.color=color;box.append(head,arrows,note);
-    let previousRecords,previousQuarter,previousLanguage;
+  async _loadHistory24() {
+    if(this._tab!==4||this._history24Busy||!this._hass?.callApi)return;
+    const ids=[...new Set([...this.shadowRoot.querySelectorAll(".history-chart")].map(el=>el.dataset.entity))].slice(0,100),sources=ids.map(id=>this._snapshotData?.bindings?.[id]?.source||id),key=JSON.stringify([ids,sources]);
+    if(!ids.length||(key===this._history24Key&&Date.now()-(this._history24At||0)<300000))return;
+    this._history24Busy=true;this._history24Key=key;
+    try{
+      const end=Date.now(),start=end-86400000;
+      const response=await this._hass.callApi("GET",`history/period/${new Date(start).toISOString()}?filter_entity_id=${encodeURIComponent([...new Set(sources)].join(","))}&end_time=${new Date(end).toISOString()}&minimal_response&no_attributes&significant_changes_only=0`);
+      if(key!==this._history24Key)return;
+      this._history24={};for(const records of response||[]){for(const [i,id] of ids.entries())if(sources[i]===records[0]?.entity_id)this._history24[id]=records;}
+      this._history24At=Date.now();
+    }catch{this._history24={};this._history24At=Date.now();}finally{this._history24Busy=false;for(const update of this._flowUpdates||[])update();}
+  }
+  _historyChart(entity) {
+    const root=this._node("div",undefined,"history-chart");root.dataset.entity=entity;
     this._flowUpdates.push(()=>{
-      const records=this._history[entity],quarter=Math.floor(Date.now()/900000),language=this._hass?.language;
-      if(records===previousRecords&&quarter===previousQuarter&&language===previousLanguage)return;
-      previousRecords=records;previousQuarter=quarter;previousLanguage=language;
-      const bins=quarterTrends(records||[]),recent=bins.at(-1),available=bins.some(b=>b.value!==null),glyph=d=>d===1?"↗":d===-1?"↘":"→";
-      head.textContent=glyph(recent.direction);head.setAttribute("aria-label",recent.direction===null?this._t("Tendance inconnue : flèche horizontale neutre","Unknown trend: neutral horizontal arrow"):recent.direction===1?this._t("En hausse","Rising"):recent.direction===-1?this._t("En baisse","Falling"):this._t("Stable","Stable"));
-      arrows.replaceChildren();for(const b of bins){const arrow=this._node("span",glyph(b.direction));arrow.className=b.direction===null?"no-sample":"";arrow.title=new Intl.DateTimeFormat(this._hass?.language||"fr",{timeZone:this._snapshotData?.time_zone||"UTC",hour:"2-digit",minute:"2-digit"}).format(b.time)+" · "+(b.direction===null?this._t("Données insuffisantes","Insufficient data"):b.direction>0?this._t("Hausse","Rise"):b.direction<0?this._t("Baisse","Fall"):this._t("Stable","Stable"));arrows.append(arrow);}
-      note.textContent=available?this._t("6 h · 24 pas de 15 min","6 h · 24 fifteen-minute steps"):this._t("Aucune donnée sur 6 h · flèche neutre","No data over 6 h · neutral arrow");
+      const records=this._history24?.[entity]||[],now=Date.now(),start=now-86400000,segments=historySegments(records).map(segment=>segment.filter(p=>p.time>=start&&p.time<=now)).filter(segment=>segment.length),values=segments.flat().map(p=>p.value);
+      root.replaceChildren();
+      const source=this._snapshotData?.bindings?.[entity]?.source||entity,unit=this._hass?.states?.[source]?.attributes?.unit_of_measurement||"";
+      if(!values.length){root.append(this._node("span",this._t("Historique 24 h indisponible","24 h history unavailable"),"note"));return;}
+      const low=Math.min(...values),high=Math.max(...values),svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 600 70");svg.setAttribute("preserveAspectRatio","none");svg.setAttribute("role","img");svg.setAttribute("aria-label",this._t("Historique des 24 dernières heures","History of the last 24 hours")+` · ${low}–${high} ${unit}`);
+      for(const segment of segments){const path=document.createElementNS(svg.namespaceURI,"path");path.setAttribute("d",segment.map((p,i)=>`${i?"L":"M"}${(p.time-start)/86400000*600},${60-(p.value-low)/(high-low||1)*50}`).join(" "));path.setAttribute("fill","none");path.setAttribute("stroke","#5bb8ff");path.setAttribute("stroke-width","2");path.setAttribute("vector-effect","non-scaling-stroke");svg.append(path);}
+      const format=t=>new Intl.DateTimeFormat(this._hass?.language||"fr",{timeZone:this._snapshotData?.time_zone||"UTC",hour:"2-digit",minute:"2-digit"}).format(t);
+      root.append(svg,this._node("span",`${format(start)} → ${format(now)} · 24 h · ${unit}`,"note"));
+    });return root;
+  }
+  _spark(entity, color) {
+    const box=this._node("div",undefined,"spark trend"),head=this._node("div",undefined,"trend-head"),note=this._node("span",undefined,"spark-note");box.append(head,note);
+    this._flowUpdates.push(()=>{
+      const power=flowPower(this._hass?.states,entity);
+      const flow=this._snapshotData?.flow,producing=entity===flow?.entities?.solar_power||entity===flow?.entities?.grid_export||flow?.batteries?.some(b=>entity===b.discharge_power);
+      box.style.color=!producing&&power!==null&&power>0?"#ff6565":"#5bb8ff";
+      const bins=quarterTrends(this._history[entity]||[]),direction=bins.at(-1).direction;
+      head.textContent=direction===1?"↗":direction===-1?"↘":"→";
+      head.setAttribute("aria-label",direction===null?this._t("Tendance inconnue : flèche horizontale","Unknown trend: horizontal arrow"):direction>0?this._t("En hausse","Rising"):direction<0?this._t("En baisse","Falling"):this._t("Stable","Stable"));
+      note.textContent=bins.some(b=>b.value!==null)?this._t("6 h · pas de 15 min","6 h · fifteen-minute intervals"):this._t("Aucune donnée sur 6 h · flèche neutre","No data over 6 h · neutral arrow");
     });return box;
   }
   _dayStart() {
@@ -422,7 +456,7 @@ export class EhomeEmsPanel extends BaseElement {
       daily.textContent=session?reading(this._hass?.states,config.energy,undefined,this._hass?.language).text:n===null?this._t("Jour indisponible","Daily unavailable"):displayNumber(n,this._hass?.language)+" kWh";
       daily.classList.toggle("bad",!session&&n===null);
       caption.textContent=session?this._t("Énergie de session · pas un compteur du jour","Session energy · not a daily counter"):this._t("Aujourd’hui · calcul depuis le compteur","Today · calculated from counter");
-      raw.textContent=this._t("Capteur : ","Source: ")+reading(this._hass?.states,config.energy,undefined,this._hass?.language).text+(n===null&&!session?this._t(" · référence à minuit absente"," · missing midnight baseline"):"");
+      raw.textContent=(session?this._t("Énergie de session : ","Session energy: "):this._t("Énergie Totale : ","Total energy: "))+reading(this._hass?.states,config.energy,undefined,this._hass?.language).text+(n===null&&!session?this._t(" · référence à minuit absente"," · missing midnight baseline"):"");
     });if(config.energy)this._editable(box,config.energy);return box;
   }
   _usageCost(config) {
@@ -460,7 +494,7 @@ export class EhomeEmsPanel extends BaseElement {
     for(const u of usages) {
       if(u.kind === "solar_router") { const card=this._vessel(u,true);this._equipmentActions(card,u,appliances?"appliances":"usages");grid.append(card);continue; }
       if(u.kind === "ev_charger") {const card=this._charger(u);this._equipmentActions(card,u,"usages");grid.append(card);continue;}
-      const tile=this._metricTile(u.name,u.power,this._entityIcon(u.power),this._tone(u.power));
+      const tile=this._metricTile(u.name,u.power,productIcon(u),this._tone(u.power));
       tile.classList.add("appliance-card");
       tile.append(this._usageEnergy(u),this._usageCost(u));
       const status=this._node("p",undefined,"note equipment-status");if(u.status)this._bind(status,u.status);tile.append(status);
@@ -479,7 +513,7 @@ export class EhomeEmsPanel extends BaseElement {
     visual.append(this._icon(mdi));
     const fill=this._node("div",undefined,"vessel-fill");fill.append(this._icon(thermal ? mdi : "mdi:battery"));visual.append(fill);
     const details=this._node("div",undefined,"vessel-details");
-    const main=this._node("div",undefined,"vessel-main");this._bind(main,thermal?config.temperature:config.soc);this._editable(main,thermal?config.temperature:config.soc);
+    const main=this._node("div",undefined,"vessel-main");if(!thermal)this._bind(main,config.soc);else this._flowUpdates.push(()=>{const value=reading(this._hass?.states,config.temperature,undefined,this._hass?.language);main.textContent=value.number!==null?value.text:config.temperature?this._t("Température indisponible","Temperature unavailable"):this._t("Température non associée","Temperature not mapped");main.classList.toggle("bad",!!config.temperature&&value.number===null);main.style.fontSize=value.number===null?"20px":"";});this._editable(main,thermal?config.temperature:config.soc);
     const direction=this._node("p",undefined,"vessel-direction"),mode=this._node("p",undefined,"note"),energy=this._node("p",undefined,"energy-value");
     if(!thermal){this._bind(energy,config.remaining_energy);this._editable(energy,config.remaining_energy);}
     const caption=this._node("p",thermal?this._t("Énergie · ","Energy · ") + ({today:this._t("aujourd’hui","today"),session:"session",total:this._t("compteur cumulé","lifetime counter")}[config.energy_period]||this._t("non associée","not mapped")):this._t("disponibles · énergie mesurée","available · measured energy"),"note");
@@ -585,7 +619,7 @@ export class EhomeEmsPanel extends BaseElement {
     secondary.append(this._node("h2", this._t("Usages et équipements", "Loads and equipment")));
     const loads = this._node("div", undefined, "load-grid");
     for (const usage of flow.usages || []) loads.append(this._metricTile(usage.name, usage.power,
-      usage.kind === "solar_router" ? "mdi:water-boiler" : usage.kind === "ev_charger" ? "mdi:car-electric" : "mdi:power-plug",
+      productIcon(usage),
       usage.kind === "solar_router" ? "#e9a23d" : usage.kind === "ev_charger" ? "#ab78e2" : "#6eafff"));
     if (!flow.usages?.length) loads.append(this._node("p", this._t("Ajoutez des usages dans la configuration de l’intégration.", "Add loads in integration configuration."), "note"));
     secondary.append(loads); grid.append(secondary);
@@ -831,6 +865,7 @@ export class EhomeEmsPanel extends BaseElement {
         source("charge_power","Puissance de charge","Charge power");source("discharge_power","Puissance de décharge","Discharge power");source("soc","État de charge (%)","State of charge (%)",["%"]);source("remaining_energy","Énergie restante mesurée","Measured remaining energy",["Wh","kWh"]);
       }else{
         if(section==="usages")add("kind","Type d’usage","Load type","select",[["solar_router",this._t("Routeur / cumulus","Router / water heater")],["ev_charger",this._t("Borne de recharge","EV charger")],["other",this._t("Autre usage","Other load")]],null,current.kind||"solar_router");
+        add("icon","Icône du produit","Product icon","select",PRODUCT_ICONS.map(icon=>[icon,icon==="auto"?this._t("Automatique selon le nom","Automatic by name"):icon]),null,current.icon||"auto");
         source("power","Puissance (W/kW)","Power (W/kW)");source("energy","Énergie (Wh/kWh)","Energy (Wh/kWh)",["Wh","kWh"]);
         add("energy_period","Période du compteur d’énergie","Energy counter period","select",[["today",this._t("Aujourd’hui (remis à zéro chaque jour)","Today (resets daily)")],["session",this._t("Session","Session")],["total",this._t("Compteur cumulé","Lifetime counter")]],null,current.energy_period||"total");
         source("status","État (facultatif)","Status (optional)",[]);
@@ -948,15 +983,15 @@ export class EhomeEmsPanel extends BaseElement {
       card.append(this._node("p", this._t("Ouvrir l’historique d’une mesure :", "Open a reading's history:"), "note"));
       for (const entityId of config.entities) {
         const name = this._hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
-        card.append(this._button(name, () => this.dispatchEvent(new CustomEvent("hass-more-info", {
+        const row=this._node("div",undefined,"history-row");row.append(this._button(name, () => this.dispatchEvent(new CustomEvent("hass-more-info", {
           detail: { entityId }, bubbles: true, composed: true,
-        }))));
+        }))),this._historyChart(entityId));card.append(row);
       }
     }
     return card;
   }
   _refresh() {
-    this._loadHistory();this._loadUsageHistory();this._subscribeWeather();
+    this._loadHistory();this._loadHistory24();this._loadUsageHistory();this._subscribeWeather();
     for (const update of this._flowUpdates || []) update();
     for (const binding of this._bindings) {
       const value = reading(this._hass?.states, binding.entity, binding.attribute, this._hass?.language || "fr");
@@ -998,8 +1033,6 @@ export class EhomeEmsPanel extends BaseElement {
     const solarPath=link("M230 140 V210 Q230 245 280 245 H480 Q520 245 520 290", "#ffce45", entities.solar_power);
     const exportPath=link("M730 360 Q800 350 800 290 V150", "#58aeff", entities.grid_export);
     const importPath=link("M850 150 V300 Q850 380 750 400", "#ff6565", entities.grid_import);
-    const homeLink = config.usages?.length ? link("M560 700 V810", "#edf4ff", entities.home_power) : null;
-    if (homeLink) homeLink.classList.add("home-outgoing");
     const primary = config.batteries?.find(battery => battery.role === "active" && battery.coupling === "ac");
     const connectedBatteries = (config.batteries || []).filter(b => b.role === "active" && b.coupling === "ac");
     const batteryPaths = connectedBatteries.map(b => [
@@ -1090,14 +1123,6 @@ export class EhomeEmsPanel extends BaseElement {
       }
       let bottom = Math.max(bounds.bottom, ...Array.from(stage.children)
         .filter(child => child !== svg).map(child => child.getBoundingClientRect().bottom));
-      if (homeLink && bounds.width && bounds.height) {
-        const homeBounds = house.getBoundingClientRect();
-        const x = (homeBounds.left + homeBounds.width / 2 - bounds.left) * 1000 / bounds.width;
-        const start = homeBounds.bottom - bounds.top + 12;
-        const end = Math.max(bounds.height - 8, start + 24, bottom - bounds.top);
-        homeLink.setAttribute("d", `M${x} ${start * 830 / bounds.height} V${end * 830 / bounds.height}`);
-        bottom = Math.max(bottom, bounds.top + end);
-      }
       sceneWrap.style.minHeight = Math.ceil(bottom - bounds.top + 16) + "px";
     };
     const observer = new ResizeObserver(reserveScene);
@@ -1108,24 +1133,8 @@ export class EhomeEmsPanel extends BaseElement {
       this._t("Usages suivis · inclus dans le total maison, sans ajout supplémentaire.", "Tracked loads · included in home total, not added again.") :
       this._t("Usages suivis · vérifiez le périmètre de votre capteur Maison (cumulus inclus ou exclu).", "Tracked loads · check your Home source boundary (water heater included or excluded)."), "flow-usage-title");
     const usages = this._node("div", undefined, "flow-usages");
-    if (config.usages?.length) {
-      const branches = document.createElementNS(svg.namespaceURI, "svg");
-      branches.classList.add("flow-branches"); branches.setAttribute("viewBox", "0 0 1000 40");
-      branches.setAttribute("preserveAspectRatio", "none"); branches.setAttribute("aria-hidden", "true");
-      const paths = config.usages.map(() => { const p = document.createElementNS(svg.namespaceURI, "path"); branches.append(p); return p; });
-      this._flowUpdates.push(() => {
-        const columns = getComputedStyle(usages).gridTemplateColumns.split(" ").length;
-        paths.forEach((p, index) => {
-          p.style.display = index >= columns ? "none" : "";
-          p.setAttribute("d", `M500 0 V12 H${(index + .5) * 1000 / Math.min(columns, config.usages.length)} V40`);
-          p.style.color=config.usages[index].kind === "solar_router" ? "#ffa000" : config.usages[index].kind === "ev_charger" ? "#bb86fc" : "#edf4ff";
-          p.classList.toggle("active", flowActive(this._hass?.states, config.usages[index].power));
-        });
-      });
-      root.append(branches);
-    }
     for (const usage of config.usages || []) {
-      const mdi = usage.kind === "solar_router" ? "mdi:water-boiler" : usage.kind === "ev_charger" ? "mdi:car-electric" : "mdi:power-plug";
+      const mdi = productIcon(usage);
       const el = tile("flow-usage", usage.name, mdi, usage.power);
       el.style.color = usage.kind === "solar_router" ? "#ffab4d" : usage.kind === "ev_charger" ? "#c18aff" : "#edf4ff";
       usages.append(el);

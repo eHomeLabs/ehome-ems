@@ -165,7 +165,8 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -189,7 +190,8 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -235,7 +237,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -255,7 +258,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -487,7 +491,8 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -511,7 +516,8 @@
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
           "included_in_home": "I confirm this load belongs to the home consumption boundary",
-          "temperature": "Température de l’eau (facultatif)"
+          "temperature": "Température de l’eau (facultatif)",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -557,7 +563,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -577,7 +584,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "icon": "Product icon (auto or MDI)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",

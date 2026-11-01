@@ -59,7 +59,7 @@ class DashboardServiceTests(IsolatedAsyncioTestCase):
         self.assertIn("sensor.renamed", str(result))
         self.assertEqual(result["dashboard"]["views"][0]["title"], "Overview")
         self.assertEqual(self.entry.data, {"home_power": "sensor.source"})
-        self.assertEqual(result["version"], "0.2.0b14")
+        self.assertEqual(result["version"], "0.2.0b15")
         self.assertEqual(result["managed_url"], "/ehome-ems-entry")
         self.assertIn("/ehome-ems-entry", result["dashboard"]["views"][0]["cards"][0]["content"])
 

@@ -133,3 +133,5 @@ test("HA midnight follows Paris timezone including 23 and 25 hour days",async()=
  assert.equal((day("2026-03-30T12:00:00Z")-day("2026-03-29T12:00:00Z"))/3600000,23);
  assert.equal((day("2026-10-26T12:00:00Z")-day("2026-10-25T12:00:00Z"))/3600000,25);
 });
+
+test("native product icons infer French names and permit explicit overrides",async()=>{const {productIcon}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");for(const [name,icon] of [["Lave Linge","washing-machine"],["Sèche Serviette","radiator"],["Filtration Piscine","pool"],["Clim Labo","air-conditioner"],["Frigo/Congélateur","fridge"],["Expresso","coffee-maker"]])assert.equal(productIcon({name}),"mdi:"+icon);assert.equal(productIcon({name:"Frigo",icon:"mdi:pool"}),"mdi:pool");assert.equal(productIcon({name:"unknown",icon:"javascript:bad"}),"mdi:power-plug");});

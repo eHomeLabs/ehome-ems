@@ -15,12 +15,6 @@ Sources fonctionnelles : puissance réseau signée, import, injection, productio
 
 Référence initiale : PV 3,24 kWc, Zendure SolarFlow 2400 AC+ de 8,2 kWh selon la dernière correction du 30 octobre, Aferiy P210 de 2,3 kWh en secours et exclue par défaut du bilan actif, cumulus 150 L 1800 W avec routeur F1ATB, VE Zoé et borne annoncée 7,2 kW maximum. Le courant réellement autorisé pour la borne reste un paramètre propre à l'installation, distinct de sa puissance commerciale. L'extension PV reste un projet tant qu'elle n'est pas déclarée installée.
 
-## Inspirations étudiées
-PV Pilot : simplicité de mise en service, association des équipements, gestion du surplus et usages ECS, PAC, piscine, batterie et VE. Les fonctions publiques sont décrites par le fabricant. La vidéo transmise (https://www.youtube.com/watch?v=yUpDVUNU2k4) n'a pas pu être consultée ; le cadrage continue sans sa transcription, conformément au choix retenu. Aucun algorithme propriétaire n'a été vérifié.
-
-Home Assistant Energy : modèle des sources, compteurs et statistiques. eHome EMS complète cette base et propose sa propre vue opérationnelle.
-
-Predbat : planification batterie, trajectoire de SOC et comparaison réel/prévu. EMHASS : optimisation des charges, prévisions et stockage thermique. evcc : configuration des équipements et recharge solaire. Ces références inspirent les fonctions ; elles ne constituent pas des dépendances obligatoires ni une autorisation de reprise de code.
 
 ## Assistant de configuration
 1. Présenter le mode observation, choisir les modules et permettre de reprendre le parcours sans perdre les étapes validées.
@@ -68,7 +62,7 @@ Conseils explicables : chaque proposition présente données utilisées, action 
 ## Pilotage progressif
 Modes Observation, Conseil, Simulation et Automatique. La simulation journalise les décisions sans envoyer de commande. En automatique : priorités modifiables, échéances, minima de marche/arrêt, hystérésis, réserve SOC, puissance réseau maximale et import d'appoint autorisé par équipement.
 
-Un seul arbitre répartit la puissance disponible entre charges et stockage. Il coordonne les consignes plutôt que plusieurs boucles concurrentes. Pour F1ATB, conserver la régulation rapide du routeur et agir seulement sur les modes/consignes explicitement exposés. Même principe pour un EMS constructeur ou evcc déjà actif.
+Un seul arbitre répartit la puissance disponible entre charges et stockage. Il coordonne les consignes plutôt que plusieurs boucles concurrentes. Pour F1ATB, conserver la régulation rapide du routeur et agir seulement sur les modes/consignes explicitement exposés. Même principe pour un EMS constructeur déjà actif.
 
 Prévoir reprise manuelle temporaire, expiration du forçage, pause du pilotage EMS et journal des raisons. Une pause stoppe les nouvelles décisions et applique le mode de restitution configuré ; elle ne signifie pas couper toute la maison. En cas de capteur essentiel périmé, suspendre l'optimisation et appliquer un comportement de repli propre à l'équipement. Vérifier les retours d'état et limiter les répétitions de commandes. Préserver les fonctions de confort et de sécurité natives des équipements.
 
@@ -91,15 +85,11 @@ Lot D — optimisation : profils de consommation, scénarios et optimisation ava
 Le premier prototype produit doit couvrir le lot A sur l'installation réelle ; l'architecture doit dès maintenant réserver les interfaces des lots B et C.
 
 ## Décisions restant à prendre
-Priorités confort/ECS/batterie/VE selon saison ; autonomie ou coût comme objectif par défaut ; seuils et réserve batterie ; rôle précis de l'Aferiy ; périmètre électrique des mesures ; courant maximal réellement autorisé à la borne ; topologies AC/DC du premier lot. Le cadrage s'appuie sur les besoins exprimés et la documentation publique, sans dépendre de la vidéo YouTube.
+Priorités confort/ECS/batterie/VE selon saison ; autonomie ou coût comme objectif par défaut ; seuils et réserve batterie ; rôle précis de l'Aferiy ; périmètre électrique des mesures ; courant maximal réellement autorisé à la borne ; topologies AC/DC du premier lot. Le cadrage s'appuie sur les besoins exprimés et la documentation publique.
 
 ## Sources consultées le 31 octobre 2026
-- PV Pilot : https://www.pvpilot.fr/
 - Home Assistant Energy : https://www.home-assistant.io/docs/energy
 - Stratégies de dashboard : https://contributors.home-assistant.io/frontend/custom-ui/strategy/
 - Forecast.Solar : https://www.home-assistant.io/integrations/forecast_solar/
-- Predbat : https://springfall2008.github.io/batpred/
-- EMHASS : https://emhass.readthedocs.io/en/latest/
-- evcc et Home Assistant : https://docs.evcc.io/en/smarthome/home-assistant/
 
-Les fonctions des projets de référence proviennent de leur documentation publique. L'architecture et les exigences eHome EMS sont des propositions de conception, et non des capacités déjà implémentées ou vérifiées dans le dépôt.
+
