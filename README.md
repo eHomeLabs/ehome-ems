@@ -6,23 +6,25 @@
 
 eHome EMS vise à transformer les données déjà présentes dans Home Assistant en un gestionnaire énergétique guidé : configurer, visualiser, comprendre, prévoir, puis piloter.
 
-**Statut : première bêta 0.2.0b11 en observation, préparée pour les essais.**
+**Statut : première bêta 0.2.0b12 en observation, préparée pour les essais.**
 Cette branche contient l'assistant, les mesures normalisées, le suivi des batteries
 et un dashboard natif exportable. V2 désigne le périmètre produit complet, encore
 en développement, et non une release logicielle 2.0.
 
 ## Installer la bêta publique
 
-Ajouter [ce dépôt](https://github.com/eHomeLabs/ehome-ems) au Marketplace/HACS en **Intégration** et sélectionner la préversion **0.2.0b11**. L’affichage des versions bêta peut être nécessaire. Conserver l’entrée eHome EMS existante lors du passage depuis le ZIP.
+Ajouter [ce dépôt](https://github.com/eHomeLabs/ehome-ems) au Marketplace/HACS en **Intégration** et sélectionner la préversion **0.2.0b12**. L’affichage des versions bêta peut être nécessaire. Conserver l’entrée eHome EMS existante lors du passage depuis le ZIP.
 
-**Nouveautés :** cartes de puissance et historique colorés, stockage visuel, Mes Appareils, compteurs Aujourd’hui et tarif estimatif configurable, flux central plus lisible et suivi de plusieurs batteries.
-Voir les [notes et limites de la b11](docs/RELEASE_0_2_0B11.md). Observation uniquement ; aucune commande d’équipement.
+**b12 :** réglages directs dans le dashboard, courbes moyennées, affichage à deux décimales, maison jour/nuit et indicateurs apparents du jour. Voir les [notes b12](docs/RELEASE_0_2_0B12.md).
+
+**Fonctions disponibles :** cartes de puissance et historique colorés, stockage visuel, Mes Appareils, compteurs Aujourd’hui et tarif estimatif configurable, flux central plus lisible et suivi de plusieurs batteries.
+Voir les [notes et limites de la b11](docs/RELEASE_0_2_0B12.md). Observation uniquement ; aucune commande d’équipement.
 
 ## Où en est le projet ? — Repères au 31 octobre 2026
 
 | Élément | État actuel |
 | --- | --- |
-| Code disponible sur cette branche | Bêta 0.2.0b11 en lecture seule, compatible avec les associations V0.1 |
+| Code disponible sur cette branche | Bêta 0.2.0b12 en lecture seule, compatible avec les associations V0.1 |
 | Cadrage du projet | Cahier des charges V2, qui remplace les anciennes orientations |
 | Assistant pas à pas | Réseau, solaire, maison, batteries et vérification ; parcours backend validé sur HA 2026.9.1 et 2026.11.0b0 |
 | Stockage | Plusieurs batteries en suivi seul : charge, décharge, SOC et énergie restante mesurée |
@@ -38,7 +40,7 @@ les prévisions, conseils et commandes ne sont pas encore disponibles.**
 ### Quel document consulter ?
 
 - **Comprendre ce que nous allons construire :** [cahier des charges V2](docs/CAHIER_DES_CHARGES.md).
-- **Installer ou revenir en arrière :** [guide bêta 0.2.0b11](docs/INSTALLATION_BETA.md).
+- **Installer ou revenir en arrière :** [guide bêta 0.2.0b12](docs/INSTALLATION_BETA.md).
 - **Savoir ce qui a été testé :** [rapport de validation backend](docs/VALIDATION_0_2_0B1.md).
 - **Suivre l'ordre de développement et la validation :** [feuille de route](docs/ROADMAP.md).
 - **Installer ou tester uniquement le prototype existant :** [installation V0.1](docs/INSTALLATION_V0_1.md) et [validation V0.1](docs/VALIDATION_V0_1.md).
@@ -47,7 +49,7 @@ Les instructions d'installation V0.1 ne donnent pas accès au dashboard V2. Pour
 
 ## Premier incrément du lot A — en développement
 
-### Retour des premiers essais — 0.2.0b11
+### Retour des premiers essais — 0.2.0b12
 
 [Priorités et scénarios manuels](docs/SIMULATION.md) dans Stratégie : inclure des
 équipements, déclarer minimum/plafond, changer l'ordre, enregistrer puis répartir

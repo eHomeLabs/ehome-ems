@@ -1,5 +1,6 @@
 """Expose generated configuration as response data, without storage writes."""
 from math import isfinite
+from copy import deepcopy
 import voluptuous as vol
 
 from homeassistant.core import SupportsResponse
@@ -70,15 +71,17 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
     result["flow"] = {
         "entities": {key: entities.get(key) for key in SOURCES},
         "home_calculated": mapping.get("home_power_mode") == "calculated",
-        "batteries": [{"name": battery["name"], "role": battery["role"],
+        "batteries": [{"id": identifier, "name": battery["name"], "role": battery["role"],
                        "coupling": battery["coupling"],
                        **{key: entities.get(f"{identifier}_{key}") for key in BATTERY_SOURCES}}
                       for identifier, battery in mapping.get(CONF_BATTERIES, {}).items()],
-        "usages": [{"name": usage["name"], "kind": usage.get("kind", "other"),
+        "usages": [{"id": identifier, "name": usage["name"], "kind": usage.get("kind", "other"),
                     "energy_period": usage.get("energy_period", "total"),
                     **{key: entities.get(f"usage_{identifier}_{key}") for key in USAGE_SOURCES}}
                    for identifier, usage in mapping.get(CONF_USAGES, {}).items()],
     }
+    result["settings"] = deepcopy(dict(mapping))
+    result["time_zone"] = getattr(hass.config, "time_zone", "UTC")
     result["daily"] = dict(mapping.get("daily", {}))
     result["tariff_eur_kwh"] = mapping.get("tariff_eur_kwh")
     result["revision"] = entry.modified_at.isoformat() if hasattr(entry, "modified_at") else ""

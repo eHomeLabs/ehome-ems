@@ -27,18 +27,34 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
     browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
     for (const viewport of [{ width: 1440, height: 1600 }, { width: 390, height: 844 }]) {
       const page = await browser.newPage({ viewport });
+      await page.clock.setFixedTime(new Date("2026-11-01T10:00:00Z"));
       const errors = [];
       page.on("pageerror", error => errors.push(error.message));
       await page.goto("http://127.0.0.1:" + server.address().port + "/tests/fixtures/panel.html");
       await page.getByRole("heading", { name: "eHome EMS", exact: true }).waitFor();
       await page.getByRole("button", { name: "Vue d’ensemble", exact: true }).waitFor();
       assert.equal(await page.evaluate(() => customElements.get("ehome-ems-panel") !== fixturePanel.constructor), true);
+      const navLabels=await page.getByRole("navigation",{name:"Vues énergie"}).getByRole("button").allTextContents();
+      assert.deepEqual(navLabels,["Vue d’ensemble","Mes Appareils","Stockage","Usages","Historique","Aujourd’hui","Stratégie","Configuration"]);
       const navBox = await page.getByRole("navigation", { name: "Vues énergie" }).boundingBox();
       const flowBox = await page.locator(".flow").boundingBox();
       assert.ok(navBox.y < flowBox.y);
       await page.locator(".flow-house img").evaluate(img => img.decode());
+      assert.ok((await page.locator(".flow-house img").getAttribute("src")).endsWith("house-day.webp"));
+      const dayBounds=await page.locator(".flow-house").boundingBox();
+      await page.clock.setFixedTime(new Date("2026-11-01T18:00:00Z"));
+      await page.evaluate(()=>{fixturePanel.hass={...fixtureHass};});
+      await page.locator(".flow-house img").evaluate(img=>img.decode());
+      assert.ok((await page.locator(".flow-house img").getAttribute("src")).endsWith("house.webp"));
+      const nightBounds=await page.locator(".flow-house").boundingBox();
+      assert.ok(Math.abs(dayBounds.width-nightBounds.width)<1 && Math.abs(dayBounds.height-nightBounds.height)<1);
+      await page.locator(".flow").screenshot({path:path.join(output,viewport.width<600?"flow-night-mobile.png":"flow-night-desktop.png")});
+      await page.clock.setFixedTime(new Date("2026-11-01T10:00:00Z"));
+      await page.evaluate(()=>{fixturePanel.hass={...fixtureHass};});
+
       assert.equal(await page.locator(".flow-links path.active").count(), 4);
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b11").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b12").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -56,6 +72,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       });
       await page.getByRole("button",{name:"Actualiser",exact:true}).click();
       await page.getByText("Maison · source existante",{exact:true}).first().waitFor();
+      assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(255, 101, 101)");
       await page.waitForFunction(() => {
         const shadow=fixturePanel.shadowRoot;
         return shadow.querySelector(".flow-usage-title").getBoundingClientRect().top >=
@@ -103,14 +120,8 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
         event => window.moreInfoEntity = event.detail.entityId));
       await page.getByRole("button", { name: "Production solaire", exact: true }).click();
       assert.equal(await page.evaluate(() => window.moreInfoEntity), "sensor.pv");
-      await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).evaluate(button => {
-        button.click(); button.click();
-      });
-      await page.getByRole("link", { name: "Ouvrir la copie", exact: true }).waitFor();
-      const calls = await page.evaluate(() => window.calls);
-      assert.equal(calls.filter(call => call.type === "lovelace/dashboards/create").length, 1);
-      assert.equal(calls.filter(call => call.type === "lovelace/config/save").length, 1);
-      assert.equal(calls.filter(call => call.type === "call_service").length, 0);
+      assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(),0);
+      assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="lovelace/dashboards/create"||call.type==="call_service")),false);
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
       assert.equal(await page.getByText("Aucune commande envoyée", { exact: true }).count(), 1);
       await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).check();
@@ -129,7 +140,13 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.0b11 · Intégration 0.2.0b11", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.0b12 · Intégration 0.2.0b12", { exact: true }).count());
+      await page.getByRole("button",{name:"Solaire",exact:true}).click();
+      await page.getByRole("dialog",{name:"Solaire",exact:true}).waitFor();
+      assert.equal(await page.getByLabel("Production solaire",{exact:true}).count(),1);
+      assert.equal(await page.getByLabel("Capteur de consommation maison",{exact:true}).count(),0);
+      await page.getByRole("button",{name:"Annuler",exact:true}).click();
+
       await page.getByRole("button", { name: "Changer la source", exact: true }).first().click();
       await page.getByRole("dialog").waitFor();
       await page.getByRole("button", { name: "Annuler", exact: true }).click();
@@ -138,10 +155,33 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.ok(await page.getByText(/0,17.*aujourd’hui.*estimation/).count());
       assert.equal(await page.getByRole("heading",{name:"Cumulus",exact:true}).count(),0);
       await page.screenshot({path:path.join(output,viewport.width<600?"appliances-mobile.png":"appliances-desktop.png"),fullPage:true});
+      await page.getByRole("button",{name:"Ajouter un appareil",exact:true}).click();
+      await page.getByRole("dialog",{name:"Appareil",exact:true}).waitFor();
+      await page.getByRole("textbox",{name:"Nom",exact:true}).fill("Expresso");
+      await page.getByLabel("Puissance (W/kW)",{exact:true}).fill("sensor.ev");
+      await page.getByRole("checkbox",{name:"Sous-comptage inclus dans le périmètre maison",exact:true}).check();
+      await page.screenshot({path:path.join(output,viewport.width<600?"add-appliance-mobile.png":"add-appliance-desktop.png"),fullPage:true});
+      await page.getByRole("button",{name:"Enregistrer",exact:true}).click();
+      await page.getByText("Expresso",{exact:true}).waitFor();
+      await page.getByRole("button",{name:"Modifier Expresso",exact:true}).click();
+      await page.getByRole("textbox",{name:"Nom",exact:true}).fill("Expresso modifié");
+      await page.getByRole("button",{name:"Enregistrer",exact:true}).click();
+      await page.getByText("Expresso modifié",{exact:true}).waitFor();
+      await page.getByRole("button",{name:"Retirer Expresso modifié",exact:true}).click();
+      await page.getByRole("button",{name:"Confirmer le retrait",exact:true}).click();
+      await page.getByText("Expresso modifié",{exact:true}).waitFor({state:"detached"});
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/manage_settings").length),3);
+
       await page.getByRole("button",{name:"Aujourd’hui",exact:true}).click();
       await page.getByText("J’ai produit",{exact:true}).waitFor();
-      assert.ok(await page.getByText("2.1 kWh",{exact:true}).count());
+      assert.ok(await page.getByText("2,1 kWh",{exact:true}).count());
+      assert.ok(await page.getByText("8,18 kWh",{exact:true}).count());
+      await page.getByText("Autonomie apparente",{exact:true}).waitFor();
+      await page.getByRole("heading",{name:"Part Import / Export dans les échanges réseau",exact:true}).waitFor();
       await page.screenshot({path:path.join(output,viewport.width<600?"today-mobile.png":"today-desktop.png"),fullPage:true});
+      await page.getByRole("button",{name:"Usages",exact:true}).click();
+      await page.locator(".charger-card").getByRole("heading",{name:"Véhicule",exact:true}).waitFor();
+      await page.screenshot({path:path.join(output,viewport.width<600?"loads-mobile.png":"loads-desktop.png"),fullPage:true});
       await page.getByRole("button",{name:"Stockage",exact:true}).click();
       await page.getByRole("heading",{name:"Aferiy",exact:true}).waitFor();
       assert.ok(await page.getByText("51 °C",{exact:true}).count());
@@ -160,6 +200,8 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("alert").getByText("Flux indisponible dans cette version chargée").waitFor();
       await page.evaluate(() => { fixtureHass.user = { is_admin: false }; fixturePanel.hass = { ...fixtureHass }; });
       assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(), 0);
+      await page.getByRole("button",{name:"Mes Appareils",exact:true}).click();
+      assert.equal(await page.getByRole("button",{name:"Ajouter un appareil",exact:true}).count(),0);
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
       assert.equal(await page.getByRole("button",{name:"Enregistrer les priorités de simulation",exact:true}).count(),0);
       assert.equal(await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).isDisabled(),true);

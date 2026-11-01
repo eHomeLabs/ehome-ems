@@ -11,6 +11,7 @@ from .dashboard_service import dashboard_snapshot, power_scale
 from .const import DOMAIN, VERSION
 from .source_editor import remap_source
 from .simulation import save_plan, allocate
+from .settings import update_settings, SettingsError
 
 PANEL_URL = f"/ehome_ems_panel_{VERSION}.js"
 PANEL_TAG = f"ehome-ems-panel-{VERSION.replace('.', '-')}"
@@ -33,6 +34,8 @@ def websocket_dashboard(hass, connection, msg):
     except HomeAssistantError:
         connection.send_error(msg["id"], "not_ready", "eHome EMS is not ready.")
         return
+    if not connection.user.is_admin:
+        result.pop("settings", None)
     connection.send_result(msg["id"], result)
 
 
@@ -55,6 +58,27 @@ def websocket_remap(hass, connection, msg):
         connection.send_result(msg["id"], {"updated": True})
 
 
+@websocket_api.require_admin
+@websocket_api.websocket_command({
+    "type": "ehome_ems/manage_settings", "entry_id": str, "revision": str,
+    "section": vol.In(["grid", "solar", "home", "daily", "batteries", "usages", "appliances"]),
+    "action": vol.In(["save", "remove"]), vol.Optional("identifier"): vol.Any(str, None),
+    vol.Optional("values", default={}): dict,
+})
+@callback
+def websocket_manage_settings(hass, connection, msg):
+    entry = hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain != DOMAIN:
+        connection.send_error(msg["id"], "not_ready", "eHome EMS is not ready.")
+        return
+    try:
+        result = update_settings(hass, entry, msg["section"], msg["action"], msg["values"], msg.get("identifier"), msg["revision"])
+    except SettingsError as error:
+        connection.send_error(msg["id"], str(error), "Settings rejected; check sources and refresh. " + ", ".join(error.fields))
+        return
+    connection.send_result(msg["id"], result)
+
+
 async def async_setup_panel_domain(hass):
     await hass.http.async_register_static_paths([
         StaticPathConfig(PANEL_URL, str(Path(__file__).parent / "frontend/ehome-panel.mjs"), False),
@@ -62,6 +86,7 @@ async def async_setup_panel_domain(hass):
     ])
     websocket_api.async_register_command(hass, websocket_dashboard)
     websocket_api.async_register_command(hass, websocket_remap)
+    websocket_api.async_register_command(hass, websocket_manage_settings)
     websocket_api.async_register_command(hass, websocket_save_simulation)
     websocket_api.async_register_command(hass, websocket_simulate)
 

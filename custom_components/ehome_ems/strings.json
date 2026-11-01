@@ -277,7 +277,7 @@
           "solar": "Production solaire du jour",
           "home": "Consommation maison du jour",
           "import": "Import réseau du jour",
-          "export": "Injection réseau du jour",
+          "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
           "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
@@ -584,7 +584,7 @@
           "solar": "Production solaire du jour",
           "home": "Consommation maison du jour",
           "import": "Import réseau du jour",
-          "export": "Injection réseau du jour",
+          "export": "Export réseau du jour",
           "charge": "Charge batteries du jour",
           "discharge": "Restitution batteries du jour",
           "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
