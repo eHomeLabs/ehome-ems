@@ -75,9 +75,12 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                        **{key: entities.get(f"{identifier}_{key}") for key in BATTERY_SOURCES}}
                       for identifier, battery in mapping.get(CONF_BATTERIES, {}).items()],
         "usages": [{"name": usage["name"], "kind": usage.get("kind", "other"),
+                    "energy_period": usage.get("energy_period", "total"),
                     **{key: entities.get(f"usage_{identifier}_{key}") for key in USAGE_SOURCES}}
                    for identifier, usage in mapping.get(CONF_USAGES, {}).items()],
     }
+    result["daily"] = dict(mapping.get("daily", {}))
+    result["tariff_eur_kwh"] = mapping.get("tariff_eur_kwh")
     result["revision"] = entry.modified_at.isoformat() if hasattr(entry, "modified_at") else ""
     return result
 

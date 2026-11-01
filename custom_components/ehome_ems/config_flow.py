@@ -11,7 +11,7 @@ from homeassistant.helpers import entity_registry as er, selector
 
 from .const import DOMAIN, SOURCES, CONF_BATTERIES, BATTERY_SOURCES, HOME_MODE, HOME_SETTINGS
 from .home_balance import home_sources, calculate_home
-from .const import CONF_USAGES, USAGE_SOURCES
+from .const import CONF_USAGES, USAGE_SOURCES, DAILY_SOURCES
 from .usage import normalize_usage
 from .measurement import normalize_power, normalize_battery
 
@@ -61,6 +61,9 @@ def source_items(candidate):
     for battery_id, battery in candidate.get(CONF_BATTERIES, {}).items():
         for key in BATTERY_SOURCES:
             yield f"batteries.{battery_id}.{key}", battery.get(key), key
+    for key, entity in candidate.get("daily", {}).items():
+        if key in DAILY_SOURCES:
+            yield f"daily.{key}", entity, "usage_energy"
     for usage_id, usage in candidate.get(CONF_USAGES, {}).items():
         for key in USAGE_SOURCES:
             yield f"usages.{usage_id}.{key}", usage.get(key), f"usage_{key}"
@@ -70,7 +73,7 @@ def usage_schema(existing):
     schema = {
         vol.Required("name", default=existing.get("name", "Usage")): vol.All(str, vol.Length(min=1, max=80)),
         vol.Required("kind", default=existing.get("kind", "solar_router")): selector.SelectSelector(
-            selector.SelectSelectorConfig(options=["solar_router", "ev_charger", "other"],
+            selector.SelectSelectorConfig(options=["solar_router", "ev_charger", "other", "appliance"],
                                           translation_key="usage_kind")),
         vol.Required("energy_period", default=existing.get("energy_period", "total")): selector.SelectSelector(
             selector.SelectSelectorConfig(options=["today", "session", "total"], translation_key="usage_energy_period")),
@@ -78,7 +81,7 @@ def usage_schema(existing):
     }
     for key in USAGE_SOURCES:
         config = {"domain": ["sensor", "binary_sensor", "switch", "select"]} if key == "status" else {
-            "domain": "sensor", "device_class": "power" if key == "power" else "energy"
+            "domain": "sensor", "device_class": "power" if key == "power" else "temperature" if key == "temperature" else "energy"
         }
         schema[vol.Optional(key, description={"suggested_value": existing[key]} if existing.get(key) else None)] = (
             selector.EntitySelector(selector.EntitySelectorConfig(**config))
@@ -106,6 +109,8 @@ class PowerWizard:
         self._draft = {key: (existing or {}).get(key) for key in SOURCES}
         self._draft[CONF_BATTERIES] = deepcopy((existing or {}).get(CONF_BATTERIES, {}))
         self._draft[CONF_USAGES] = deepcopy((existing or {}).get(CONF_USAGES, {}))
+        self._draft["daily"] = deepcopy((existing or {}).get("daily", {}))
+        self._draft["tariff_eur_kwh"] = (existing or {}).get("tariff_eur_kwh")
         if "simulation" in (existing or {}):
             self._draft["simulation"] = deepcopy(existing["simulation"])
         for key in HOME_SETTINGS:
@@ -119,14 +124,14 @@ class PowerWizard:
         errors = {}
         registry = er.async_get(self.hass)
         items = list(source_items(candidate))
-        counts = Counter(entity_id for _, entity_id, _ in items if entity_id)
+        counts = Counter(entity_id for key, entity_id, _ in items if entity_id and not key.startswith("daily."))
         for key, entity_id, role in items:
             if not entity_id:
                 continue
             state = self.hass.states.get(entity_id)
             registered = registry.async_get(entity_id)
-            units = ("%",) if role == "soc" else ("Wh", "kWh") if role in ("remaining_energy", "usage_energy") else ("W", "kW")
-            if counts[entity_id] > 1:
+            units = ("°C", "°F") if role == "usage_temperature" else ("%",) if role == "soc" else ("Wh", "kWh") if role in ("remaining_energy", "usage_energy") else ("W", "kW")
+            if not key.startswith("daily.") and counts[entity_id] > 1:
                 errors[key] = "duplicate_source"
             elif registered and registered.platform == DOMAIN:
                 errors[key] = "recursive_source"
@@ -283,9 +288,62 @@ class PowerWizard:
         menu = ["add_usage"]
         if self._draft[CONF_USAGES]:
             menu += ["edit_usage", "remove_usage"]
-        menu += ["review"]
+        menu += ["appliances", "daily", "review"]
         return self.async_show_menu(step_id="usages", menu_options=menu,
                                     description_placeholders={"summary": self._preview()})
+
+    async def async_step_appliances(self, user_input=None):
+        menu = ["add_appliance"]
+        if any(u.get("kind") == "appliance" for u in self._draft[CONF_USAGES].values()):
+            menu += ["edit_appliance", "remove_appliance"]
+        menu += ["daily", "review"]
+        return self.async_show_menu(step_id="appliances", menu_options=menu)
+
+    async def async_step_add_appliance(self, user_input=None):
+        if user_input is None:
+            self._editing_usage = uuid4().hex
+        return await self._usage_form("add_appliance", user_input)
+
+    async def async_step_edit_appliance(self, user_input=None):
+        return await self._choose_appliance("edit_appliance", user_input)
+
+    async def async_step_remove_appliance(self, user_input=None):
+        return await self._choose_appliance("remove_appliance", user_input)
+
+    async def _choose_appliance(self, step, user_input):
+        choices = {k: u for k, u in self._draft[CONF_USAGES].items() if u.get("kind") == "appliance"}
+        if user_input and user_input.get("usage_id") in choices:
+            self._editing_usage = user_input["usage_id"]
+            if step == "remove_appliance":
+                del self._draft[CONF_USAGES][self._editing_usage]
+                return await self.async_step_appliances()
+            return await self.async_step_appliance_details()
+        return self.async_show_form(step_id=step, data_schema=vol.Schema({vol.Required("usage_id"):
+            selector.SelectSelector(selector.SelectSelectorConfig(options=[
+                {"value": k, "label": u["name"]} for k, u in choices.items()]))}))
+
+    async def async_step_appliance_details(self, user_input=None):
+        return await self._usage_form("appliance_details", user_input)
+
+    async def async_step_daily(self, user_input=None):
+        errors = {}
+        existing = {**self._draft.get("daily", {}), "tariff_eur_kwh": self._draft.get("tariff_eur_kwh")}
+        if user_input is not None:
+            candidate = deepcopy(self._draft)
+            candidate["daily"] = {k: user_input[k] for k in DAILY_SOURCES if user_input.get(k)}
+            tariff = user_input.get("tariff_eur_kwh")
+            if tariff is not None and (isinstance(tariff, bool) or not isinstance(tariff, (int, float)) or not isfinite(tariff) or not 0 <= tariff <= 10):
+                errors["tariff_eur_kwh"] = "invalid_tariff"
+            candidate["tariff_eur_kwh"] = tariff
+            errors.update({k.removeprefix("daily."): v for k, v in self._errors(candidate).items() if k.startswith("daily.")})
+            if not errors:
+                self._draft = candidate
+                return await self.async_step_review()
+            existing = user_input
+        schema = {vol.Optional(k, description={"suggested_value": existing[k]} if existing.get(k) else None):
+                  selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor", device_class="energy")) for k in DAILY_SOURCES}
+        schema[vol.Optional("tariff_eur_kwh", description={"suggested_value": existing["tariff_eur_kwh"]} if existing.get("tariff_eur_kwh") is not None else None)] = vol.All(vol.Coerce(float), vol.Range(min=0, max=10))
+        return self.async_show_form(step_id="daily", data_schema=vol.Schema(schema), errors=errors)
 
     async def async_step_add_usage(self, user_input=None):
         if user_input is None:
@@ -295,6 +353,11 @@ class PowerWizard:
     async def _usage_form(self, step, user_input):
         usage_id = self._editing_usage
         existing = self._draft[CONF_USAGES].get(usage_id, {})
+        appliance = step in ("add_appliance", "appliance_details")
+        if appliance:
+            existing = {**existing, "kind": "appliance"}
+            if user_input is not None:
+                user_input = {**user_input, "kind": "appliance"}
         errors = {}
         if user_input is not None:
             try:
@@ -313,10 +376,11 @@ class PowerWizard:
                     errors["included_in_home"] = "outside_home"
                 if not errors:
                     self._draft = candidate
-                    return await self.async_step_usages()
-        return self.async_show_form(step_id=step,
-                                    data_schema=usage_schema(user_input if user_input is not None else existing),
-                                    errors=errors)
+                    return await (self.async_step_appliances() if appliance else self.async_step_usages())
+        schema = usage_schema(user_input if user_input is not None else existing).schema
+        if appliance:
+            schema = {k: v for k, v in schema.items() if k.schema not in ("kind", "temperature")}
+        return self.async_show_form(step_id=step, data_schema=vol.Schema(schema), errors=errors)
 
     def _usage_choice_schema(self):
         return vol.Schema({vol.Required("usage_id"): selector.SelectSelector(selector.SelectSelectorConfig(
@@ -348,12 +412,15 @@ class PowerWizard:
             if not entity_id:
                 continue
             state = self.hass.states.get(entity_id)
+            if key.startswith("daily."):
+                rows.append(f"- Today / {key}: {entity_id} (Wh/kWh, daily source declared)")
+                continue
             if key.startswith("usages."):
                 usage = self._draft[CONF_USAGES][key.split(".")[1]]
                 field = role.removeprefix("usage_")
                 reading = normalize_usage(state.state if state else None,
                                           state.attributes.get("unit_of_measurement") if state else None, field)
-                unit = "W" if field == "power" else "kWh" if field == "energy" else ""
+                unit = "W" if field == "power" else "kWh" if field == "energy" else "°C" if field == "temperature" else ""
                 rows.append(f"- {usage['name']} / {field}: {reading.value if reading.value is not None else '—'} {unit} [{reading.quality}]")
                 continue
             is_battery = key.startswith("batteries.")
@@ -390,7 +457,7 @@ class PowerWizard:
         self._reviewing = True
         return self.async_show_menu(
             step_id="review",
-            menu_options=["confirm", "grid", "solar", "home", "batteries", "usages"],
+            menu_options=["confirm", "grid", "solar", "home", "batteries", "usages", "appliances", "daily"],
             description_placeholders={"summary": self._preview()},
         )
 

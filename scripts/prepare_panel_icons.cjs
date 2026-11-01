@@ -5,6 +5,8 @@ fs.writeFileSync("tests/fixtures/mdi.json", JSON.stringify({
   "mdi:white-balance-sunny": mdi.mdiWhiteBalanceSunny,
   "mdi:transmission-tower": mdi.mdiTransmissionTower,
   "mdi:battery-high": mdi.mdiBatteryHigh,
+  "mdi:battery-outline": mdi.mdiBatteryOutline,
+  "mdi:battery": mdi.mdiBattery,
   "mdi:water-boiler": mdi.mdiWaterBoiler,
   "mdi:car-electric": mdi.mdiCarElectric,
   "mdi:power-plug": mdi.mdiPowerPlug,

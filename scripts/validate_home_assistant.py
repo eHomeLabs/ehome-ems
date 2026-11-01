@@ -80,7 +80,18 @@ async def validate(config_dir):
             "included_in_home": True,
         })
         assert result["step_id"] == "usages", result
-        result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "review"})
+        # b11 appliance and daily settings through HA's real schema serializer.
+        hass.states.async_set("sensor.sim_fridge", "85", {"unit_of_measurement": "W", "device_class": "power"})
+        hass.states.async_set("sensor.sim_fridge_day", "800", {"unit_of_measurement": "Wh", "device_class": "energy"})
+        await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "appliances"})
+        result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "add_appliance"})
+        json.dumps(to_field_list(result["data_schema"], custom_serializer=cv.custom_serializer))
+        result = await hass.config_entries.flow.async_configure(flow_id, {"name": "Simulated fridge", "power": "sensor.sim_fridge", "energy": "sensor.sim_fridge_day", "energy_period": "today", "included_in_home": True})
+        assert result["step_id"] == "appliances", result
+        result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "daily"})
+        json.dumps(to_field_list(result["data_schema"], custom_serializer=cv.custom_serializer))
+        result = await hass.config_entries.flow.async_configure(flow_id, {"home": "sensor.sim_fridge_day", "tariff_eur_kwh": .215})
+        assert result["step_id"] == "review", result
         assert result["step_id"] == "review", result
         result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "confirm"})
         assert result["step_id"] == "confirm", result
@@ -107,6 +118,9 @@ async def validate(config_dir):
         assert float(solar.state) == 1500, solar
         battery_id = next(iter(entry.data["batteries"]))
         original_home_id, _ = mirror("home_power")
+        appliance_id = next(key for key, usage in entry.data["usages"].items() if usage["kind"] == "appliance")
+        assert float(mirror(f"usage_{appliance_id}_energy")[1].state) == .8
+        assert entry.data["daily"]["home"] == "sensor.sim_fridge_day"
         router_id = next(key for key, usage in entry.data["usages"].items() if usage["kind"] == "solar_router")
         router_energy_id, router_energy = mirror(f"usage_{router_id}_energy")
         assert float(router_energy.state) == 1.25
@@ -247,7 +261,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b10.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.0b11.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -262,9 +276,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.0b10"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-0b10"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.0b10.js"
+                assert snapshot["version"] == "0.2.0b11"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-0b11"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.0b11.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]

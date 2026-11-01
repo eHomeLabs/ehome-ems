@@ -12,6 +12,8 @@ def candidates(mapping):
         if battery.get("role") == "active" and battery.get("coupling") == "ac":
             result.append({"id": f"battery:{identifier}", "name": battery["name"], "kind": "battery"})
     for identifier, usage in mapping.get("usages", {}).items():
+        if usage.get("kind") == "appliance":
+            continue
         result.append({"id": f"usage:{identifier}", "name": usage["name"], "kind": usage.get("kind", "other")})
     return result
 

@@ -15,7 +15,7 @@ LABELS = {
                   "Les mesures absentes restent indisponibles ; aucun bilan solaire n’est estimé.",
         "empty": "Aucune mesure disponible dans le registre. Vérifiez les associations et les entités désactivées.",
         "storage_only": "Les mesures disponibles sont dans la vue Stockage.",
-        "usages": "Usages", "status": "État", "energy_today": "Énergie du jour",
+        "temperature": "Température", "usages": "Usages", "status": "État", "energy_today": "Énergie du jour",
         "energy_session": "Énergie de session", "energy_total": "Compteur cumulé",
         "usages_note": "Ces usages sont déjà inclus dans la consommation maison. Ne pas les ajouter une seconde fois. Suivi seul : aucun ordre envoyé au routeur ou à la borne.",
         "breakdown_only": "Les mesures détaillées sont disponibles dans les autres vues.",
@@ -33,7 +33,7 @@ LABELS = {
                   "Missing readings stay unavailable; no solar balance is estimated.",
         "empty": "No readings available in the registry. Check mappings and disabled entities.",
         "storage_only": "Available readings are in the Storage view.",
-        "usages": "Loads", "status": "Status", "energy_today": "Today's energy",
+        "temperature": "Temperature", "usages": "Loads", "status": "Status", "energy_today": "Today's energy",
         "energy_session": "Session energy", "energy_total": "Cumulative counter",
         "usages_note": "These loads are already included in home consumption. Do not add them again. Monitoring only: no commands to the router or charger.",
         "breakdown_only": "Detailed readings are available in the other views.",
@@ -128,7 +128,7 @@ def build_dashboard(mapping, entities, *, language="fr", max_power_w=10000):
             entity = entity_for(f"usage_{usage_id}_{key}")
             if not entity:
                 continue
-            name = labels["power"] if key == "power" else labels["status"] if key == "status" else labels[
+            name = labels["temperature"] if key == "temperature" else labels["power"] if key == "power" else labels["status"] if key == "status" else labels[
                 f"energy_{usage.get('energy_period', 'total')}"
             ]
             rows.append(row(entity, name))

@@ -51,7 +51,9 @@
           "solar": "Edit solar",
           "home": "Edit home",
           "batteries": "Edit batteries",
-          "usages": "Edit loads"
+          "usages": "Edit loads",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "confirm": {
@@ -139,7 +141,9 @@
           "add_usage": "Add load",
           "edit_usage": "Edit load",
           "remove_usage": "Remove load",
-          "review": "Continue to review"
+          "review": "Continue to review",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "add_usage": {
@@ -152,7 +156,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -161,7 +166,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "usage_details": {
@@ -174,7 +180,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -183,7 +190,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "edit_usage": {
@@ -197,6 +205,82 @@
         "description": "Removal is applied at final confirmation. It does not remove equipment or its integration, and sends no commands.",
         "data": {
           "usage_id": "Load"
+        }
+      },
+      "appliances": {
+        "title": "Mes Appareils",
+        "description": "Suivez frigo, lave-vaisselle, expresso… Puissance W/kW et énergie Wh/kWh sont facultatives. Pour un coût du jour, sélectionnez un compteur remis à zéro chaque jour et la période Aujourd’hui. Ces sous-comptages ne sont jamais ajoutés au total maison.",
+        "menu_options": {
+          "add_appliance": "Ajouter un appareil",
+          "edit_appliance": "Modifier un appareil",
+          "remove_appliance": "Retirer un appareil",
+          "daily": "Aujourd’hui et tarif",
+          "review": "Vérifier et enregistrer"
+        }
+      },
+      "add_appliance": {
+        "title": "Mon appareil",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "appliance_details": {
+        "title": "Mon appareil",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "edit_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "remove_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "daily": {
+        "title": "Aujourd’hui et tarif",
+        "description": "Facultatif : associez uniquement des compteurs d’énergie DU JOUR, remis à zéro à minuit dans votre installation. Aucun compteur cumulé ou énergie restante batterie. Charge/restitution : total du jour de vos batteries, toutes origines confondues. Les € utilisent un prix fixe configurable (hors abonnement, heures creuses et revente), ce sont des équivalents estimatifs, pas des économies mesurées. Effacez le tarif pour masquer les €.",
+        "data": {
+          "solar": "Production solaire du jour",
+          "home": "Consommation maison du jour",
+          "import": "Import réseau du jour",
+          "export": "Injection réseau du jour",
+          "charge": "Charge batteries du jour",
+          "discharge": "Restitution batteries du jour",
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
         }
       }
     },
@@ -215,7 +299,8 @@
       "storage_configuration": "Check declared storage presence and active batteries in the Storage step.",
       "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor.",
       "invalid_usage": "Check name, type and energy period.",
-      "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load."
+      "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load.",
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
     },
     "abort": {
       "already_configured": "eHome EMS is already configured. Use Configure to edit its settings."
@@ -273,7 +358,9 @@
           "solar": "Edit solar",
           "home": "Edit home",
           "batteries": "Edit batteries",
-          "usages": "Edit loads"
+          "usages": "Edit loads",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "confirm": {
@@ -361,7 +448,9 @@
           "add_usage": "Add load",
           "edit_usage": "Edit load",
           "remove_usage": "Remove load",
-          "review": "Continue to review"
+          "review": "Continue to review",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "add_usage": {
@@ -374,7 +463,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -383,7 +473,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "usage_details": {
@@ -396,7 +487,8 @@
           "energy": "Energy counter (Wh/kWh, optional)",
           "energy_period": "Period represented by this counter",
           "status": "Existing status (optional)",
-          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+          "included_in_home": "I confirm this load belongs to the home consumption boundary",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -405,7 +497,8 @@
           "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
-          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "edit_usage": {
@@ -419,6 +512,82 @@
         "description": "Removal is applied at final confirmation. It does not remove equipment or its integration, and sends no commands.",
         "data": {
           "usage_id": "Load"
+        }
+      },
+      "appliances": {
+        "title": "Mes Appareils",
+        "description": "Suivez frigo, lave-vaisselle, expresso… Puissance W/kW et énergie Wh/kWh sont facultatives. Pour un coût du jour, sélectionnez un compteur remis à zéro chaque jour et la période Aujourd’hui. Ces sous-comptages ne sont jamais ajoutés au total maison.",
+        "menu_options": {
+          "add_appliance": "Ajouter un appareil",
+          "edit_appliance": "Modifier un appareil",
+          "remove_appliance": "Retirer un appareil",
+          "daily": "Aujourd’hui et tarif",
+          "review": "Vérifier et enregistrer"
+        }
+      },
+      "add_appliance": {
+        "title": "Mon appareil",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "appliance_details": {
+        "title": "Mon appareil",
+        "description": "Map at least one existing reading or status. Monitoring stays read-only and preserves router and charger automations.",
+        "data": {
+          "name": "Load name",
+          "power": "Actual consumed power (W/kW)",
+          "energy": "Energy counter (Wh/kWh, optional)",
+          "energy_period": "Period represented by this counter",
+          "status": "Existing status (optional)",
+          "included_in_home": "I confirm this load belongs to the home consumption boundary"
+        },
+        "data_description": {
+          "name": "For example Water heater via F1ATB or EV charging.",
+          "power": "Choose measured load power, not an SSR percentage or setpoint. A water-heater meter can suit F1ATB; for an EV, use charger consumption, not whole-home power.",
+          "energy": "Mirrors an existing counter without integrating power or inventing missing energy. Leave empty without a suitable source.",
+          "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
+          "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
+          "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation."
+        }
+      },
+      "edit_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "remove_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "daily": {
+        "title": "Aujourd’hui et tarif",
+        "description": "Facultatif : associez uniquement des compteurs d’énergie DU JOUR, remis à zéro à minuit dans votre installation. Aucun compteur cumulé ou énergie restante batterie. Charge/restitution : total du jour de vos batteries, toutes origines confondues. Les € utilisent un prix fixe configurable (hors abonnement, heures creuses et revente), ce sont des équivalents estimatifs, pas des économies mesurées. Effacez le tarif pour masquer les €.",
+        "data": {
+          "solar": "Production solaire du jour",
+          "home": "Consommation maison du jour",
+          "import": "Import réseau du jour",
+          "export": "Injection réseau du jour",
+          "charge": "Charge batteries du jour",
+          "discharge": "Restitution batteries du jour",
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
         }
       }
     },
@@ -437,7 +606,8 @@
       "storage_configuration": "Check declared storage presence and active batteries in the Storage step.",
       "unsupported_topology": "An active battery is declared DC. The simple AC balance is not suitable; use an existing home sensor.",
       "invalid_usage": "Check name, type and energy period.",
-      "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load."
+      "outside_home": "This screen details loads already included in the home. Confirm this boundary before adding the load.",
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
     }
   },
   "selector": {
@@ -463,7 +633,8 @@
       "options": {
         "solar_router": "Solar router / water heating",
         "ev_charger": "EV charging",
-        "other": "Other load"
+        "other": "Other load",
+        "appliance": "Appareil suivi"
       }
     },
     "usage_energy_period": {

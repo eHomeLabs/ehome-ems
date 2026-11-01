@@ -38,7 +38,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.ok(navBox.y < flowBox.y);
       await page.locator(".flow-house img").evaluate(img => img.decode());
       assert.equal(await page.locator(".flow-links path.active").count(), 4);
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b10").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-0b11").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -129,7 +129,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.0b10 · Intégration 0.2.0b10", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.0b11 · Intégration 0.2.0b11", { exact: true }).count());
       await page.getByRole("button", { name: "Changer la source", exact: true }).first().click();
       await page.getByRole("dialog").waitFor();
       await page.getByRole("button", { name: "Annuler", exact: true }).click();

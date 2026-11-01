@@ -74,3 +74,11 @@ test("copy identifiers cannot inject paths or overwrite the default dashboard", 
 test("LAN HTTP can create unique copy tokens without secure-context randomUUID", () => {
   assert.match(newCopyToken({ getRandomValues: values => values.fill(42) }), /^[a-f0-9]{32}$/);
 });
+
+test("history preserves unknown gaps and rejects empty or reversed samples", async () => {
+  const {historySegments}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");
+  const at=(minute,state)=>({last_changed:new Date(Date.UTC(2026,0,1,0,minute)).toISOString(),state});
+  assert.deepEqual(historySegments([at(0,"1"),at(1,""),at(2,"3")]).map(s=>s.length),[1,1]);
+  assert.deepEqual(historySegments([at(0,"1"),at(1,"2"),at(2,"unavailable"),at(3,"4"),at(4,"5")]).map(s=>s.length),[2,2]);
+  assert.equal(historySegments([at(0,"NaN"),at(1,"unknown")]).length,0);
+});

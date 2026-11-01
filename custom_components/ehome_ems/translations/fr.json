@@ -51,7 +51,9 @@
           "solar": "Modifier le photovoltaïque",
           "home": "Modifier la maison",
           "batteries": "Modifier les batteries",
-          "usages": "Modifier les usages"
+          "usages": "Modifier les usages",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "confirm": {
@@ -139,7 +141,9 @@
           "add_usage": "Ajouter un usage",
           "edit_usage": "Modifier un usage",
           "remove_usage": "Retirer un usage du suivi",
-          "review": "Continuer vers la vérification"
+          "review": "Continuer vers la vérification",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "add_usage": {
@@ -152,7 +156,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -161,7 +166,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "usage_details": {
@@ -174,7 +180,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -183,7 +190,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "edit_usage": {
@@ -197,6 +205,82 @@
         "description": "Ce retrait sera appliqué à la confirmation finale. Il ne supprime pas l’équipement ni son intégration et n’envoie aucune commande.",
         "data": {
           "usage_id": "Usage"
+        }
+      },
+      "appliances": {
+        "title": "Mes Appareils",
+        "description": "Suivez frigo, lave-vaisselle, expresso… Puissance W/kW et énergie Wh/kWh sont facultatives. Pour un coût du jour, sélectionnez un compteur remis à zéro chaque jour et la période Aujourd’hui. Ces sous-comptages ne sont jamais ajoutés au total maison.",
+        "menu_options": {
+          "add_appliance": "Ajouter un appareil",
+          "edit_appliance": "Modifier un appareil",
+          "remove_appliance": "Retirer un appareil",
+          "daily": "Aujourd’hui et tarif",
+          "review": "Vérifier et enregistrer"
+        }
+      },
+      "add_appliance": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "appliance_details": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "edit_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "remove_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "daily": {
+        "title": "Aujourd’hui et tarif",
+        "description": "Facultatif : associez uniquement des compteurs d’énergie DU JOUR, remis à zéro à minuit dans votre installation. Aucun compteur cumulé ou énergie restante batterie. Charge/restitution : total du jour de vos batteries, toutes origines confondues. Les € utilisent un prix fixe configurable (hors abonnement, heures creuses et revente), ce sont des équivalents estimatifs, pas des économies mesurées. Effacez le tarif pour masquer les €.",
+        "data": {
+          "solar": "Production solaire du jour",
+          "home": "Consommation maison du jour",
+          "import": "Import réseau du jour",
+          "export": "Injection réseau du jour",
+          "charge": "Charge batteries du jour",
+          "discharge": "Restitution batteries du jour",
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
         }
       }
     },
@@ -215,7 +299,8 @@
       "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
       "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
       "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
-      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage."
+      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
     },
     "abort": {
       "already_configured": "eHome EMS est déjà configuré. Utilisez Configurer pour modifier ses réglages."
@@ -273,7 +358,9 @@
           "solar": "Modifier le photovoltaïque",
           "home": "Modifier la maison",
           "batteries": "Modifier les batteries",
-          "usages": "Modifier les usages"
+          "usages": "Modifier les usages",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "confirm": {
@@ -361,7 +448,9 @@
           "add_usage": "Ajouter un usage",
           "edit_usage": "Modifier un usage",
           "remove_usage": "Retirer un usage du suivi",
-          "review": "Continuer vers la vérification"
+          "review": "Continuer vers la vérification",
+          "appliances": "Mes Appareils",
+          "daily": "Aujourd’hui et tarif"
         }
       },
       "add_usage": {
@@ -374,7 +463,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -383,7 +473,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "usage_details": {
@@ -396,7 +487,8 @@
           "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
           "energy_period": "Période représentée par ce compteur",
           "status": "État existant (facultatif)",
-          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison",
+          "temperature": "Température de l’eau (facultatif)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -405,7 +497,8 @@
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
-          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
+          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit."
         }
       },
       "edit_usage": {
@@ -419,6 +512,82 @@
         "description": "Ce retrait sera appliqué à la confirmation finale. Il ne supprime pas l’équipement ni son intégration et n’envoie aucune commande.",
         "data": {
           "usage_id": "Usage"
+        }
+      },
+      "appliances": {
+        "title": "Mes Appareils",
+        "description": "Suivez frigo, lave-vaisselle, expresso… Puissance W/kW et énergie Wh/kWh sont facultatives. Pour un coût du jour, sélectionnez un compteur remis à zéro chaque jour et la période Aujourd’hui. Ces sous-comptages ne sont jamais ajoutés au total maison.",
+        "menu_options": {
+          "add_appliance": "Ajouter un appareil",
+          "edit_appliance": "Modifier un appareil",
+          "remove_appliance": "Retirer un appareil",
+          "daily": "Aujourd’hui et tarif",
+          "review": "Vérifier et enregistrer"
+        }
+      },
+      "add_appliance": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "appliance_details": {
+        "title": "Mon appareil",
+        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "data": {
+          "name": "Nom de l’usage",
+          "power": "Puissance réellement consommée (W/kW)",
+          "energy": "Compteur d’énergie (Wh/kWh, facultatif)",
+          "energy_period": "Période représentée par ce compteur",
+          "status": "État existant (facultatif)",
+          "included_in_home": "Je confirme que cet usage appartient au périmètre de consommation maison"
+        },
+        "data_description": {
+          "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
+          "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
+          "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
+          "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
+          "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
+          "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison."
+        }
+      },
+      "edit_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "remove_appliance": {
+        "title": "Choisir un appareil",
+        "data": {
+          "usage_id": "Appareil"
+        }
+      },
+      "daily": {
+        "title": "Aujourd’hui et tarif",
+        "description": "Facultatif : associez uniquement des compteurs d’énergie DU JOUR, remis à zéro à minuit dans votre installation. Aucun compteur cumulé ou énergie restante batterie. Charge/restitution : total du jour de vos batteries, toutes origines confondues. Les € utilisent un prix fixe configurable (hors abonnement, heures creuses et revente), ce sont des équivalents estimatifs, pas des économies mesurées. Effacez le tarif pour masquer les €.",
+        "data": {
+          "solar": "Production solaire du jour",
+          "home": "Consommation maison du jour",
+          "import": "Import réseau du jour",
+          "export": "Injection réseau du jour",
+          "charge": "Charge batteries du jour",
+          "discharge": "Restitution batteries du jour",
+          "tariff_eur_kwh": "Prix fixe estimatif (€/kWh)"
         }
       }
     },
@@ -437,7 +606,8 @@
       "storage_configuration": "Vérifiez la présence déclarée du stockage et les batteries actives à l’étape Stockage.",
       "unsupported_topology": "Une batterie active est déclarée DC. Le calcul AC simple n’est pas adapté : utilisez un capteur maison existant.",
       "invalid_usage": "Vérifiez le nom, le type et la période de l’énergie.",
-      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage."
+      "outside_home": "Cet écran détaille les usages déjà compris dans la maison. Confirmez ce périmètre avant d’ajouter l’usage.",
+      "invalid_tariff": "Prix attendu entre 0 et 10 €/kWh."
     }
   },
   "selector": {
@@ -463,7 +633,8 @@
       "options": {
         "solar_router": "Routeur solaire / ECS",
         "ev_charger": "Recharge véhicule électrique",
-        "other": "Autre usage"
+        "other": "Autre usage",
+        "appliance": "Appareil suivi"
       }
     },
     "usage_energy_period": {

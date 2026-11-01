@@ -195,6 +195,9 @@ class UsageSensor(MappedPowerSensor):
         if key == "energy":
             self._attr_device_class = SensorDeviceClass.ENERGY
             self._attr_native_unit_of_measurement = "kWh"
+        elif key == "temperature":
+            self._attr_device_class = SensorDeviceClass.TEMPERATURE
+            self._attr_native_unit_of_measurement = "°C"
         elif key == "status":
             self._attr_device_class = None
             self._attr_state_class = None
