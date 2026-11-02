@@ -293,7 +293,7 @@ async def validate(config_dir):
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
                 assert snapshot["version"] == "0.2.6"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-5"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-6"
                 assert PANEL_URL == "/ehome_ems_panel_0.2.6.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
