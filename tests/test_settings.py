@@ -44,6 +44,22 @@ class SettingsTests(TestCase):
         for tolerance in (-1,21,float('nan'),True):
             with self.assertRaises(settings.SettingsError):self.save('appliances',{'name':'Bad','power':'sensor.other','included_in_home':True,'negative_power_tolerance_w':tolerance})
 
+    def test_photovoltaic_metadata_never_changes_total_or_balance_and_survives_other_edits(self):
+        data={"name":"Hybrid","kind":"hybrid_inverter","power":"sensor.fridge","dc_power":"sensor.other","energy":"sensor.fridge_day","energy_period":"total","nominal_power_w":6000}
+        result=self.save('photovoltaic',data);identifier=result['identifier']
+        self.assertEqual(self.entry.options['home_power'],'sensor.home')
+        self.assertNotIn('solar_power',self.entry.options)
+        self.save('daily',{'tariff_eur_kwh':.2})
+        self.assertEqual(self.entry.options['photovoltaic'][identifier]['power'],'sensor.fridge')
+        with self.assertRaises(settings.SettingsError):self.save('photovoltaic',{'name':'Wrong','kind':'dc_inverter','power':'sensor.fridge_day'})
+        self.save('photovoltaic',{},identifier,'remove')
+        self.assertFalse(self.entry.options['photovoltaic'])
+    def test_f1atb_profile_requires_exact_topic_and_confirmation(self):
+        data={'name':'Router','kind':'solar_router','power':'sensor.other','included_in_home':True,'router_type':'f1atb','router_mqtt_enabled':True,'router_mqtt_topic':'demo/SSR'}
+        with self.assertRaises(settings.SettingsError):self.save('usages',data)
+        self.save('usages',{**data,'router_protocol_confirmed':True})
+        with self.assertRaises(settings.SettingsError):self.save('usages',{**data,'router_protocol_confirmed':True,'router_mqtt_topic':'demo/#'})
+
     def test_add_update_and_remove_keeps_other_settings_and_id(self):
         data={'name':'Fridge','power':'sensor.fridge','energy':'sensor.fridge_day','included_in_home':True,'energy_period':'today'}
         result=self.save('appliances',data)

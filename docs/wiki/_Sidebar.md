@@ -1,4 +1,4 @@
-# eHome EMS 0.2.2
+# eHome EMS 0.2.3
 
 - [Accueil](Home.md)
 - [Installation](03-Installation-Home-Assistant.md)
@@ -9,3 +9,6 @@
 - [Mises à jour](08-Sauvegarde-et-restauration.md)
 - [Dépannage](09-Depannage.md)
 - [Illustrations maison](../HOUSE_ASSETS.md)
+
+- [Photovoltaïque](../PHOTOVOLTAIQUE.md)
+- [Routeur F1ATB](../ROUTEUR_F1ATB.md)

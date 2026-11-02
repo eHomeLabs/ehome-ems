@@ -74,6 +74,7 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
     result["simulation_history"] = list(getattr(hass, "data", {}).get(DOMAIN, {}).get("simulation_history", {}).get(entry.entry_id, []))
     result["flow"] = {
         "entities": {key: entities.get(key) for key in SOURCES},
+        "photovoltaic": [{"id":identifier, **item} for identifier,item in mapping.get("photovoltaic",{}).items()],
         "home_calculated": mapping.get("home_power_mode") == "calculated",
         "batteries": [{"id": identifier, "name": battery["name"], "role": battery["role"],
                        "coupling": battery["coupling"],
@@ -81,6 +82,7 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                       for identifier, battery in mapping.get(CONF_BATTERIES, {}).items()],
         "usages": [{"id": identifier, "name": usage["name"], "kind": usage.get("kind", "other"),
                     "icon": usage.get("icon", "auto"),
+                    **{key:usage.get(key) for key in ("router_type","router_output","router_url","router_mqtt_topic","router_mqtt_enabled","router_protocol_confirmed")},
                     "daily_energy_goal_kwh": usage.get("daily_energy_goal_kwh"),
                     "control_enabled": usage.get("control_enabled", False),
                     "control_entity": usage.get("control_entity"),

@@ -14,6 +14,8 @@ from .const import DOMAIN, SOURCES, CONF_BATTERIES, BATTERY_SOURCES, HOME_MODE, 
 from .home_balance import home_sources, calculate_home
 from .const import CONF_USAGES, USAGE_SOURCES, DAILY_SOURCES
 from .usage import normalize_usage
+from .photovoltaic import photovoltaic_errors, photovoltaic_schema, PV_FIELDS
+from .f1atb import router_error, has_router_target
 from .measurement import normalize_power, normalize_battery
 
 GROUPS = {
@@ -77,8 +79,14 @@ def usage_schema(existing):
     schema = {
         vol.Required("name", default=existing.get("name", "Usage")): vol.All(str, vol.Length(min=1, max=80)),
         vol.Required("kind", default=existing.get("kind", "solar_router")): selector.SelectSelector(
-            selector.SelectSelectorConfig(options=["solar_router", "ev_charger", "other", "appliance"],
+            selector.SelectSelectorConfig(options=["solar_router", "water_heater", "ev_charger", "other", "appliance"],
                                           translation_key="usage_kind")),
+        vol.Optional("router_type", default=existing.get("router_type","generic")): selector.SelectSelector(selector.SelectSelectorConfig(options=["generic","f1atb"])),
+        vol.Optional("router_output", default=existing.get("router_output","ssr")): selector.SelectSelector(selector.SelectSelectorConfig(options=["ssr","triac","pwm"])),
+        vol.Optional("router_url", description={"suggested_value":existing["router_url"]} if existing.get("router_url") else None): vol.All(str,vol.Length(max=2048)),
+        vol.Optional("router_mqtt_topic", description={"suggested_value":existing["router_mqtt_topic"]} if existing.get("router_mqtt_topic") else None): vol.All(str,vol.Length(max=255)),
+        vol.Optional("router_mqtt_enabled", default=existing.get("router_mqtt_enabled",False)): bool,
+        vol.Optional("router_protocol_confirmed", default=existing.get("router_protocol_confirmed",False)): bool,
         vol.Optional("negative_power_tolerance_w", default=existing.get("negative_power_tolerance_w", 5)): vol.All(vol.Coerce(float), vol.Range(min=0, max=20)),
         vol.Optional("daily_energy_goal_kwh", description={"suggested_value": existing["daily_energy_goal_kwh"]} if existing.get("daily_energy_goal_kwh") else None): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1000)),
         vol.Optional("control_enabled", default=existing.get("control_enabled", False)): bool,
@@ -118,6 +126,7 @@ class PowerWizard:
         self._draft = {key: (existing or {}).get(key) for key in SOURCES}
         self._draft[CONF_BATTERIES] = deepcopy((existing or {}).get(CONF_BATTERIES, {}))
         self._draft[CONF_USAGES] = deepcopy((existing or {}).get(CONF_USAGES, {}))
+        self._draft["photovoltaic"] = deepcopy((existing or {}).get("photovoltaic", {}))
         self._draft["daily"] = deepcopy((existing or {}).get("daily", {}))
         self._draft["tariff_eur_kwh"] = (existing or {}).get("tariff_eur_kwh")
         self._draft["weather_entity"] = (existing or {}).get("weather_entity")
@@ -172,6 +181,9 @@ class PowerWizard:
                 errors[f"usages.{identifier}.control_entity"] = "missing_source"
             if usage.get("control_enabled") and not target:
                 errors[f"usages.{identifier}.control_entity"] = "missing_source"
+        errors.update(photovoltaic_errors(self.hass, candidate.get("photovoltaic", {})))
+        for identifier, usage in candidate.get(CONF_USAGES, {}).items():
+            if reason := router_error(usage):errors[f"usages.{identifier}.router"] = reason
         return errors
 
     async def _power_step(self, step, next_step, user_input):
@@ -407,7 +419,7 @@ class PowerWizard:
                 prefix = f"usages.{usage_id}."
                 errors = {path.removeprefix(prefix): reason for path, reason in self._errors(candidate).items()
                           if path.startswith(prefix)}
-                if not any(usage.get(key) for key in USAGE_SOURCES):
+                if not any(usage.get(key) for key in USAGE_SOURCES) and not has_router_target(usage):
                     errors["base"] = "select_source"
                 if not usage.get("included_in_home"):
                     errors["included_in_home"] = "outside_home"
@@ -490,6 +502,14 @@ class PowerWizard:
             reading = calculate_home(self._draft, inputs)
             value = f"{reading.value:g} W" if reading.value is not None else "—"
             rows.append(f"- Maison / Home (calcul EMS): {value} [{reading.quality}]")
+        for item in self._draft.get("photovoltaic",{}).values():
+            for key in PV_FIELDS:
+                if not item.get(key):continue
+                state=self.hass.states.get(item[key]);raw=state.state if state else None;unit=state.attributes.get("unit_of_measurement") if state else None
+                reading=normalize_power(raw,unit,"grid_power") if key.endswith("power") else normalize_usage(raw,unit,key)
+                rows.append(f"- PV / {item['name']} / {key}: {reading.value if reading.value is not None else '—'} [{reading.quality}]")
+        for item in self._draft.get(CONF_USAGES,{}).values():
+            if item.get("router_type")=="f1atb":rows.append(f"- F1ATB / {item['name']}: MQTT {'activé' if item.get('router_mqtt_enabled') else 'désactivé'} ; enregistrement sans commande")
         colored = []
         for row in rows:
             text = escape(row)
@@ -516,7 +536,7 @@ class PowerWizard:
             _, reason = home_sources(self._draft)
             if reason:
                 errors = {"base": reason}
-        if not any(entity_id for _, entity_id, _ in source_items(self._draft)):
+        if not any(entity_id for _, entity_id, _ in source_items(self._draft)) and not any(item.get(key) for item in self._draft.get("photovoltaic",{}).values() for key in PV_FIELDS) and not any(has_router_target(item) for item in self._draft.get(CONF_USAGES,{}).values()):
             errors = {"base": "select_source"}
         elif errors and "base" not in errors:
             errors = {"base": "sources_changed"}

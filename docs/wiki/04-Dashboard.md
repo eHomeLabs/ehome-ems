@@ -2,7 +2,7 @@
 
 [Accueil](Home.md) · [Appareils et usages](05-Appareils-et-usages.md)
 
-L'ordre est : Vue d'ensemble, Mes Appareils, Stockage, Usages, Historique, Aujourd'hui, Stratégie, Configuration.
+L'ordre est : Vue d'ensemble, Mes Appareils, Stockage, Photovoltaïque, Usages, Historique, Aujourd'hui, Stratégie, Configuration.
 
 ## Vue d'ensemble
 

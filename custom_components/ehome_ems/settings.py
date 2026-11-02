@@ -5,7 +5,7 @@ from uuid import uuid4
 import voluptuous as vol
 
 from .const import SOURCES, HOME_SETTINGS, DAILY_SOURCES
-from .config_flow import PowerWizard, battery_schema, usage_schema, positive_capacity
+from .config_flow import PowerWizard, battery_schema, usage_schema, positive_capacity, photovoltaic_schema, PV_FIELDS, has_router_target
 from .home_balance import home_sources
 
 
@@ -23,8 +23,8 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
         raise SettingsError("invalid_settings")
     candidate = deepcopy(dict(entry.options or entry.data))
     try:
-        if section in ("batteries", "usages", "appliances"):
-            collection = "batteries" if section == "batteries" else "usages"
+        if section in ("batteries", "usages", "appliances", "photovoltaic"):
+            collection = "batteries" if section == "batteries" else "photovoltaic" if section == "photovoltaic" else "usages"
             items = candidate.setdefault(collection, {})
             if identifier and identifier not in items:
                 raise SettingsError("target_missing")
@@ -35,7 +35,11 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                     raise SettingsError("target_missing")
                 del items[identifier]
             else:
-                if collection == "batteries":
+                if collection == "photovoltaic":
+                    if isinstance(values.get("nominal_power_w"),bool):raise SettingsError("invalid_settings")
+                    clean = photovoltaic_schema(items.get(identifier, {}))(values)
+                    sources = tuple(PV_FIELDS)
+                elif collection == "batteries":
                     clean = battery_schema(items.get(identifier, {}))(values)
                     if clean.get("capacity_kwh") is not None:
                         clean["capacity_kwh"] = positive_capacity(clean["capacity_kwh"])
@@ -53,7 +57,7 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                     if not clean.get("included_in_home"):
                         raise SettingsError("outside_home")
                     sources = ("power", "energy", "status", "temperature")
-                if not any(clean.get(key) for key in sources):
+                if not any(clean.get(key) for key in sources) and not (collection=="usages" and has_router_target(clean)):
                     raise SettingsError("select_source")
                 identifier = identifier or uuid4().hex
                 items[identifier] = clean
@@ -115,7 +119,7 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
         _, reason = home_sources(candidate)
         if reason:
             raise SettingsError(reason)
-    if not any(source for _, source, _ in source_items(candidate)):
+    if not any(source for _, source, _ in source_items(candidate)) and not any(item.get(key) for item in candidate.get("photovoltaic",{}).values() for key in PV_FIELDS) and not any(has_router_target(item) for item in candidate.get("usages",{}).values()):
         raise SettingsError("select_source")
     hass.config_entries.async_update_entry(entry, options=candidate)
     return {"updated": True, "identifier": identifier}

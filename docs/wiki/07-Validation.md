@@ -13,4 +13,4 @@ Dans le résumé de l'assistant, **valid apparaît en vert**, les autres qualit�
 
 ![Détail des contributions au bilan](../screenshots/home-balance.png)
 
-[Contrôles automatisés et limites de validation](../VALIDATION_ASSISTANT.md) · [Revue 0.2.2](../REVUE_0_2_2.md)
+[Contrôles automatisés et limites de validation](../VALIDATION_ASSISTANT.md) · [Revue 0.2.3](../REVUE_0_2_2.md)

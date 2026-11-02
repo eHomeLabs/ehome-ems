@@ -35,7 +35,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button", { name: "Vue d’ensemble", exact: true }).waitFor();
       assert.equal(await page.evaluate(() => customElements.get("ehome-ems-panel") !== fixturePanel.constructor), true);
       const navLabels=await page.getByRole("navigation",{name:"Vues énergie"}).getByRole("button").allTextContents();
-      assert.deepEqual(navLabels,["Vue d’ensemble","Mes Appareils","Stockage","Usages","Historique","Aujourd’hui","Stratégie","Configuration"]);
+      assert.deepEqual(navLabels,["Vue d’ensemble","Mes Appareils","Stockage","Photovoltaïque","Usages","Historique","Aujourd’hui","Stratégie","Configuration"]);
       await page.locator(".trend-head").first().waitFor();
       assert.equal(await page.locator(".kpis canvas").count(),0);
       assert.equal(await page.locator(".trend-steps").count(),0);
@@ -68,7 +68,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-2").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-3").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -161,7 +161,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.2 · Intégration 0.2.2", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.3 · Intégration 0.2.3", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -215,6 +215,38 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button",{name:"Confirmer le retrait",exact:true}).click();
       await page.getByText("Expresso modifié",{exact:true}).waitFor({state:"detached"});
       assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/manage_settings").length),3);
+      await page.getByRole("button",{name:"Photovoltaïque",exact:true}).click();
+      await page.getByRole("heading",{name:"Micro-onduleur Démo",exact:true}).waitFor();
+      await page.getByRole("button",{name:"Ajouter un équipement photovoltaïque",exact:true}).click();
+      await page.getByRole("textbox",{name:"Nom",exact:true}).fill("Hybride test");
+      await page.getByLabel("Type d’équipement",{exact:true}).selectOption("hybrid_inverter");
+      await page.getByLabel("Puissance sortie AC",{exact:true}).fill("sensor.pv_alternative");
+      await page.getByLabel("Puissance photovoltaïque DC",{exact:true}).fill("sensor.pv_dc");
+      await page.getByRole("button",{name:"Enregistrer",exact:true}).click();await page.getByRole("heading",{name:"Hybride test",exact:true}).waitFor();
+      await page.getByRole("button",{name:"Retirer Hybride test",exact:true}).click();await page.getByRole("button",{name:"Confirmer le retrait",exact:true}).click();
+      await page.getByRole("button",{name:"Usages",exact:true}).click();
+      await page.getByRole("button",{name:"Ajouter un usage",exact:true}).click();
+      await page.getByRole("textbox",{name:"Nom",exact:true}).fill("F1ATB Démo");
+      await page.getByLabel("Type d’usage",{exact:true}).selectOption("solar_router");
+      await page.getByLabel("Profil du routeur solaire",{exact:true}).selectOption("f1atb");
+      await page.getByLabel("Puissance (W/kW)",{exact:true}).fill("sensor.router_power");
+      await page.getByLabel("Topic MQTT exact : nom routeur/nom action",{exact:true}).fill("demo_router/SSR");
+      await page.getByLabel("Je confirme le protocole F1ATB V15+ et la souscription au forçage MQTT activée sur le routeur",{exact:true}).check();
+      await page.getByLabel("Activer les commandes MQTT manuelles F1ATB",{exact:true}).check();
+      await page.getByLabel("Sous-comptage inclus dans le périmètre maison",{exact:true}).check();
+      await page.getByRole("button",{name:"Enregistrer",exact:true}).click();
+      await page.getByText("Paramétrage F1ATB",{exact:true}).click();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command").length),0);
+      await page.getByRole("button",{name:"Forcer On temporairement",exact:true}).click();
+      await page.getByText(/Ordre MQTT publié/).waitFor();
+      await page.getByLabel("Ouverture maximale (%)",{exact:true}).fill("60");
+      await page.getByRole("button",{name:"Appliquer les réglages MQTT",exact:true}).click();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command").length),2);
+      await page.locator(".router-settings").screenshot({path:path.join(output,viewport.width<600?"router-mobile.png":"router-desktop.png")});
+      await page.getByLabel("Ouverture maximale (%)",{exact:true}).fill("150");
+      await page.getByRole("button",{name:"Libérer le forçage",exact:true}).click();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command").length),3);
+
 
       await page.getByRole("button",{name:"Aujourd’hui",exact:true}).click();
       await page.getByText("J’ai produit",{exact:true}).waitFor();

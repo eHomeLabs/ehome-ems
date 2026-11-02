@@ -43,3 +43,7 @@ La tolérance négative est réglable de 0 à 20 W, 5 W par défaut. De −5 W i
 Renseigner l’objectif quotidien en kWh dans Modifier l’usage, accessible aussi depuis la carte du cumulus dans Stockage. Avec 3 kWh d’objectif et 2,16 kWh du jour, l’avancement vaut **72 %**, sans décimale. La silhouette utilise cet avancement et la température reste distincte. Sans objectif, le visuel conserve son échelle de température. Sans énergie quotidienne exploitable, aucun pourcentage n’est inventé. Un compteur de session ne fournit pas cet indicateur journalier.
 
 Cet objectif ne mesure pas la chaleur encore disponible : les soutirages et pertes thermiques ne sont pas déduits. Les batteries électriques continuent d’afficher leur SOC mesuré et leur stock réel ; leur capacité n’est pas un objectif journalier.
+
+## Profil routeur solaire
+
+Le profil **F1ATB** ajoute une fiche de paramétrage distincte du cumulus : page native, sortie déclarée, topic explicite et commandes MQTT manuelles. Les capteurs peuvent être associés ensuite. Voir le [guide F1ATB](ROUTEUR_F1ATB.md). Les anciens usages conservent leur profil générique.
