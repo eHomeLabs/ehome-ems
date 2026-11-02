@@ -156,7 +156,7 @@
       },
       "add_usage": {
         "title": "Ajouter un usage",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "kind": "Type d’usage",
@@ -173,14 +173,17 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
-          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
           "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
@@ -192,7 +195,7 @@
       },
       "usage_details": {
         "title": "Modifier un usage",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "kind": "Type d’usage",
@@ -209,14 +212,17 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
-          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
           "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
@@ -252,7 +258,7 @@
       },
       "add_appliance": {
         "title": "Mon appareil",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "power": "Puissance réellement consommée (W/kW)",
@@ -267,10 +273,13 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -279,12 +288,13 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
         }
       },
       "appliance_details": {
         "title": "Mon appareil",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "power": "Puissance réellement consommée (W/kW)",
@@ -299,10 +309,13 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -311,7 +324,8 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
         }
       },
       "edit_appliance": {
@@ -526,7 +540,7 @@
       },
       "add_usage": {
         "title": "Ajouter un usage",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "kind": "Type d’usage",
@@ -543,14 +557,17 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
-          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
           "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
@@ -562,7 +579,7 @@
       },
       "usage_details": {
         "title": "Modifier un usage",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "kind": "Type d’usage",
@@ -579,14 +596,17 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
-          "kind": "Le type sert à présenter l’usage. Ce n’est pas une connexion directe au routeur ou au véhicule.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
           "power": "Choisissez une puissance mesurée sur l’usage. Pour F1ATB, le compteur du cumulus peut convenir ; ne choisissez pas un pourcentage de SSR ou une consigne. Pour le VE, choisissez la consommation de la borne, pas toute la maison.",
           "energy": "Reprise du compteur existant, sans intégration ni calcul d’énergie manquante. Laissez vide si vous n’avez pas de mesure adaptée.",
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
@@ -622,7 +642,7 @@
       },
       "add_appliance": {
         "title": "Mon appareil",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "power": "Puissance réellement consommée (W/kW)",
@@ -637,10 +657,13 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -649,12 +672,13 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
         }
       },
       "appliance_details": {
         "title": "Mon appareil",
-        "description": "Associez au moins une mesure ou un état existant. Le suivi reste en observation et préserve les automatismes F1ATB et de la borne.",
+        "description": "Associer des mesures HA ou configurer une connexion F1ATB HTTP directe. Enregistrer ne commande pas le routeur.",
         "data": {
           "name": "Nom de l’usage",
           "power": "Puissance réellement consommée (W/kW)",
@@ -669,10 +693,13 @@
           "control_enabled": "Activer la commande manuelle On/Off",
           "router_type": "Profil du routeur solaire",
           "router_output": "Sortie F1ATB (SSR / Triac / PWM)",
-          "router_url": "Page web du routeur",
+          "router_url": "Adresse IP ou URL du routeur",
           "router_mqtt_topic": "Topic exact : nom routeur/nom action",
           "router_mqtt_enabled": "Activer les commandes MQTT manuelles F1ATB",
-          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée"
+          "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
+          "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
+          "router_action": "Index de l’action F1ATB",
+          "router_http_enabled": "Activer les commandes HTTP manuelles"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -681,7 +708,8 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
+          "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
         }
       },
       "edit_appliance": {

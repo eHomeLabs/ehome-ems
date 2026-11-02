@@ -4,9 +4,14 @@
   "version": "0.2.3",
   "documentation": "https://github.com/eHomeLabs/ehome-ems",
   "issue_tracker": "https://github.com/eHomeLabs/ehome-ems/issues",
-  "codeowners": ["@eHomeLabs"],
+  "codeowners": [
+    "@eHomeLabs"
+  ],
   "config_flow": true,
-  "dependencies": ["panel_custom", "websocket_api"],
+  "dependencies": [
+    "panel_custom",
+    "websocket_api"
+  ],
   "requirements": [],
-  "iot_class": "local_push"
+  "iot_class": "local_polling"
 }

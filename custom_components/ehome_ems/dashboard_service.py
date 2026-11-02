@@ -82,7 +82,7 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                       for identifier, battery in mapping.get(CONF_BATTERIES, {}).items()],
         "usages": [{"id": identifier, "name": usage["name"], "kind": usage.get("kind", "other"),
                     "icon": usage.get("icon", "auto"),
-                    **{key:usage.get(key) for key in ("router_type","router_output","router_url","router_mqtt_topic","router_mqtt_enabled","router_protocol_confirmed")},
+                    **{key:usage.get(key) for key in ("router_connection","router_action","router_http_enabled","router_type","router_output","router_url","router_mqtt_topic","router_mqtt_enabled","router_protocol_confirmed")},
                     "daily_energy_goal_kwh": usage.get("daily_energy_goal_kwh"),
                     "control_enabled": usage.get("control_enabled", False),
                     "control_entity": usage.get("control_entity"),
@@ -90,6 +90,17 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                     **{key: entities.get(f"usage_{identifier}_{key}") for key in USAGE_SOURCES}}
                    for identifier, usage in mapping.get(CONF_USAGES, {}).items()],
     }
+    native = getattr(hass, "data", {}).get(DOMAIN, {}).get("router_http", {}).get(entry.entry_id, {})
+    for usage in result["flow"]["usages"]:
+        if usage["id"] in native:
+            coordinator = native[usage["id"]]
+            data = coordinator.data or {}
+            usage["router_native"] = {"available": coordinator.last_update_success,
+                "actions": data.get("actions", []), "config_token": data.get("config_token"),
+                "temperatures": data.get("temperatures", []) if coordinator.last_update_success else []}
+            usage["router_entities"] = {key: registry.async_get_entity_id("sensor", DOMAIN,
+                f"{entry.entry_id}_router_{usage['id']}_{key}") for key in
+                ("probe_power", "probe_energy_total_kwh", "grid_import_power", "grid_export_power", "opening", "force_minutes", "status", "connection", *(f"temperature_{i}" for i in range(4)))}
     result["settings"] = deepcopy(dict(mapping))
     result["weather_entity"] = mapping.get("weather_entity")
     result["time_zone"] = getattr(hass.config, "time_zone", "UTC")

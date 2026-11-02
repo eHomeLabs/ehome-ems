@@ -505,6 +505,7 @@ export class EhomeEmsPanel extends BaseElement {
     if(!grid.childElementCount)grid.append(this._node("p",this._t("Ajoutez vos micro-onduleurs, onduleurs DC ou hybrides depuis leurs entités HA existantes.","Add microinverters, DC or hybrid inverters using existing HA entities."),"note"));root.append(grid);return root;
   }
   _routerCard(config) {
+    if(config.router_connection==="http")return this._routerHttpCard(config);
     const root=this._node("section",undefined,"card router-card"),details=this._node("details",undefined,"router-settings");root.append(this._node("h2",config.name),this._node("p","F1ATB · "+(config.router_output||"ssr").toUpperCase(),"note"));
     if(config.power)root.append(this._metricTile(this._t("Puissance routée mesurée","Measured routed power"),config.power,"mdi:white-balance-sunny","#ffa000"));
     if(config.energy)root.append(this._usageEnergy(config),this._usageCost(config));
@@ -526,6 +527,58 @@ export class EhomeEmsPanel extends BaseElement {
       busy=true;for(const b of buttons)b.disabled=true;try{await this._hass.callWS({type:"ehome_ems/router_command",entry_id:this._panel.config.entry_id,identifier:config.id,revision:this._snapshotData.revision,action,values});feedback.textContent=this._t("Ordre MQTT publié, réception par le routeur non confirmée. Contrôlez ses mesures et sa page native.","MQTT command published; router receipt not confirmed. Check readings and its native page.");}catch{feedback.textContent=this._t("Commande refusée ou publication MQTT impossible. Vérifiez la configuration et actualisez.","Command rejected or MQTT publication failed. Check settings and refresh.");}finally{busy=false;for(const b of buttons)b.disabled=!this._hass?.user?.is_admin;}};
     for(const [action,fr,en] of [["force_on","Forcer On temporairement","Temporary On"],["force_off","Forcer Off temporairement","Temporary Off"],["release","Libérer le forçage","Release override"],["parameters","Appliquer les réglages MQTT","Apply MQTT settings"]]){const button=this._button(this._t(fr,en),()=>send(action));button.disabled=!this._hass?.user?.is_admin;buttons.push(button);form.append(button);}
     details.append(this._node("p",this._t("L’index vise une période déjà créée sur le routeur. Le mode concerne l’action et peut prendre effet immédiatement, indépendamment de cette période.","The index targets an existing router period. Mode affects the action and may take effect immediately, independently of that period."),"note"),form,feedback);root.append(details);return root;
+  }
+  _routerHttpCard(config) {
+    const root=this._node("section",undefined,"card router-card native-router"),native=config.router_native||{},entities=config.router_entities||{},selected=(native.actions||[]).find(a=>a.index===config.router_action);
+    root.append(this._node("h2",config.name),this._node("p",this._t("F1ATB · connexion locale directe","F1ATB · direct local connection"),"note"));
+    const status=this._node("p",undefined,"note"),state=this._node("span");status.append(this._t("Action : ","Action: ")+(selected?.name||String(config.router_action??0))+" · ",state);root.append(status);
+    for(const [key,fr,en] of [["opening","Ouverture de l’action","Action opening"],["force_minutes","Forçage restant (+ On / − Off)","Override remaining (+ On / − Off)"]])if(entities[key])root.append(this._metricTile(this._t(fr,en),entities[key],"mdi:white-balance-sunny","#ffa000"));
+    const meter=this._node("details");meter.append(this._node("summary",this._t("Mesures du routeur","Router measurements")));
+    meter.append(this._node("p",this._t("La seconde voie de mesure est globale au routeur. Elle n’est pas attribuée à cette action et n’est pas ajoutée au bilan Maison. Une ouverture n’est pas une mesure de puissance.","The second measurement channel belongs to the router. It is not assigned to this action or added to Home balance. Opening is not a power measurement."),"note"));
+    for(const [key,fr,en] of [["probe_power","Puissance mesurée · seconde voie","Measured power · second channel"],["probe_energy_total_kwh","Énergie cumulée · seconde voie","Lifetime energy · second channel"],["grid_import_power","Soutirage réseau","Grid import"],["grid_export_power","Injection réseau","Grid export"]])if(entities[key])meter.append(this._metricTile(this._t(fr,en),entities[key],"mdi:white-balance-sunny","#ffa000"));
+    for(let i=0;i<4;i++)if(entities["temperature_"+i])meter.append(this._metricTile(this._t("Température ","Temperature ")+i,entities["temperature_"+i],"mdi:water-boiler","#ffa000"));
+    this._flowUpdates.push(()=>{const value=this._hass?.states?.[entities.status]?.state;state.textContent=({auto:this._t("Automatique","Automatic"),forced_on:this._t("Marche forcée","Forced On"),forced_off:this._t("Arrêt forcé","Forced Off")})[value]||this._t("Indisponible ou action inactive","Unavailable or inactive action");});
+    root.append(meter);
+    if(config.power)root.append(this._metricTile(this._t("Puissance associée à l’usage","Mapped load power"),config.power,"mdi:white-balance-sunny","#ffa000"));
+    if(config.energy)root.append(this._usageEnergy(config),this._usageCost(config));
+    const link=this._node("a",this._t("Ouvrir la page du routeur","Open router page"));link.href=config.router_url?.includes("://")?config.router_url:"http://"+config.router_url;link.target="_blank";link.rel="noopener noreferrer";root.append(link);
+    const details=this._node("details",undefined,"router-settings");details.append(this._node("summary",this._t("Paramétrage F1ATB","F1ATB settings")));
+    if(!config.router_http_enabled){details.append(this._node("p",this._t("Lecture seule. Activez les commandes HTTP manuelles dans Modifier pour piloter cette action.","Read only. Enable manual HTTP commands in Edit to control this action."),"note"));root.append(details);return root;}
+    const form=this._node("form",undefined,"settings-form"),fields={},buttons=[];form.addEventListener("submit",e=>e.preventDefault());
+    const add=(key,label,value,min,max,options)=>{const row=this._node("label",label),el=this._node(options?"select":"input");if(options){for(const [v,text] of options){const o=this._node("option",text);o.value=v;el.append(o);}}else{el.type="number";el.min=min;el.max=max;el.step=1;}el.value=value??"";el.setAttribute("aria-label",label);fields[key]=el;row.append(el);form.append(row);return el;};
+    const minutes=add("minutes",this._t("Durée du forçage (minutes)","Override duration (minutes)"),30,1,1440);minutes.required=true;
+    const feedback=this._node("p",undefined,"note");feedback.setAttribute("role","status");let busy=false;
+    const send=async(action)=>{
+      if(busy||!this._hass?.user?.is_admin)return;
+      let values={};
+      if(action==="force_on"||action==="force_off"){if(!minutes.reportValidity())return;values.minutes=Number(minutes.value);}
+      if(action==="http_parameters"){
+        values.config_token=native.config_token;
+        for(const key of ["mode","forced_opening","opening_max"]){if(!fields[key].reportValidity())return;if(fields[key].value!=="")values[key]=Number(fields[key].value);}
+        if("opening_max" in values){if(!fields.period.value){feedback.textContent=this._t("Choisissez une période compatible.","Choose a compatible period.");return;}values.period=Number(fields.period.value);}
+        if(Object.keys(values).length===1){feedback.textContent=this._t("Choisissez au moins un réglage.","Choose at least one setting.");return;}
+      }
+      busy=true;buttons.forEach(b=>b.disabled=true);
+      try{const result=await this._hass.callWS({type:"ehome_ems/router_command",entry_id:this._panel.config.entry_id,identifier:config.id,revision:this._snapshotData.revision,action,values});
+        feedback.textContent=result.confirmed_by_router?this._t("Réglage confirmé par relecture du routeur.","Setting confirmed by router readback."):this._t("Ordre envoyé, résultat non confirmé. Actualisez avant toute nouvelle commande.","Command sent, result unconfirmed. Refresh before another command.");
+        if(action==="http_parameters")native.config_token=null;
+      }catch(error){feedback.textContent=this._t("Commande refusée ou communication impossible. Actualisez et vérifiez le routeur : ","Command rejected or communication failed. Refresh and check router: ")+(error.code||"");}
+      finally{busy=false;updateButtons();}
+    };
+    for(const [action,fr,en] of [["force_on","Forcer On temporairement","Temporary On"],["force_off","Forcer Off temporairement","Temporary Off"],["release","Libérer le forçage","Release override"]]){const b=this._button(this._t(fr,en),()=>send(action));b.dataset.action=action;buttons.push(b);form.append(b);}
+    form.append(this._node("p",this._t("Réglages enregistrés dans le routeur : seules les valeurs renseignées sont modifiées. Les horaires, protections et paramètres réseau sont conservés.","Settings saved in the router: only filled values change. Schedules, protections and network settings are preserved."),"note"));
+    add("mode",this._t("Forme d’onde (facultatif)","Waveform (optional)"),"",null,null,[["",this._t("Conserver","Keep")],[0,this._t("Inactif","Inactive")],[1,config.router_action===0?this._t("Découpe sinus","Phase cut"):"On/Off"],[5,this._t("Demi-sinus","Half sine")],[2,this._t("Multi-sinus","Multi sine")],[3,this._t("Train de sinus","Burst fire")],[4,"PWM"]]);
+    add("forced_opening",this._t("Ouverture en marche forcée (%)","Forced On opening (%)"),"",0,100);
+    const ps=(selected?.periods||[]).flatMap((p,i)=>p.Type===4&&(config.router_action===0||selected.mode>1)?[[String(i),this._t("Période ","Period ")+i+" · "+p.Vmax+" %"]]:[]);
+    add("period",this._t("Période à limiter","Period to limit"),"",null,null,[["",this._t("Choisir une période","Choose a period")],...ps]);
+    add("opening_max",this._t("Ouverture maximale de cette période (%)","Maximum opening for this period (%)"),"",0,100);
+    const apply=this._button(this._t("Enregistrer les réglages sur le routeur","Save settings to router"),()=>send("http_parameters"));apply.dataset.action="http_parameters";buttons.push(apply);form.append(apply);
+    const updateButtons=()=>{
+      const online=entities.connection?this._hass?.states?.[entities.connection]?.state==="online":native.available;
+      const actionAvailable=!!this._hass?.states?.[entities.status]&&!['unknown','unavailable'].includes(this._hass.states[entities.status].state);
+      for(const b of buttons)b.disabled=busy||!this._hass?.user?.is_admin||!online||(b.dataset.action==="http_parameters"?!native.config_token:!actionAvailable);
+    };
+    updateButtons();this._flowUpdates.push(updateButtons);details.append(form,feedback);root.append(details);return root;
   }
   _loads(snapshot, appliances) {
     const root=this._node("section",undefined,"stack");
@@ -938,11 +991,17 @@ export class EhomeEmsPanel extends BaseElement {
         if(section==="usages")add("kind","Type d’usage","Load type","select",[["solar_router",this._t("Routeur solaire","Solar router")],["water_heater",this._t("Cumulus / chauffe-eau","Water heater")],["ev_charger",this._t("Borne de recharge","EV charger")],["other",this._t("Autre usage","Other load")]],null,current.kind||"solar_router");
         if(section==="usages"){
           add("router_type","Profil du routeur solaire","Solar router profile","select",[["generic",this._t("Générique / cumulus existant","Generic / existing water heater")],["f1atb","F1ATB"]],null,current.router_type||"generic");
+          add("router_connection","Connexion F1ATB","F1ATB connection","select",[["http",this._t("HTTP local direct","Direct local HTTP")],["mqtt","MQTT"]],null,current.router_connection||(identifier?"mqtt":"http"));
+          const actionSelect=add("router_action","Action du routeur","Router action","select",[[String(current.router_action??0),this._t("Action ","Action ")+(current.router_action??0)]],null,String(current.router_action??0));
+          add("router_http_enabled","Activer les commandes HTTP manuelles F1ATB","Enable manual F1ATB HTTP commands","checkbox");
+          const discoverFeedback=this._node("p",undefined,"note");discoverFeedback.setAttribute("role","status");
+          const discover=this._button(this._t("Lire le routeur et ses actions","Read router and actions"),async()=>{discover.disabled=true;try{const data=await this._hass.callWS({type:"ehome_ems/router_discover",host:controls.router_url.value.trim()});const previous=actionSelect.value;actionSelect.replaceChildren();for(const a of data.actions){const o=this._node("option",a.index+" · "+a.name+(a.mode===0?this._t(" (inactive)"," (inactive)"):""));o.value=a.index;actionSelect.append(o);}if([...actionSelect.options].some(o=>o.value===previous))actionSelect.value=previous;discoverFeedback.textContent=this._t("Actions lues. Aucune commande envoyée.","Actions read. No command sent.");}catch(error){discoverFeedback.textContent=this._t("Lecture impossible : vérifiez l’adresse et l’accès depuis HA. ","Read failed: check address and access from HA. ")+(error.code||"");}finally{discover.disabled=false;}});
+          form.append(discover,discoverFeedback);controls.router_discover_button=discover;
           add("router_output","Sortie F1ATB","F1ATB output","select",[["ssr","SSR"],["triac","Triac"],["pwm","PWM"]],null,current.router_output||"ssr");
-          add("router_url","Page web du routeur (facultatif)","Router web page (optional)","url");add("router_mqtt_topic","Topic MQTT exact : nom routeur/nom action","Exact MQTT topic: router name/action name");
+          add("router_url","Adresse IP ou URL du routeur","Router IP address or URL","text");add("router_mqtt_topic","Topic MQTT exact : nom routeur/nom action","Exact MQTT topic: router name/action name");
           add("router_protocol_confirmed","Je confirme le protocole F1ATB V15+ et la souscription au forçage MQTT activée sur le routeur","I confirm F1ATB V15+ protocol and enabled MQTT forcing subscription","checkbox");
           add("router_mqtt_enabled","Activer les commandes MQTT manuelles F1ATB","Enable manual F1ATB MQTT commands","checkbox");
-          form.append(this._node("p",this._t("Aucun identifiant MQTT à saisir ici : EMS utilise l’intégration MQTT HA. Aucun ordre à l’enregistrement. Les commandes sont temporaires ; la configuration complète reste sur le routeur.","No MQTT credentials here: EMS uses HA MQTT. Saving sends no command. Commands are temporary; full configuration remains on the router."),"note"));
+          form.append(this._node("p",this._t("HTTP : connexion directe, sans autre intégration F1ATB. Saisissez l’adresse puis lisez les actions. MQTT : utilise le broker HA existant. Enregistrer cette fiche n’envoie aucune commande au routeur.","HTTP connects directly without another F1ATB integration. Enter the address then read actions. MQTT uses the existing HA broker. Saving this card sends no router command."),"note"));
         }
         add("icon","Icône du produit","Product icon","select",PRODUCT_ICONS.map(icon=>[icon,icon==="auto"?this._t("Automatique selon le nom","Automatic by name"):icon]),null,current.icon||"auto");
         source("power","Puissance (W/kW)","Power (W/kW)");source("energy","Énergie (Wh/kWh)","Energy (Wh/kWh)",["Wh","kWh"]);
@@ -977,13 +1036,23 @@ export class EhomeEmsPanel extends BaseElement {
         const sync=()=>{homeInput.disabled=mode.value==="calculated";};mode.addEventListener("change",sync);sync();
       }else for(const [key,fr,en] of section==="solar"?[["solar_power","Production solaire","Solar production"]]:[["grid_power","Réseau signé (facultatif)","Signed grid (optional)"],["grid_import","Import réseau","Grid import"],["grid_export","Export réseau","Grid export"]])source(key,fr,en);
     }
-    if(section==="usages"&&!remove){const syncRouter=()=>{const router=controls.kind.value==="solar_router",f1atb=router&&controls.router_type.value==="f1atb";controls.router_type.closest("label").hidden=!router;for(const key of ["router_output","router_url","router_mqtt_topic","router_mqtt_enabled","router_protocol_confirmed"])controls[key].closest("label").hidden=!f1atb;if(!f1atb)controls.router_mqtt_enabled.checked=false;};controls.kind.addEventListener("change",syncRouter);controls.router_type.addEventListener("change",syncRouter);syncRouter();}
+    if(section==="usages"&&!remove){
+      const syncRouter=()=>{const router=controls.kind.value==="solar_router",f1atb=router&&controls.router_type.value==="f1atb",http=f1atb&&controls.router_connection.value==="http";
+        controls.router_type.closest("label").hidden=!router;
+        for(const key of ["router_connection","router_url"])controls[key].closest("label").hidden=!f1atb;
+        for(const key of ["router_action","router_http_enabled"])controls[key].closest("label").hidden=!http;
+        controls.router_discover_button.hidden=!http;
+        for(const key of ["router_output","router_mqtt_topic","router_mqtt_enabled","router_protocol_confirmed"])controls[key].closest("label").hidden=!f1atb||http;
+        if(!f1atb){controls.router_mqtt_enabled.checked=false;controls.router_http_enabled.checked=false;}
+      };controls.kind.addEventListener("change",syncRouter);controls.router_type.addEventListener("change",syncRouter);controls.router_connection.addEventListener("change",syncRouter);syncRouter();
+    }
     const message=this._node("p","","note bad");message.setAttribute("role","status");
     const actions=this._node("div",undefined,"actions"),cancel=this._button(this._t("Annuler","Cancel"),()=>dialog.close());cancel.disabled=false;
     const revision=this._snapshotData.revision;
     const save=this._button(remove?this._t("Confirmer le retrait","Confirm removal"):this._t("Enregistrer","Save"),async()=>{
       if(!remove && !form.reportValidity())return;
-      const values={};for(const [key,input] of Object.entries(controls)){if(input.type==="checkbox")values[key]=input.checked;else if(input.value.trim()!=="")values[key]=input.type==="number"?Number(input.value):input.value.trim();}
+      const values={};for(const [key,input] of Object.entries(controls)){if(key==="router_discover_button")continue;if(input.type==="checkbox")values[key]=input.checked;else if(input.value.trim()!=="")values[key]=input.type==="number"?Number(input.value):input.value.trim();}
+      if(section==="usages"&&!remove){values.router_action=Number(values.router_action??0);if(values.kind!=="solar_router"||values.router_type!=="f1atb"){delete values.router_connection;delete values.router_action;delete values.router_http_enabled;}}
       save.disabled=true;form.inert=true;
       try{
         await this._hass.callWS({type:"ehome_ems/manage_settings",entry_id:this._panel.config.entry_id,revision,section,action:remove?"remove":"save",identifier,values});

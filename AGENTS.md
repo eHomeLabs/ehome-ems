@@ -18,4 +18,4 @@ La version 0.2.3 consolide le suivi énergétique en observation. Les référenc
 - Pour le code, lancer les tests appropriés et les contrôles CI HA/navigateur. Pour la documentation, vérifier liens, captures et cohérence ; aucun test matériel implicite.
 
 - Les fiches photovoltaïques sont descriptives et ne doivent pas être agrégées implicitement dans le total solaire ou le bilan Maison.
-- Les commandes F1ATB restent manuelles, par topic explicitement configuré, via MQTT HA, non retenues et sans supposer un accusé de réception du routeur. Aucun identifiant de broker à dupliquer.
+- Le support F1ATB natif utilise HTTP local sans intégration supplémentaire, ou MQTT HA selon le transport choisi. Les commandes restent manuelles et activées explicitement. HTTP : sérialisation par routeur, configuration complète préservée, contrôle de conflit avant écriture persistante et relecture sans supposer un succès. MQTT : topic explicite, messages non retenus, aucun accusé de réception supposé ni identifiant de broker dupliqué.

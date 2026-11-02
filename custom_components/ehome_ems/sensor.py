@@ -53,6 +53,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
             UsageSensor(entry.entry_id, usage_id, usage, key)
             for key in USAGE_SOURCES if usage.get(key)
         )
+    if any(u.get("router_connection") == "http" and u.get("router_type") == "f1atb" and u.get("kind") == "solar_router" for u in mapping.get(CONF_USAGES, {}).values()):
+        from .f1atb_runtime import async_setup_routers
+        from .f1atb_sensor import router_sensors
+        coordinators = await async_setup_routers(hass, entry)
+        entities.extend(router_sensors(coordinators, entry, mapping))
     async_add_entities(entities)
 
 

@@ -145,3 +145,7 @@ Dans **Usages → Ajouter un usage**, choisir **Routeur solaire**, puis le profi
 Les commandes manuelles MQTT sont désactivées par défaut : confirmer le protocole et activer la souscription sur le routeur, puis activer l’option dans EMS. Forçage On/Off temporisé, libération du forçage, mode de l’action et réglages de seuil/ouverture d’une période existante sont proposés. La publication utilise MQTT HA, sans identifiants à recopier, sans message retenu et sans exécution par les scénarios.
 
 Un ordre publié ne prouve pas sa réception par le F1ATB. Les réglages MQTT sont temporaires et ne remplacent pas sa configuration enregistrée, ses horaires complets ou ses sécurités. [Guide F1ATB et compatibilité](docs/ROUTEUR_F1ATB.md) · [Photovoltaïque](docs/PHOTOVOLTAIQUE.md)
+
+## Évolution en développement : F1ATB HTTP natif
+
+Le profil F1ATB dans Usages propose une connexion **HTTP local direct**, sans installer une autre intégration F1ATB : adresse IP, lecture des actions, suivi des mesures et commandes manuelles activées explicitement. Forçage temporisé, forme d’onde, ouverture forcée et plafond d’une période compatible sont pris en charge, avec relecture du résultat. Le mode MQTT existant reste disponible. Cette évolution n’est pas encore dans l’archive 0.2.3 publiée. [Configuration, périmètres et tests](docs/ROUTEUR_F1ATB.md).

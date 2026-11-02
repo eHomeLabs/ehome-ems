@@ -1,1 +1,2 @@
 voluptuous==0.15.2
+aiohttp>=3.12,<4

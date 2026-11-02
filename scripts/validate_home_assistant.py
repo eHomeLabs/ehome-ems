@@ -457,6 +457,8 @@ async def validate(config_dir):
                 await command({**router_msg,"action":"parameters","values":{"period":0,"mode":"Decoupe"}},success=False)
                 await command({**router_msg,"action":"release","values":{}})
                 assert json.loads(mqtt_calls[-1].data["payload"])=={"tOnOff":0}
+                from validate_f1atb_ha import validate_native_router
+                await validate_native_router(hass, entry, command)
             ordinary = await hass.auth.async_create_user("Simulated reader", group_ids=["system-users"])
             refresh = await hass.auth.async_create_refresh_token(ordinary, client_id="https://example.local")
             access = hass.auth.async_create_access_token(refresh)
@@ -490,6 +492,8 @@ async def validate(config_dir):
                 await ws.send_json({"id":8,**router_msg})
                 assert not (await ws.receive_json())["success"]
                 assert len(mqtt_calls)==2
+                await ws.send_json({"id":9,"type":"ehome_ems/router_discover","host":"http://router.example.local"})
+                assert not (await ws.receive_json())["success"]
 
 
         assert await hass.config_entries.async_unload(entry.entry_id)
