@@ -4,14 +4,14 @@ export function dailyGoalPercent(energy,goal) {
 }
 export function productIcon(config={}) {
   if(PRODUCT_ICONS.includes(config.icon)&&config.icon!=="auto")return config.icon;
-  if(config.kind==="solar_router")return "mdi:water-boiler";
+  if(["solar_router","water_heater"].includes(config.kind))return "mdi:water-boiler";
   if(config.kind==="ev_charger")return "mdi:ev-station";
   const name=(config.name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   for(const [pattern,icon] of [[/vaisselle|dishwash/,"dishwasher"],[/seche.*linge|dryer/,"tumble-dryer"],[/lave.*linge|washing/,"washing-machine"],[/frigo|congel|refriger|fridge|freezer/,"fridge"],[/serviette|radiateur|radiator/,"radiator"],[/clim|chaleur|heat.pump/,"air-conditioner"],[/piscine|pool|filtration/,"pool"],[/expresso|cafe|coffee/,"coffee-maker"],[/imprimante|printer/,"printer-3d-nozzle"],[/eclairage|lampe|light/,"lightbulb"],[/television|\btv\b/,"television"],[/ordinateur|informatique|computer/,"desktop-classic"]])if(pattern.test(name))return "mdi:"+icon;
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.2";
+export const UI_VERSION = "0.2.3";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -174,7 +174,7 @@ export class EhomeEmsPanel extends BaseElement {
       if (JSON.stringify(snapshot.bindings) !== JSON.stringify(this._snapshotData?.bindings)) { this._historyAt = 0; this._history = {}; }
       this._snapshotData = snapshot;
       this._error = null;
-      this._tab = Math.min(this._tab, 7);
+      this._tab = Math.min(this._tab, 8);
       this._loadHistory();
     } catch (error) {
       if (request !== this._request) return;
@@ -281,7 +281,7 @@ export class EhomeEmsPanel extends BaseElement {
       .flow{background:#081827;border-color:#254b65;border-radius:18px}.flow-tile,.flow-usage{background:#0a1b29;border-color:currentColor;box-shadow:0 0 16px #0003}.flow-stage{aspect-ratio:auto;height:490px;max-width:none}.flow-solar,.flow-grid{width:25%;padding:12px}.flow-tile ha-icon{--mdc-icon-size:28px}.flow-title{font-size:15px}.flow-number{font-size:25px}.flow-small{font-size:12px}.flow-house{left:25%;top:20%;width:56%}.flow-house .flow-number{font-size:36px}.flow-battery{top:48%;width:23%;padding:12px}.flow-battery .flow-number{font-size:22px}.flow-extra .flow-usage{text-align:left;flex:0 1 250px}.flow-extra .flow-number{font-size:21px}.flow-usage-title{font-size:12px;margin:4px 0}.flow-usages{max-width:620px;margin:auto}.flow-usage{padding:12px;text-align:left}.flow-usage ha-icon{float:left;margin:0 12px 0 0}.flow-links path.active,.flow-branches path.active{stroke-width:4;stroke-dasharray:15 20;filter:drop-shadow(0 0 5px currentColor)}
       @media(min-width:1051px){.overview-grid .flow-stage{aspect-ratio:auto;height:440px}.overview-grid .flow-house{left:25%;top:22%;width:58%}.overview-grid .flow-solar,.overview-grid .flow-grid{width:26%}.overview-grid .flow-battery{top:47%;width:24%}}
       @media(max-width:700px){.vessel-card{padding:20px}.vessel-icon{height:220px}.vessel-icon>ha-icon,.vessel-fill>ha-icon{--mdc-icon-size:170px;width:170px;height:170px}.vessel-fill{width:170px;height:170px}.vessel-layout{gap:12px}.vessel-main{font-size:43px}.flow-stage{height:460px}.flow-house{left:17%;top:28%;width:80%}.flow-battery{top:60%;width:36%}.flow-solar{width:43%}.flow-grid{width:43%}.flow-house .flow-title{font-size:12px}.flow-house .flow-number{font-size:27px}.flow-tile .flow-number{font-size:21px}.flow-grid .flow-number{font-size:21px}.kpi-label{font-size:12px}.kpi ha-icon{--mdc-icon-size:24px}.flow-usage .flow-title{font-size:12px}.flow-usage .flow-number{font-size:21px}}
-      .kpi{display:flex;flex-direction:column;min-width:0;box-sizing:border-box}.kpi>ha-icon{position:absolute;right:16px;top:18px;margin:0}.kpi-label{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;box-sizing:border-box;min-height:42px;height:42px;line-height:21px;padding-right:40px;overflow-wrap:anywhere}.kpi>.value{display:block;min-height:38px;line-height:38px;margin:6px 0 10px}.spark{margin:0;min-height:62px;height:62px;box-sizing:border-box}.trend-head{font-size:29px;font-weight:700;line-height:30px}.history-row{display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,3fr);gap:16px;align-items:center;margin:12px 0}.history-chart svg{width:100%;height:70px;display:block}@media(max-width:600px){.history-row{grid-template-columns:1fr}}.spark-note{padding:3px 0 0;font-size:10px;min-height:24px}.appliance-card .usage-energy{min-height:105px}.appliance-card .cost{min-height:42px}.equipment-status{min-height:20px}.appliance-card .equipment-actions{margin-top:auto}.usage-energy .note{overflow-wrap:anywhere}.cards{align-items:stretch}.today .cards>.kpi{min-height:210px;height:210px}.weather-card .weather-detail{min-height:40px}.weather-card .value{font-size:24px}
+      .kpi{display:flex;flex-direction:column;min-width:0;box-sizing:border-box}.kpi>ha-icon{position:absolute;right:16px;top:18px;margin:0}.kpi-label{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;box-sizing:border-box;min-height:42px;height:42px;line-height:21px;padding-right:40px;overflow-wrap:anywhere}.kpi>.value{display:block;min-height:38px;line-height:38px;margin:6px 0 10px}.spark{margin:0;min-height:62px;height:62px;box-sizing:border-box}.trend-head{font-size:29px;font-weight:700;line-height:30px}[hidden]{display:none!important}.router-settings form{display:grid;gap:12px;margin-top:14px}.router-settings label{display:grid;gap:6px}.router-settings input,.router-settings select{width:100%;box-sizing:border-box;padding:12px;border:1px solid #3a596e;border-radius:10px;background:var(--secondary-background-color,#102333);color:var(--primary-text-color,#edf4ff);font:inherit}.pv-card .cards{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.history-row{display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,3fr);gap:16px;align-items:center;margin:12px 0}.history-chart svg{width:100%;height:70px;display:block}@media(max-width:600px){.history-row{grid-template-columns:1fr}}.spark-note{padding:3px 0 0;font-size:10px;min-height:24px}.appliance-card .usage-energy{min-height:105px}.appliance-card .cost{min-height:42px}.equipment-status{min-height:20px}.appliance-card .equipment-actions{margin-top:auto}.usage-energy .note{overflow-wrap:anywhere}.cards{align-items:stretch}.today .cards>.kpi{min-height:210px;height:210px}.weather-card .weather-detail{min-height:40px}.weather-card .value{font-size:24px}
     `;
     this.shadowRoot.append(style);
     const main = this._node("main");
@@ -308,7 +308,7 @@ export class EhomeEmsPanel extends BaseElement {
         "Some readings are missing or disabled. Check integration mappings."), "note warn"));
       const nav = this._node("nav", undefined, "top-nav"); nav.setAttribute("aria-label", this._t("Vues énergie", "Energy views"));
       const sections = [[this._t("Vue d’ensemble", "Overview"), "summary"], [this._t("Mes Appareils", "My Appliances"), "appliances"],
-        [this._t("Stockage", "Storage"), "storage"], [this._t("Usages", "Loads"), "usages"], [this._t("Historique", "History"), "history"],
+        [this._t("Stockage", "Storage"), "storage"], [this._t("Photovoltaïque", "Photovoltaic"), "photovoltaic"], [this._t("Usages", "Loads"), "usages"], [this._t("Historique", "History"), "history"],
         [this._t("Aujourd’hui", "Today"), "today"], [this._t("Stratégie", "Strategy"), "strategy"], [this._t("Configuration", "Configuration"), "configuration"]];
       sections.forEach(([title], index) => {
         const button = this._button(title, () => { this._tab = index; this._render(); });
@@ -317,16 +317,18 @@ export class EhomeEmsPanel extends BaseElement {
       });
       main.append(nav);
       if (this._tab === 0) main.append(this._overview(snapshot));
-      else if (this._tab === 6) main.append(this._strategy(snapshot.flow, true));
-      else if (this._tab === 7) main.append(this._configuration(snapshot));
+      else if (this._tab === 7) main.append(this._strategy(snapshot.flow, true));
+      else if (this._tab === 8) main.append(this._configuration(snapshot));
       else if (this._tab === 2) main.append(this._storage(snapshot));
-      else if (this._tab === 3 || this._tab === 1) main.append(this._loads(snapshot, this._tab === 1));
-      else if (this._tab === 5) main.append(this._today(snapshot));
+      else if (this._tab === 3) main.append(this._photovoltaic(snapshot));
+      else if (this._tab === 4 || this._tab === 1) main.append(this._loads(snapshot, this._tab === 1));
+      else if (this._tab === 6) main.append(this._today(snapshot));
       else {
         const path = sections[this._tab][1];
         const view = snapshot.dashboard.views.find(view => view.path === path);
         const content = this._node("section", undefined, "cards");
         for (const card of view?.cards || []) content.append(this._card(card));
+        const pvPowers=(snapshot.flow?.photovoltaic||[]).flatMap(p=>[p.power,p.dc_power]).filter(Boolean);if(pvPowers.length)content.append(this._card({type:"history-graph",title:this._t("Photovoltaïque","Photovoltaic"),entities:[...new Set(pvPowers)]}));
         if (!view) content.append(this._node("p", this._t("Aucune mesure configurée pour cette vue.", "No readings configured for this view."), "note"));
         main.append(content);
       }
@@ -356,7 +358,7 @@ export class EhomeEmsPanel extends BaseElement {
     if(entity && [f?.entities?.grid_export,f?.entities?.grid_power].includes(entity))return "#58aeff";
     if (f?.batteries?.some(b => Object.values(b).includes(entity))) return "#42dca4";
     const u = f?.usages?.find(u => Object.values(u).includes(entity));
-    return u?.kind === "solar_router" ? "#ffa000" : u?.kind === "ev_charger" ? "#bb86fc" : "#5bb8ff";
+    return ["solar_router","water_heater"].includes(u?.kind) ? "#ffa000" : u?.kind === "ev_charger" ? "#bb86fc" : "#5bb8ff";
   }
   _entityIcon(entity) {
     const f = this._snapshotData?.flow;
@@ -370,7 +372,7 @@ export class EhomeEmsPanel extends BaseElement {
     if (this._historyBusy || Date.now() - this._historyAt < 300000 || !this._hass?.callApi) return;
     const flow = this._snapshotData?.flow;
     if (!flow) return;
-    const ids = [...new Set([...Object.values(flow.entities || {}), ...(flow.batteries || []).flatMap(b => [b.charge_power, b.discharge_power,b.soc]), ...(flow.usages || []).map(u => u.power)].filter(Boolean))].slice(0, 100);
+    const ids = [...new Set([...Object.values(flow.entities || {}), ...(flow.batteries || []).flatMap(b => [b.charge_power, b.discharge_power,b.soc]), ...(flow.usages || []).map(u => u.power),...(flow.photovoltaic||[]).flatMap(p=>[p.power,p.dc_power])].filter(Boolean))].slice(0, 100);
     const sources = ids.map(id => this._snapshotData.bindings?.[id]?.source || id);
     if (!ids.length) return;
     this._historyBusy = true;
@@ -391,7 +393,7 @@ export class EhomeEmsPanel extends BaseElement {
     finally { this._historyBusy = false; }
   }
   async _loadHistory24() {
-    if(this._tab!==4||this._history24Busy||!this._hass?.callApi)return;
+    if(this._tab!==5||this._history24Busy||!this._hass?.callApi)return;
     const ids=[...new Set([...this.shadowRoot.querySelectorAll(".history-chart")].map(el=>el.dataset.entity))].slice(0,100),sources=ids.map(id=>this._snapshotData?.bindings?.[id]?.source||id),key=JSON.stringify([ids,sources]);
     if(!ids.length||(key===this._history24Key&&Date.now()-(this._history24At||0)<300000))return;
     this._history24Busy=true;this._history24Key=key;
@@ -420,7 +422,7 @@ export class EhomeEmsPanel extends BaseElement {
     const box=this._node("div",undefined,"spark trend"),head=this._node("div",undefined,"trend-head"),note=this._node("span",undefined,"spark-note");box.append(head,note);
     this._flowUpdates.push(()=>{
       const power=flowPower(this._hass?.states,entity);
-      const flow=this._snapshotData?.flow,producing=entity===flow?.entities?.solar_power||entity===flow?.entities?.grid_export||flow?.batteries?.some(b=>entity===b.discharge_power);
+      const flow=this._snapshotData?.flow,producing=entity===flow?.entities?.solar_power||entity===flow?.entities?.grid_export||flow?.photovoltaic?.some(p=>[p.power,p.dc_power].includes(entity))||flow?.batteries?.some(b=>entity===b.discharge_power);
       box.style.color=!producing&&power!==null&&power>0?"#ff6565":"#5bb8ff";
       const bins=quarterTrends(this._history[entity]||[]),direction=bins.at(-1).direction;
       head.textContent=direction===1?"↗":direction===-1?"↘":"→";
@@ -435,7 +437,7 @@ export class EhomeEmsPanel extends BaseElement {
   }
   async _loadUsageHistory() {
     if(!this._hass?.callApi||this._energyBusy)return;
-    const start=this._dayStart(),ids=[...new Set((this._snapshotData?.flow?.usages||[]).filter(u=>u.energy&&u.energy_period!=="session").map(u=>u.energy))].slice(0,100),sources=ids.map(id=>this._snapshotData?.bindings?.[id]?.source||id),key=JSON.stringify([start,sources]);
+    const start=this._dayStart(),ids=[...new Set([...(this._snapshotData?.flow?.usages||[]),...(this._snapshotData?.flow?.photovoltaic||[])].filter(u=>u.energy&&u.energy_period!=="session").map(u=>u.energy))].slice(0,100),sources=ids.map(id=>this._snapshotData?.bindings?.[id]?.source||id),key=JSON.stringify([start,sources]);
     if(key===this._energyKey && Date.now()-(this._energyAt||0)<300000)return;
     this._energyKey=key;this._energyStart=start;this._energyBusy=true;this._energyAt=Date.now();this._dailyHistory={};
     try{if(!ids.length)return;const response=await this._hass.callApi("GET",`history/period/${new Date(start).toISOString()}?filter_entity_id=${encodeURIComponent([...new Set(sources)].join(","))}&end_time=${new Date().toISOString()}&minimal_response&significant_changes_only=0`);
@@ -487,6 +489,44 @@ export class EhomeEmsPanel extends BaseElement {
   _integrationLink(text) {
     const a = this._node("a", text); a.href = "/config/integrations/integration/ehome_ems"; return a;
   }
+  _photovoltaic(snapshot) {
+    const root=this._node("section",undefined,"stack");root.append(this._node("h2",this._t("Photovoltaïque","Photovoltaic")),this._node("p",this._t("Détail des équipements : ces mesures AC/DC ne sont pas additionnées automatiquement au total solaire ni au bilan Maison. Associez séparément un total solaire AC cohérent.","Equipment details: AC/DC readings are not automatically added to solar total or Home balance. Map a consistent AC solar total separately."),"note"));
+    if(this._hass?.user?.is_admin)root.append(this._button(this._t("Ajouter un équipement photovoltaïque","Add PV equipment"),()=>this._settingsDialog("photovoltaic")));
+    const grid=this._node("div",undefined,"cards");
+    for(const item of snapshot.flow?.photovoltaic||[]){
+      const card=this._node("section",undefined,"card pv-card");card.append(this._node("h2",item.name),this._node("p",({micro_inverter:this._t("Micro-onduleur","Microinverter"),dc_inverter:this._t("Onduleur DC","DC inverter"),hybrid_inverter:this._t("Onduleur hybride","Hybrid inverter")}[item.kind]||item.kind)+" · "+[item.manufacturer,item.model].filter(Boolean).join(" "),"note"));
+      if(item.nominal_power_w)card.append(this._node("p",this._t("Puissance nominale : ","Nominal power: ")+displayNumber(item.nominal_power_w,this._hass?.language)+" W","note"));
+      const measurements=this._node("div",undefined,"cards");
+      for(const [key,fr,en] of [["power","Sortie AC","AC output"],["dc_power","Production DC","DC production"],["charge_power","Charge batterie (source déclarée)","Battery charge (declared source)"],["discharge_power","Décharge batterie (source déclarée)","Battery discharge (declared source)"]])if(item[key])measurements.append(this._metricTile(this._t(fr,en),item[key],"mdi:white-balance-sunny","#ffc83d"));
+      card.append(measurements);if(item.energy)card.append(this._usageEnergy(item));
+      for(const [key,fr,en] of [["temperature","Température","Temperature"],["status","État","Status"]])if(item[key]){const row=this._node("p",undefined,"note"),value=this._node("span");this._bind(value,item[key]);row.append(this._t(fr,en)+" : ",value);card.append(row);}
+      this._equipmentActions(card,item,"photovoltaic");grid.append(card);
+    }
+    if(!grid.childElementCount)grid.append(this._node("p",this._t("Ajoutez vos micro-onduleurs, onduleurs DC ou hybrides depuis leurs entités HA existantes.","Add microinverters, DC or hybrid inverters using existing HA entities."),"note"));root.append(grid);return root;
+  }
+  _routerCard(config) {
+    const root=this._node("section",undefined,"card router-card"),details=this._node("details",undefined,"router-settings");root.append(this._node("h2",config.name),this._node("p","F1ATB · "+(config.router_output||"ssr").toUpperCase(),"note"));
+    if(config.power)root.append(this._metricTile(this._t("Puissance routée mesurée","Measured routed power"),config.power,"mdi:white-balance-sunny","#ffa000"));
+    if(config.energy)root.append(this._usageEnergy(config),this._usageCost(config));
+    for(const [key,fr,en] of [["temperature","Température","Temperature"],["status","État","Status"]])if(config[key]){const line=this._node("p",undefined,"note"),value=this._node("span");this._bind(value,config[key]);line.append(this._t(fr,en)+" : ",value);root.append(line);}
+    if(!config.power&&!config.energy&&!config.status)root.append(this._node("p",this._t("Mesures non associées : aucune puissance supposée.","No readings mapped: no assumed power."),"note"));details.append(this._node("summary",this._t("Paramétrage F1ATB","F1ATB settings")));
+    details.append(this._node("p",this._t("Commandes MQTT manuelles V15+ : temporaires, non sauvegardées par le routeur. Vérifiez le firmware et le retour d’état. Les horaires complets, sécurités et paramètres réseau restent gérés dans la page native.","Manual V15+ MQTT commands: temporary, not saved by the router. Check firmware and state feedback. Full schedules, protections and network settings remain on the native page."),"note"));
+    if(config.router_url){const link=this._node("a",this._t("Ouvrir la page du routeur","Open router page"));link.href=config.router_url;link.target="_blank";link.rel="noopener noreferrer";details.append(link);}
+    const doc=this._node("a",this._t("Documentation officielle F1ATB","Official F1ATB documentation"));doc.href="https://f1atb.fr/fr/documentation-routeur-photovoltaique-f1atb/pages-web-ihm/action/actions-via-mqtt/";doc.target="_blank";doc.rel="noopener noreferrer";details.append(this._node("p"));details.append(doc);
+    if(!config.router_mqtt_enabled){details.append(this._node("p",this._t("Associez le topic de l’action et activez volontairement les commandes dans Modifier. Dans F1ATB, activer la souscription au forçage des actions via MQTT.","Map the action topic and explicitly enable commands in Edit. Enable MQTT action forcing subscription in F1ATB."),"note"));root.append(details);return root;}
+    const form=this._node("form",undefined,"settings-form"),fields={};
+    const add=(key,label,type="number",options=null)=>{const row=this._node("label",label),el=this._node(options?"select":"input");if(options){for(const option of options){const o=this._node("option",option);o.value=option;el.append(o);}}else{el.type=type;el.step="1";}el.setAttribute("aria-label",label);fields[key]=el;row.append(el);form.append(row);return el;};
+    const minutes=add("minutes",this._t("Durée du forçage (minutes)","Override duration (minutes)"));minutes.min=1;minutes.max=1440;minutes.value=30;minutes.required=true;
+    const period=add("period",this._t("Index de période F1ATB (0–7)","F1ATB period index (0–7)"));period.min=0;period.max=7;period.value=0;period.required=true;
+    const modes={ssr:["Inactif","OnOff","Demi","Multi","Train"],triac:["Inactif","Decoupe","Demi","Multi","Train"],pwm:["Inactif","PWM"]};add("mode",this._t("Mode immédiat de l’action (facultatif)","Immediate action mode (optional)"),"text",["",...(modes[config.router_output||"ssr"]||[])]);
+    for(const [key,fr,en,min,max] of [["opening_max","Ouverture maximale (%)","Maximum opening (%)",0,100],["threshold_on","Seuil On (W)","On threshold (W)",-100000,100000],["threshold_off","Seuil Off (W)","Off threshold (W)",-100000,100000]]){const input=add(key,this._t(fr,en));input.min=min;input.max=max;}
+    const feedback=this._node("p",undefined,"note");feedback.setAttribute("role","status");let busy=false;const buttons=[];
+    form.addEventListener("submit",event=>event.preventDefault());
+    const send=async(action)=>{if(busy||!this._hass?.user?.is_admin)return;let values={};if(action==="force_on"||action==="force_off"){if(!minutes.reportValidity())return;values={minutes:Number(minutes.value)};}else if(action==="parameters"){for(const key of ["period","mode","opening_max","threshold_on","threshold_off"])if(!fields[key].reportValidity())return;values.period=Number(period.value);for(const key of ["mode","opening_max","threshold_on","threshold_off"])if(fields[key].value!=="")values[key]=key==="mode"?fields[key].value:Number(fields[key].value);if(Object.keys(values).length===1){feedback.textContent=this._t("Choisissez au moins un réglage à appliquer.","Choose at least one setting to apply.");return;}}
+      busy=true;for(const b of buttons)b.disabled=true;try{await this._hass.callWS({type:"ehome_ems/router_command",entry_id:this._panel.config.entry_id,identifier:config.id,revision:this._snapshotData.revision,action,values});feedback.textContent=this._t("Ordre MQTT publié, réception par le routeur non confirmée. Contrôlez ses mesures et sa page native.","MQTT command published; router receipt not confirmed. Check readings and its native page.");}catch{feedback.textContent=this._t("Commande refusée ou publication MQTT impossible. Vérifiez la configuration et actualisez.","Command rejected or MQTT publication failed. Check settings and refresh.");}finally{busy=false;for(const b of buttons)b.disabled=!this._hass?.user?.is_admin;}};
+    for(const [action,fr,en] of [["force_on","Forcer On temporairement","Temporary On"],["force_off","Forcer Off temporairement","Temporary Off"],["release","Libérer le forçage","Release override"],["parameters","Appliquer les réglages MQTT","Apply MQTT settings"]]){const button=this._button(this._t(fr,en),()=>send(action));button.disabled=!this._hass?.user?.is_admin;buttons.push(button);form.append(button);}
+    details.append(this._node("p",this._t("L’index vise une période déjà créée sur le routeur. Le mode concerne l’action et peut prendre effet immédiatement, indépendamment de cette période.","The index targets an existing router period. Mode affects the action and may take effect immediately, independently of that period."),"note"),form,feedback);root.append(details);return root;
+  }
   _loads(snapshot, appliances) {
     const root=this._node("section",undefined,"stack");
     root.append(this._node("h2",appliances?this._t("Mes Appareils","My Appliances"):this._t("Usages","Loads")),
@@ -496,7 +536,7 @@ export class EhomeEmsPanel extends BaseElement {
     const grid=this._node("div",undefined,"cards");
     const usages=(snapshot.flow?.usages||[]).filter(u => (u.kind === "appliance") === appliances);
     for(const u of usages) {
-      if(u.kind === "solar_router") { const card=this._vessel(u,true);this._equipmentActions(card,u,appliances?"appliances":"usages");grid.append(card);continue; }
+      if(["solar_router","water_heater"].includes(u.kind)) { const card=u.kind==="solar_router"&&u.router_type==="f1atb"?this._routerCard(u):this._vessel(u,true);this._equipmentActions(card,u,appliances?"appliances":"usages");grid.append(card);continue; }
       if(u.kind === "ev_charger") {const card=this._charger(u);this._equipmentActions(card,u,"usages");grid.append(card);continue;}
       const tile=this._metricTile(u.name,u.power,productIcon(u),this._tone(u.power));
       tile.classList.add("appliance-card");
@@ -564,7 +604,7 @@ export class EhomeEmsPanel extends BaseElement {
     details.append(main,direction,mode,thermal?this._usageEnergy(config):energy,thermal?this._usageCost(config):caption);
     if(!thermal)details.append(autonomy);
     if(thermal)details.append(autonomy);else details.append(this._node("p",`${config.role === "active"?this._t("Active","Active"):this._t("Secours","Backup")} · ${config.coupling?.toUpperCase()}`,"note"));
-    if(thermal)details.append(this._manualControl(config));
+    if(thermal&&(config.router_type!=="f1atb"||config.control_enabled))details.append(this._manualControl(config));
     layout.append(visual,details);card.append(layout);return card;
   }
   _storage(snapshot) {
@@ -572,7 +612,7 @@ export class EhomeEmsPanel extends BaseElement {
     const grid=this._node("div",undefined,"cards");
     for(const b of snapshot.flow?.batteries||[]){const card=this._vessel(b);this._equipmentActions(card,b,"batteries");grid.append(card);}
     if(this._hass?.user?.is_admin)root.append(this._button(this._t("Ajouter une batterie","Add battery"),()=>this._settingsDialog("batteries")));
-    for(const u of snapshot.flow?.usages||[])if(u.kind==="solar_router"){const card=this._vessel(u,true);this._equipmentActions(card,u,"usages");grid.append(card);}
+    for(const u of snapshot.flow?.usages||[])if(["solar_router","water_heater"].includes(u.kind)&&(u.kind==="water_heater"||u.router_type!=="f1atb")){const card=this._vessel(u,true);this._equipmentActions(card,u,"usages");grid.append(card);}
     if(!grid.childElementCount)grid.append(this._integrationLink(this._t("Associer des batteries ou un cumulus","Map batteries or a water heater")));
     root.append(grid);return root;
   }
@@ -607,7 +647,7 @@ export class EhomeEmsPanel extends BaseElement {
       const entity=snapshot.daily?.[key],tile=this._metricTile(this._t(fr,en),entity,icon,color);
       if(key!=="export")tile.append(this._cost(entity,"today"));else tile.append(this._node("p",this._t("Revente non valorisée","Export revenue not valued"),"note"));grid.append(tile);
     }
-    for(const usage of snapshot.flow?.usages || []) if(usage.kind === "solar_router" && usage.energy_period !== "session") {
+    for(const usage of snapshot.flow?.usages || []) if(["solar_router","water_heater"].includes(usage.kind) && usage.energy_period !== "session") {
       const tile=this._metricTile(usage.name,usage.energy,"mdi:water-boiler","#ffa000",()=>this._dayEnergy(usage));tile.append(this._usageCost(usage));grid.append(tile);
     }
     grid.append(this._weatherCard(snapshot));
@@ -645,7 +685,7 @@ export class EhomeEmsPanel extends BaseElement {
     const loads = this._node("div", undefined, "load-grid");
     for (const usage of flow.usages || []) loads.append(this._metricTile(usage.name, usage.power,
       productIcon(usage),
-      usage.kind === "solar_router" ? "#e9a23d" : usage.kind === "ev_charger" ? "#ab78e2" : "#6eafff"));
+      ["solar_router","water_heater"].includes(usage.kind) ? "#e9a23d" : usage.kind === "ev_charger" ? "#ab78e2" : "#6eafff"));
     if (!flow.usages?.length) loads.append(this._node("p", this._t("Ajoutez des usages dans la configuration de l’intégration.", "Add loads in integration configuration."), "note"));
     secondary.append(loads); grid.append(secondary);
     const quality = this._node("section", undefined, "card quality-panel");
@@ -854,17 +894,17 @@ export class EhomeEmsPanel extends BaseElement {
   _settingsShortcuts(snapshot) {
     const root=this._node("div",undefined,"settings-shortcuts");
     for(const [section,fr,en] of [["grid","Réseau","Grid"],["solar","Solaire","Solar"],["home","Conso Maison","Home consumption"],["daily","Compteurs du jour et tarif","Daily counters and tariff"]])root.append(this._button(this._t(fr,en),()=>this._settingsDialog(section)));
-    for(const [section,fr,en] of [["batteries","Ajouter une batterie","Add battery"],["usages","Ajouter un usage","Add load"],["appliances","Ajouter un appareil","Add appliance"]])root.append(this._button(this._t(fr,en),()=>this._settingsDialog(section)));
-    for(const [section,collection] of [["batteries","batteries"],["usages","usages"]])for(const [id,equipment] of Object.entries(snapshot.settings?.[collection]||{}))root.append(this._button(this._t("Modifier ","Edit ")+equipment.name,()=>this._settingsDialog(equipment.kind==="appliance"?"appliances":section,id)));
+    for(const [section,fr,en] of [["photovoltaic","Ajouter un équipement photovoltaïque","Add PV equipment"],["batteries","Ajouter une batterie","Add battery"],["usages","Ajouter un usage","Add load"],["appliances","Ajouter un appareil","Add appliance"]])root.append(this._button(this._t(fr,en),()=>this._settingsDialog(section)));
+    for(const [section,collection] of [["photovoltaic","photovoltaic"],["batteries","batteries"],["usages","usages"]])for(const [id,equipment] of Object.entries(snapshot.settings?.[collection]||{}))root.append(this._button(this._t("Modifier ","Edit ")+equipment.name,()=>this._settingsDialog(equipment.kind==="appliance"?"appliances":section,id)));
     return root;
   }
   _settingsDialog(section,identifier=null,remove=false) {
     if(!this._hass?.user?.is_admin || this._dialog?.open)return;
-    const settings=this._snapshotData?.settings || {},collection=section==="batteries"?"batteries":"usages";
-    const equipment=["batteries","usages","appliances"].includes(section);
+    const settings=this._snapshotData?.settings || {},collection=section==="batteries"?"batteries":section==="photovoltaic"?"photovoltaic":"usages";
+    const equipment=["batteries","usages","appliances","photovoltaic"].includes(section);
     const current=equipment?settings[collection]?.[identifier]||{}:section==="daily"?{...settings.daily,tariff_eur_kwh:settings.tariff_eur_kwh,weather_entity:settings.weather_entity}:settings;
     const dialog=this._node("dialog");this._dialog=dialog;
-    const names={grid:this._t("Réseau","Grid"),solar:this._t("Solaire","Solar"),home:this._t("Conso Maison","Home consumption"),daily:this._t("Compteurs du jour et tarif","Daily counters and tariff"),batteries:this._t("Batterie","Battery"),usages:this._t("Usage","Load"),appliances:this._t("Appareil","Appliance")};
+    const names={photovoltaic:this._t("Équipement photovoltaïque","PV equipment"),grid:this._t("Réseau","Grid"),solar:this._t("Solaire","Solar"),home:this._t("Conso Maison","Home consumption"),daily:this._t("Compteurs du jour et tarif","Daily counters and tariff"),batteries:this._t("Batterie","Battery"),usages:this._t("Usage","Load"),appliances:this._t("Appareil","Appliance")};
     const title=this._node("h2",remove?this._t("Retirer du suivi","Remove monitoring"):names[section]);title.id="settings-title";dialog.setAttribute("aria-labelledby",title.id);dialog.append(title);
     const form=this._node("form",undefined,"settings-form"),controls={};
     const add=(key,fr,en,type="text",options=null,units=null,initial=current[key])=>{
@@ -883,13 +923,27 @@ export class EhomeEmsPanel extends BaseElement {
     const source=(key,fr,en,units=["W","kW"])=>add(key,fr,en,"text",null,units);
     if(remove)dialog.append(this._node("p",this._t("Retirer uniquement l’association EMS de ","Remove only the EMS mapping of ")+(current.name||"")+this._t(" ? Aucun appareil ni capteur source ne sera supprimé.","? No device or source sensor will be deleted.")));
     else {
-      if(equipment){add("name","Nom","Name");if(section==="batteries"){
+      if(equipment){add("name","Nom","Name");if(section==="photovoltaic"){
+        add("kind","Type d’équipement","Equipment type","select",[["micro_inverter",this._t("Micro-onduleur","Microinverter")],["dc_inverter",this._t("Onduleur DC","DC inverter")],["hybrid_inverter",this._t("Onduleur hybride","Hybrid inverter")]],null,current.kind||"micro_inverter");
+        add("manufacturer","Fabricant","Manufacturer");add("model","Modèle","Model");const rated=add("nominal_power_w","Puissance nominale (W, facultatif)","Nominal power (W, optional)","number");rated.min=1;rated.max=1000000;
+        for(const [key,fr,en] of [["power","Puissance sortie AC","AC output power"],["dc_power","Puissance photovoltaïque DC","DC photovoltaic power"],["charge_power","Charge batterie (hybride)","Battery charge (hybrid)"],["discharge_power","Décharge batterie (hybride)","Battery discharge (hybrid)"]])source(key,fr,en);
+        source("energy","Énergie produite","Produced energy",["Wh","kWh"]);add("energy_period","Période du compteur","Counter period","select",[["today",this._t("Aujourd’hui","Today")],["total",this._t("Cumul total","Lifetime total")],["session",this._t("Session","Session")]],null,current.energy_period||"total");source("temperature","Température","Temperature",["°C","°F"]);source("status","État","Status",[]);
+        form.append(this._node("p",this._t("Suivi uniquement : ces mesures ne sont pas agrégées dans le total solaire et ne modifient pas le bilan Maison. Distinguez les sorties AC, entrées DC et flux batterie d’un hybride.","Monitoring only: readings are not aggregated into solar total or Home balance. Distinguish AC outputs, DC inputs and hybrid battery flows."),"note"));
+      }else if(section==="batteries"){
         add("role","Rôle","Role","select",[["backup",this._t("Secours","Backup")],["active",this._t("Active","Active")]],null,current.role||"backup");
         add("coupling","Couplage","Coupling","select",[["ac","AC"],["dc","DC"]],null,current.coupling||"ac");add("capacity_kwh","Capacité utile (kWh, facultatif)","Usable capacity (kWh, optional)","number");
         add("remaining_energy_is_stock","Je confirme que le capteur d’énergie représente le stock restant, même si sa classe HA indique un cumul","I confirm the energy sensor is remaining stock even if HA class says total","checkbox");
         source("charge_power","Puissance de charge","Charge power");source("discharge_power","Puissance de décharge","Discharge power");source("soc","État de charge (%)","State of charge (%)",["%"]);source("remaining_energy","Énergie restante mesurée","Measured remaining energy",["Wh","kWh"]);
       }else{
-        if(section==="usages")add("kind","Type d’usage","Load type","select",[["solar_router",this._t("Routeur / cumulus","Router / water heater")],["ev_charger",this._t("Borne de recharge","EV charger")],["other",this._t("Autre usage","Other load")]],null,current.kind||"solar_router");
+        if(section==="usages")add("kind","Type d’usage","Load type","select",[["solar_router",this._t("Routeur solaire","Solar router")],["water_heater",this._t("Cumulus / chauffe-eau","Water heater")],["ev_charger",this._t("Borne de recharge","EV charger")],["other",this._t("Autre usage","Other load")]],null,current.kind||"solar_router");
+        if(section==="usages"){
+          add("router_type","Profil du routeur solaire","Solar router profile","select",[["generic",this._t("Générique / cumulus existant","Generic / existing water heater")],["f1atb","F1ATB"]],null,current.router_type||"generic");
+          add("router_output","Sortie F1ATB","F1ATB output","select",[["ssr","SSR"],["triac","Triac"],["pwm","PWM"]],null,current.router_output||"ssr");
+          add("router_url","Page web du routeur (facultatif)","Router web page (optional)","url");add("router_mqtt_topic","Topic MQTT exact : nom routeur/nom action","Exact MQTT topic: router name/action name");
+          add("router_protocol_confirmed","Je confirme le protocole F1ATB V15+ et la souscription au forçage MQTT activée sur le routeur","I confirm F1ATB V15+ protocol and enabled MQTT forcing subscription","checkbox");
+          add("router_mqtt_enabled","Activer les commandes MQTT manuelles F1ATB","Enable manual F1ATB MQTT commands","checkbox");
+          form.append(this._node("p",this._t("Aucun identifiant MQTT à saisir ici : EMS utilise l’intégration MQTT HA. Aucun ordre à l’enregistrement. Les commandes sont temporaires ; la configuration complète reste sur le routeur.","No MQTT credentials here: EMS uses HA MQTT. Saving sends no command. Commands are temporary; full configuration remains on the router."),"note"));
+        }
         add("icon","Icône du produit","Product icon","select",PRODUCT_ICONS.map(icon=>[icon,icon==="auto"?this._t("Automatique selon le nom","Automatic by name"):icon]),null,current.icon||"auto");
         source("power","Puissance (W/kW)","Power (W/kW)");source("energy","Énergie (Wh/kWh)","Energy (Wh/kWh)",["Wh","kWh"]);
         add("energy_period","Période du compteur d’énergie","Energy counter period","select",[["today",this._t("Aujourd’hui (remis à zéro chaque jour)","Today (resets daily)")],["session",this._t("Session","Session")],["total",this._t("Compteur cumulé","Lifetime counter")]],null,current.energy_period||"total");
@@ -923,6 +977,7 @@ export class EhomeEmsPanel extends BaseElement {
         const sync=()=>{homeInput.disabled=mode.value==="calculated";};mode.addEventListener("change",sync);sync();
       }else for(const [key,fr,en] of section==="solar"?[["solar_power","Production solaire","Solar production"]]:[["grid_power","Réseau signé (facultatif)","Signed grid (optional)"],["grid_import","Import réseau","Grid import"],["grid_export","Export réseau","Grid export"]])source(key,fr,en);
     }
+    if(section==="usages"&&!remove){const syncRouter=()=>{const router=controls.kind.value==="solar_router",f1atb=router&&controls.router_type.value==="f1atb";controls.router_type.closest("label").hidden=!router;for(const key of ["router_output","router_url","router_mqtt_topic","router_mqtt_enabled","router_protocol_confirmed"])controls[key].closest("label").hidden=!f1atb;if(!f1atb)controls.router_mqtt_enabled.checked=false;};controls.kind.addEventListener("change",syncRouter);controls.router_type.addEventListener("change",syncRouter);syncRouter();}
     const message=this._node("p","","note bad");message.setAttribute("role","status");
     const actions=this._node("div",undefined,"actions"),cancel=this._button(this._t("Annuler","Cancel"),()=>dialog.close());cancel.disabled=false;
     const revision=this._snapshotData.revision;
@@ -1167,7 +1222,7 @@ export class EhomeEmsPanel extends BaseElement {
     for (const usage of config.usages || []) {
       const mdi = productIcon(usage);
       const el = tile("flow-usage", usage.name, mdi, usage.power);
-      el.style.color = usage.kind === "solar_router" ? "#ffab4d" : usage.kind === "ev_charger" ? "#c18aff" : "#edf4ff";
+      el.style.color = ["solar_router","water_heater"].includes(usage.kind) ? "#ffab4d" : usage.kind === "ev_charger" ? "#c18aff" : "#edf4ff";
       usages.append(el);
     }
     if (!config.usages?.length) usages.append(this._node("p", this._t("Aucun usage associé. Ajoutez le cumulus, le routeur ou le véhicule dans Configurer.", "No tracked loads. Add the water heater, router or vehicle in Configure."), "flow-note"));

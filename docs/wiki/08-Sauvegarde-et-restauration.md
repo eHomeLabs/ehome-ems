@@ -11,8 +11,8 @@ La sauvegarde HA doit conserver la configuration de l'entrée EMS et les donnée
 | Installation ou mise à jour du code Python | Oui : HA Core doit charger le nouveau code |
 | Affichage resté en cache | Recharger le navigateur |
 
-Pour migrer de la b15 à la 0.2.2, conserver l'entrée, mettre à jour puis redémarrer Core une fois et recharger le navigateur. Aucun redémarrage du système hôte n'est demandé.
+Pour migrer de la b15 à la 0.2.3, conserver l'entrée, mettre à jour puis redémarrer Core une fois et recharger le navigateur. Aucun redémarrage du système hôte n'est demandé.
 
-Pour revenir à la b15, réinstaller ses fichiers et redémarrer HA Core. Les nouveaux champs 0.2.2 sont facultatifs ; désactiver les commandes et conserver une sauvegarde compatible avant de revenir à une ancienne version. Conserver une sauvegarde compatible pour les futures évolutions de format.
+Pour revenir à la b15, réinstaller ses fichiers et redémarrer HA Core. Les nouveaux champs 0.2.3 sont facultatifs ; désactiver les commandes et conserver une sauvegarde compatible avant de revenir à une ancienne version. Conserver une sauvegarde compatible pour les futures évolutions de format.
 
 [Installation et retour arrière](../INSTALLATION.md)

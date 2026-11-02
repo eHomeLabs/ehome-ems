@@ -10,6 +10,7 @@ from homeassistant.exceptions import HomeAssistantError
 from .dashboard_service import dashboard_snapshot, power_scale
 from .const import DOMAIN, VERSION
 from .manual_control import async_control
+from .f1atb import async_router_command
 from .source_editor import remap_source
 from .simulation import save_plan, allocate
 from .settings import update_settings, SettingsError
@@ -62,7 +63,7 @@ def websocket_remap(hass, connection, msg):
 @websocket_api.require_admin
 @websocket_api.websocket_command({
     "type": "ehome_ems/manage_settings", "entry_id": str, "revision": str,
-    "section": vol.In(["grid", "solar", "home", "daily", "batteries", "usages", "appliances"]),
+    "section": vol.In(["grid", "solar", "home", "daily", "batteries", "usages", "appliances", "photovoltaic"]),
     "action": vol.In(["save", "remove"]), vol.Optional("identifier"): vol.Any(str, None),
     vol.Optional("values", default={}): dict,
 })
@@ -89,6 +90,7 @@ async def async_setup_panel_domain(hass):
     websocket_api.async_register_command(hass, websocket_remap)
     websocket_api.async_register_command(hass, websocket_manage_settings)
     websocket_api.async_register_command(hass, websocket_manual_control)
+    websocket_api.async_register_command(hass, websocket_router_command)
     websocket_api.async_register_command(hass, websocket_save_simulation)
     websocket_api.async_register_command(hass, websocket_simulate)
 
@@ -170,3 +172,20 @@ async def websocket_manual_control(hass, connection, msg):
         connection.send_error(msg["id"], "command_failed", "Home Assistant could not execute the manual command.")
     else:
         connection.send_result(msg["id"], result)
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({"type":"ehome_ems/router_command","entry_id":str,"identifier":str,"revision":str,"action":vol.In(["force_on","force_off","release","parameters"]),"values":dict})
+@websocket_api.async_response
+async def websocket_router_command(hass, connection, msg):
+    entry=hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain!=DOMAIN:
+        connection.send_error(msg["id"],"not_ready","eHome EMS is not ready.")
+        return
+    try:
+        result=await async_router_command(hass,entry,msg["identifier"],msg["revision"],msg["action"],msg["values"],Context(user_id=connection.user.id))
+    except ValueError as error:
+        connection.send_error(msg["id"],str(error),"Router command rejected; check saved configuration.")
+    except HomeAssistantError:
+        connection.send_error(msg["id"],"command_failed","MQTT publication failed.")
+    else:connection.send_result(msg["id"],result)

@@ -1,6 +1,6 @@
-# Feuille de route après la 0.2.2
+# Feuille de route après la 0.2.3
 
-La 0.2.2 consolide le socle d'observation validé avec la b15. Le numéro 0.2.2 ne signifie pas que tout le périmètre produit est livré.
+La 0.2.3 consolide le socle d'observation validé avec la b15. Le numéro 0.2.3 ne signifie pas que tout le périmètre produit est livré.
 
 | Domaine | Disponible | Suite envisagée |
 | --- | --- | --- |

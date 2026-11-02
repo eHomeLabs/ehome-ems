@@ -1,4 +1,4 @@
-# Le panneau eHome EMS 0.2.2
+# Le panneau eHome EMS 0.2.3
 
 Le panneau géré apparaît dans la barre latérale HA après confirmation de l'assistant. Il suit les associations et respecte les droits administrateur pour les modifications. Aucun YAML à copier, ni intégration graphique externe à installer.
 
@@ -7,11 +7,12 @@ Le panneau géré apparaît dans la barre latérale HA après confirmation de l'
 | 1 | Vue d'ensemble | Puissances, tendances, flux et diagnostic Conso Maison |
 | 2 | Mes Appareils | Ajout et modification directs, énergie quotidienne et cumul source |
 | 3 | Stockage | Batteries distinctes, rôle actif/secours, charge/décharge, SOC et stock |
-| 4 | Usages | Routeur/cumulus, borne et sous-consommations |
-| 5 | Historique | Courbes 24 h par source et ouverture du détail HA |
-| 6 | Aujourd'hui | Compteurs journaliers, coûts estimatifs, ratios apparents et météo |
-| 7 | Stratégie | Situation observée et scénarios manuels sans commande |
-| 8 | Configuration | Raccourcis d'édition, versions et qualité des associations |
+| 4 | Photovoltaïque | Micro-onduleurs, mesures AC/DC et hybrides |
+| 5 | Usages | Routeur/cumulus, borne et sous-consommations |
+| 6 | Historique | Courbes 24 h par source et ouverture du détail HA |
+| 7 | Aujourd'hui | Compteurs journaliers, coûts estimatifs, ratios apparents et météo |
+| 8 | Stratégie | Situation observée et scénarios manuels sans commande |
+| 9 | Configuration | Raccourcis d'édition, versions et qualité des associations |
 
 ![Vue d'ensemble](screenshots/overview.png)
 

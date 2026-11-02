@@ -262,7 +262,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.2.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.3.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -277,9 +277,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.2"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-2"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.2.js"
+                assert snapshot["version"] == "0.2.3"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-3"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.3.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -430,6 +430,33 @@ async def validate(config_dir):
                 hass.states.async_set("switch.sim_manual", "unavailable")
                 await command({**payload,"expected_state":"on","desired_on":False}, success=False)
                 assert len(manual_calls) == 1
+                # PV equipment is monitoring-only, even if its source is the solar total.
+                from custom_components.ehome_ems.photovoltaic import photovoltaic_schema
+                json.dumps(to_field_list(photovoltaic_schema({}), custom_serializer=cv.custom_serializer))
+                previous_home = mirror("home_power")[1].state
+                pv_created = await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"photovoltaic","action":"save","values":{"name":"Demo hybrid","kind":"hybrid_inverter","power":"sensor.sim_pv_new","energy_period":"total"}})
+                await hass.async_block_till_done()
+                assert mirror("home_power")[1].state == previous_home
+                pv_snapshot = await command({"type":"ehome_ems/dashboard","entry_id":entry.entry_id})
+                assert pv_snapshot["flow"]["photovoltaic"][0]["id"] == pv_created["identifier"]
+                mqtt_calls = []
+                async def simulated_publish(call):mqtt_calls.append(call)
+                hass.services.async_register("mqtt","publish",simulated_publish)
+                router_created = await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"usages","action":"save","values":{"name":"Demo F1ATB","kind":"solar_router","power":"sensor.sim_coffee","included_in_home":True,"router_type":"f1atb","router_mqtt_topic":"demo_router/SSR","router_protocol_confirmed":True,"router_mqtt_enabled":True}} , success=False)
+                # Use a distinct source: duplicate consumption mappings must still be rejected.
+                hass.states.async_set("sensor.sim_router_extra","100",{"unit_of_measurement":"W"})
+                router_created = await command({"type":"ehome_ems/manage_settings","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"section":"usages","action":"save","values":{"name":"Demo F1ATB","kind":"solar_router","power":"sensor.sim_router_extra","included_in_home":True,"router_type":"f1atb","router_mqtt_topic":"demo_router/SSR","router_protocol_confirmed":True,"router_mqtt_enabled":True}})
+                await hass.async_block_till_done()
+                router_identifier=router_created["identifier"]
+                router_msg={"type":"ehome_ems/router_command","entry_id":entry.entry_id,"identifier":router_identifier,"revision":entry.modified_at.isoformat(),"action":"force_on","values":{"minutes":30}}
+                assert not mqtt_calls
+                await command(router_msg)
+                assert len(mqtt_calls)==1 and not mqtt_calls[0].data["retain"]
+                assert json.loads(mqtt_calls[0].data["payload"])=={"tOnOff":30}
+                assert mqtt_calls[0].context.user_id is not None
+                await command({**router_msg,"action":"parameters","values":{"period":0,"mode":"Decoupe"}},success=False)
+                await command({**router_msg,"action":"release","values":{}})
+                assert json.loads(mqtt_calls[-1].data["payload"])=={"tOnOff":0}
             ordinary = await hass.auth.async_create_user("Simulated reader", group_ids=["system-users"])
             refresh = await hass.auth.async_create_refresh_token(ordinary, client_id="https://example.local")
             access = hass.auth.async_create_access_token(refresh)
@@ -460,6 +487,9 @@ async def validate(config_dir):
                 await ws.send_json({"id":7,"type":"ehome_ems/manual_control","entry_id":entry.entry_id,"identifier":manual_identifier,"revision":entry.modified_at.isoformat(),"desired_on":True,"expected_state":"off"})
                 assert not (await ws.receive_json())["success"]
                 assert len(manual_calls) == 1
+                await ws.send_json({"id":8,**router_msg})
+                assert not (await ws.receive_json())["success"]
+                assert len(mqtt_calls)==2
 
 
         assert await hass.config_entries.async_unload(entry.entry_id)

@@ -199,6 +199,10 @@ class WizardTests(IsolatedAsyncioTestCase):
         self.assertEqual(result["menu_options"][-1], "confirm")
         self.assertIn('<font color="#51d593">[valid]</font>', result["description_placeholders"]["summary"])
 
+    async def test_photovoltaic_collection_is_preserved_in_wizard(self):
+        self.flow._start({'photovoltaic':{'p':{'name':'PV','power':'sensor.pv'}}})
+        self.assertEqual(self.flow._draft['photovoltaic']['p']['power'],'sensor.pv')
+
     async def test_edit_from_review_preserves_other_groups(self):
         await self.walk_to_review()
         result = await self.flow.async_step_home({})

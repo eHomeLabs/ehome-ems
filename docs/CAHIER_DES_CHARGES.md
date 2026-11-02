@@ -1,15 +1,15 @@
 # Cahier des charges eHome EMS
-Référence produit — mise à jour du 1er novembre 2026 ; état livré : 0.2.2
+Référence produit — mise à jour du 1er novembre 2026 ; état livré : 0.2.3
 
 ## Vision
 eHome EMS — Universal Energy Manager. Votre installation. Vos équipements. Votre énergie. Un EMS sur mesure.
 
 Intégration Home Assistant distribuée via HACS, associant un assistant de configuration, un dashboard énergétique généré, des analyses, des prévisions et, sur activation explicite, un pilotage coordonné. Le fonctionnement local de base doit rester indépendant d'un abonnement ou d'une IA distante. Les équipements restent accessibles par leurs intégrations HA existantes.
 
-Ce document distingue le socle livré en 0.2.2 des objectifs futurs. Le suivi en observation, les historiques, le calcul du jour depuis les cumuls et les scénarios manuels sont disponibles. Prévisions énergétiques, conseils avancés et pilotage restent à développer.
+Ce document distingue le socle livré en 0.2.3 des objectifs futurs. Le suivi en observation, les historiques, le calcul du jour depuis les cumuls et les scénarios manuels sont disponibles. Prévisions énergétiques, conseils avancés et pilotage restent à développer.
 
 ## Acquis et banc de validation de référence
-Architecture exclusivement intégration HA, sur l'instance existante. Référence de test RPi4 avec SSD. Version 0.2.2 en observation et rechargement propre des paramètres. Aucune modification implicite des automatisations existantes. Les boutons On/Off manuels 0.2.2 sont distincts de l’observation et de la simulation ; ils exigent une association, une activation explicite et un clic administrateur.
+Architecture exclusivement intégration HA, sur l'instance existante. Référence de test RPi4 avec SSD. Version 0.2.3 en observation et rechargement propre des paramètres. Aucune modification implicite des automatisations existantes. Les boutons On/Off manuels 0.2.3 sont distincts de l’observation et de la simulation ; ils exigent une association, une activation explicite et un clic administrateur.
 
 Sources fonctionnelles : puissance réseau signée, import, export, production solaire et consommation maison. Les unités et le périmètre physique sont contrôlés dans l'assistant ; les identifiants réels restent dans la configuration locale de l'utilisateur.
 
@@ -82,7 +82,7 @@ Lot C — orchestration : simulation puis pilotage ECS/batterie/VE selon capacit
 
 Lot D — optimisation : profils de consommation, scénarios et optimisation avancée facultative. Acceptation : comparaison à une stratégie de référence, temps de calcul mesuré sur RPi4 et fonctionnement du socle sans ce moteur.
 
-Le socle du lot A et une partie des historiques/coûts sont disponibles en 0.2.2. Les lots B à D restent des objectifs au-delà des fonctions explicitement listées dans le README.
+Le socle du lot A et une partie des historiques/coûts sont disponibles en 0.2.3. Les lots B à D restent des objectifs au-delà des fonctions explicitement listées dans le README.
 
 ## Décisions restant à prendre
 Priorités confort/ECS/batterie/VE selon saison ; autonomie ou coût comme objectif par défaut ; seuils et réserve batterie ; rôle précis de l'Aferiy ; périmètre électrique des mesures ; courant maximal réellement autorisé à la borne ; topologies AC/DC du premier lot. Le cadrage s'appuie sur les besoins exprimés et la documentation publique.

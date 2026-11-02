@@ -170,7 +170,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -200,7 +206,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -252,7 +264,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -278,7 +296,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -516,7 +540,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -546,7 +576,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -598,7 +634,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -624,7 +666,13 @@
           "daily_energy_goal_kwh": "Daily energy goal (kWh, optional)",
           "negative_power_tolerance_w": "Negative power tolerance (W)",
           "control_entity": "On/Off control entity",
-          "control_enabled": "Enable manual On/Off"
+          "control_enabled": "Enable manual On/Off",
+          "router_type": "Solar router profile",
+          "router_output": "F1ATB output (SSR / Triac / PWM)",
+          "router_url": "Router web page",
+          "router_mqtt_topic": "Exact topic: router name/action name",
+          "router_mqtt_enabled": "Enable manual F1ATB MQTT commands",
+          "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -709,10 +757,11 @@
     },
     "usage_kind": {
       "options": {
-        "solar_router": "Solar router / water heating",
+        "solar_router": "Solar router",
         "ev_charger": "EV charging",
         "other": "Other load",
-        "appliance": "Appareil suivi"
+        "appliance": "Appareil suivi",
+        "water_heater": "Water heater"
       }
     },
     "usage_energy_period": {
