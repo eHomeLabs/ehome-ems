@@ -77,11 +77,13 @@ async def validate_native_router(hass, entry, command):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
         assert float(hass.states.get(sensor('probe_power')).state)==300
+        from validate_energy_goals_ha import validate_energy_goals
+        await validate_energy_goals(hass, entry, command, identifier, config, writes, forces)
         await command({'type':'ehome_ems/manage_settings','entry_id':entry.entry_id,'revision':entry.modified_at.isoformat(),
             'section':'usages','action':'remove','identifier':identifier,'values':{}})
         await hass.async_block_till_done()
         assert entry.entry_id not in hass.data[DOMAIN]['router_http']
-        assert writes==['/ForceAction','/ParaNew']
+        assert writes==['/ForceAction','/ParaNew','/ForceAction','/ForceAction']
         print('PASS native F1ATB: direct HTTP, secrets redacted, measurements, manual writes, conflict, unload/reload')
     finally:
         await runner.cleanup()

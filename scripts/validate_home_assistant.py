@@ -33,8 +33,10 @@ async def validate(config_dir):
         with socket.socket() as port_socket:
             port_socket.bind(("127.0.0.1", 0))
             port = port_socket.getsockname()[1]
-        config = {"http": {"server_host": "127.0.0.1", "server_port": port}}
+        config = {"http": {"server_host": "127.0.0.1", "server_port": port},
+                  "recorder": {"db_url": "sqlite:///" + hass.config.path("simulated-goal-history.db"), "auto_purge": False, "commit_interval": 0}}
         assert await bootstrap.async_from_config_dict(config, hass) is hass
+        await hass.async_start()
         assert await async_setup_component(hass, "ehome_ems", {})
         hass.states.async_set("sensor.sim_grid", "-250", {"unit_of_measurement": "W", "device_class": "power"})
         hass.states.async_set("sensor.sim_solar", "1.5", {"unit_of_measurement": "kW", "device_class": "power"})
@@ -507,6 +509,12 @@ async def validate(config_dir):
                 assert len(mqtt_calls)==2
                 await ws.send_json({"id":9,"type":"ehome_ems/router_discover","host":"http://router.example.local"})
                 assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":10,"type":"ehome_ems/save_energy_goal","entry_id":entry.entry_id,"identifier":"denied","revision":entry.modified_at.isoformat(),"values":{}})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":11,"type":"ehome_ems/rearm_energy_goal","entry_id":entry.entry_id,"identifier":"denied","revision":entry.modified_at.isoformat()})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":12,"type":"ehome_ems/energy_goals","entry_id":entry.entry_id})
+                assert (await ws.receive_json())["success"]
 
 
         assert await hass.config_entries.async_unload(entry.entry_id)

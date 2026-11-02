@@ -16,6 +16,7 @@ from .const import CONF_USAGES, USAGE_SOURCES, DAILY_SOURCES
 from .usage import normalize_usage
 from .photovoltaic import photovoltaic_errors, photovoltaic_schema, PV_FIELDS
 from .f1atb import router_error, has_router_target
+from .energy_goal import validate_goal
 from .measurement import normalize_power, normalize_battery
 
 GROUPS = {
@@ -129,6 +130,7 @@ class PowerWizard:
         self._draft = {key: (existing or {}).get(key) for key in SOURCES}
         self._draft[CONF_BATTERIES] = deepcopy((existing or {}).get(CONF_BATTERIES, {}))
         self._draft[CONF_USAGES] = deepcopy((existing or {}).get(CONF_USAGES, {}))
+        self._draft["energy_goals"] = deepcopy((existing or {}).get("energy_goals", {}))
         self._draft["photovoltaic"] = deepcopy((existing or {}).get("photovoltaic", {}))
         self._draft["daily"] = deepcopy((existing or {}).get("daily", {}))
         self._draft["tariff_eur_kwh"] = (existing or {}).get("tariff_eur_kwh")
@@ -187,6 +189,15 @@ class PowerWizard:
         errors.update(photovoltaic_errors(self.hass, candidate.get("photovoltaic", {})))
         for identifier, usage in candidate.get(CONF_USAGES, {}).items():
             if reason := router_error(usage):errors[f"usages.{identifier}.router"] = reason
+        goals = candidate.get("energy_goals", {})
+        if not isinstance(goals, dict) or len(goals) > 8:
+            errors["energy_goals"] = "invalid_goal_settings"
+        else:
+            for identifier, goal in goals.items():
+                try:
+                    validate_goal(candidate, identifier, goal, self.hass.states)
+                except (ValueError, TypeError, KeyError) as error:
+                    errors[f"energy_goals.{identifier}"] = str(error)
         return errors
 
     async def _power_step(self, step, next_step, user_input):

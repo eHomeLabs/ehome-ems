@@ -70,6 +70,8 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
             ),
         })
     result["bindings"] = binding_metadata(mapping, entities)
+    runtime = getattr(hass, "data", {}).get(DOMAIN, {}).get("energy_goal_runtime", {}).get(entry.entry_id)
+    result["energy_goals"] = list(runtime.results.values()) if runtime else []
     result["simulation"] = plan(mapping)
     result["simulation_history"] = list(getattr(hass, "data", {}).get(DOMAIN, {}).get("simulation_history", {}).get(entry.entry_id, []))
     result["flow"] = {

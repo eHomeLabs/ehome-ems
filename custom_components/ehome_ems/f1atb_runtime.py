@@ -54,6 +54,9 @@ async def async_http_command(hass, entry, identifier, revision, action, values):
     if (usage.get("kind") != "solar_router" or usage.get("router_type") != "f1atb"
             or usage.get("router_connection") != "http" or not usage.get("router_http_enabled")):
         raise RouterError("router_not_enabled")
+    runtime = hass.data.get(DOMAIN, {}).get("energy_goal_runtime", {}).get(entry.entry_id)
+    if runtime:
+        await runtime.async_manual_override(identifier)
     coordinator = hass.data.get(DOMAIN, {}).get("router_http", {}).get(entry.entry_id, {}).get(identifier)
     if not coordinator:
         raise RouterError("router_unavailable")

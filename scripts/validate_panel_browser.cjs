@@ -146,6 +146,15 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(),0);
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="lovelace/dashboards/create"||call.type==="call_service")),false);
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
+      await page.getByText("Configurer l’objectif · Cumulus",{exact:true}).click();
+      await page.getByLabel("Objectif du cycle (kWh) · Cumulus",{exact:true}).fill("3");
+      await page.getByLabel("Compteur cumulé dédié au cumulus · Cumulus",{exact:true}).selectOption("sensor.demo_water_total");
+      await page.getByLabel("Je confirme que ce compteur est cumulatif et ne se remet pas à zéro à minuit · Cumulus",{exact:true}).check();
+      const goalCommands=await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command"||c.type==="ehome_ems/manual_control").length);
+      await page.getByRole("button",{name:"Enregistrer l’objectif en observation",exact:true}).click();
+      await page.locator(".goal-results").getByText(/À compléter : 2 kWh.*67 min/).waitFor();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command"||c.type==="ehome_ems/manual_control").length),goalCommands);
+      await page.locator(".energy-goals").screenshot({path:path.join(output,viewport.width<600?"energy-goal-mobile.png":"energy-goal-desktop.png")});
       assert.equal(await page.getByText("Aucune commande automatique", { exact: true }).count(), 1);
       await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).check();
       await page.getByRole("spinbutton",{name:"Plafond (W) · Zendure",exact:true}).fill("1000");

@@ -92,6 +92,9 @@ async def async_setup_panel_domain(hass):
     websocket_api.async_register_command(hass, websocket_manual_control)
     websocket_api.async_register_command(hass, websocket_router_command)
     websocket_api.async_register_command(hass, websocket_router_discover)
+    websocket_api.async_register_command(hass, websocket_save_energy_goal)
+    websocket_api.async_register_command(hass, websocket_energy_goals)
+    websocket_api.async_register_command(hass, websocket_rearm_energy_goal)
     websocket_api.async_register_command(hass, websocket_save_simulation)
     websocket_api.async_register_command(hass, websocket_simulate)
 
@@ -205,3 +208,49 @@ async def websocket_router_discover(hass, connection, msg):
         connection.send_error(msg["id"], str(error), "Cannot read F1ATB configuration.")
     else:
         connection.send_result(msg["id"], result)
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({"type":"ehome_ems/save_energy_goal", "entry_id":str,
+    "identifier":str, "revision":str, "values":dict, vol.Optional("remove",default=False):bool})
+@callback
+def websocket_save_energy_goal(hass, connection, msg):
+    from .energy_goal import save_goal
+    entry=hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain!=DOMAIN:
+        connection.send_error(msg["id"],"not_ready","eHome EMS is not ready.")
+        return
+    try:
+        save_goal(hass,entry,msg["identifier"],msg["values"],msg["revision"],msg["remove"])
+    except (ValueError,TypeError,KeyError) as error:
+        connection.send_error(msg["id"],str(error),"Energy goal settings rejected.")
+    else:
+        connection.send_result(msg["id"],{"saved":True})
+
+
+@websocket_api.websocket_command({"type":"ehome_ems/energy_goals", "entry_id":str})
+@callback
+def websocket_energy_goals(hass, connection, msg):
+    entry=hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain!=DOMAIN:
+        connection.send_error(msg["id"],"not_ready","eHome EMS is not ready.")
+        return
+    runtime=hass.data.get(DOMAIN,{}).get("energy_goal_runtime",{}).get(entry.entry_id)
+    connection.send_result(msg["id"],list(runtime.results.values()) if runtime else [])
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({"type":"ehome_ems/rearm_energy_goal", "entry_id":str,
+    "identifier":str,"revision":str})
+@websocket_api.async_response
+async def websocket_rearm_energy_goal(hass, connection, msg):
+    entry=hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain!=DOMAIN or entry.modified_at.isoformat()!=msg["revision"]:
+        connection.send_error(msg["id"],"conflict","Configuration changed.")
+        return
+    runtime=hass.data.get(DOMAIN,{}).get("energy_goal_runtime",{}).get(entry.entry_id)
+    if not runtime or msg["identifier"] not in runtime.goals:
+        connection.send_error(msg["id"],"not_ready","Energy goal is not ready.")
+        return
+    await runtime.async_rearm(msg["identifier"])
+    connection.send_result(msg["id"],{"rearmed":True})

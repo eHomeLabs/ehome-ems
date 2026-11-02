@@ -149,3 +149,7 @@ Un ordre publié ne prouve pas sa réception par le F1ATB. Les réglages MQTT so
 ## Nouveauté 0.2.4 : F1ATB HTTP natif
 
 Le profil F1ATB dans Usages propose une connexion **HTTP local direct**, sans installer une autre intégration F1ATB : adresse IP, lecture des actions, suivi des mesures et commandes manuelles activées explicitement. Forçage temporisé, forme d’onde, ouverture forcée et plafond d’une période compatible sont pris en charge, avec relecture du résultat. Le mode MQTT existant reste disponible. Disponible à partir de la version 0.2.4. [Configuration, périmètres et tests](docs/ROUTEUR_F1ATB.md).
+
+## Évolution en développement : objectif énergétique avant une échéance
+
+Stratégie propose un objectif par cycle (kWh), une heure d’échéance et un créneau de complément réseau. Le manque et le temps de chauffe sont calculés depuis le compteur cumulé du cumulus, en conservant l’énergie reçue avant minuit. L’observation ne commande rien ; un mode automatique F1ATB HTTP peut être activé explicitement, avec des forçages courts et un retour Auto à l’objectif. Cette évolution n’est pas incluse dans l’archive 0.2.5 publiée. [Fonctionnement, limites et tests](docs/OBJECTIFS_ENERGIE.md).

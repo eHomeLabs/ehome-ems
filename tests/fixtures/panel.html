@@ -32,6 +32,7 @@ let simulation={schema_version:1,mode:"manual_scenario",targets:[
  {id:"usage:b",name:"Cumulus",kind:"solar_router",enabled:false,min_w:0,max_w:0},
  {id:"usage:c",name:"Véhicule",kind:"ev_charger",enabled:false,min_w:0,max_w:0}]};
 const simulation_history=[];
+let energyGoalResults=[];
 const settings={weather_entity:"weather.home",home_power:"sensor.home",usages:{d:{name:"Frigo",kind:"appliance",power:"sensor.fridge",energy:"sensor.fridge_energy",energy_period:"today",included_in_home:true}},batteries:{}};
 const flow=window.fixtureFlow={entities:{solar_power:"sensor.pv",home_power:"sensor.home",grid_import:"sensor.import",grid_export:"sensor.export"},
  home_calculated:true,batteries:[{id:"a",name:"Zendure",role:"active",coupling:"ac",charge_power:"sensor.charge",discharge_power:"sensor.discharge",soc:"sensor.soc",remaining_energy:"sensor.stock"},{id:"backup",name:"Aferiy",role:"backup",coupling:"ac",charge_power:"sensor.aferiy_in",discharge_power:"sensor.aferiy_out",soc:"sensor.aferiy_soc",remaining_energy:"sensor.aferiy_stock"}],
@@ -62,7 +63,15 @@ window.fixtureHass={
  callWS:async message=>{
   window.calls.push(message);
   if(message.type==="ehome_ems/dashboard")return {
-    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.5",settings:structuredClone(settings),time_zone:"Europe/Paris",weather_entity:"weather.home",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home",import:"sensor.daily_import",export:"sensor.daily_export"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history)};
+    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.5",settings:structuredClone(settings),time_zone:"Europe/Paris",weather_entity:"weather.home",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home",import:"sensor.daily_import",export:"sensor.daily_export"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history),energy_goals:structuredClone(energyGoalResults)};
+  if(message.type==="ehome_ems/energy_goals")return structuredClone(energyGoalResults);
+  if(message.type==="ehome_ems/save_energy_goal"){
+    if(!fixtureHass.user.is_admin)throw {code:"unauthorized"};
+    settings.energy_goals||={};
+    if(message.remove){delete settings.energy_goals[message.identifier];energyGoalResults=energyGoalResults.filter(g=>g.id!==message.identifier);}
+    else{settings.energy_goals[message.identifier]=message.values;energyGoalResults=[{id:message.identifier,name:settings.usages[message.identifier].name,mode:message.values.mode,goal_kwh:message.values.goal_kwh,consumed_kwh:1,missing_kwh:2,needed_minutes:67,reason:"waiting_window",running:false,deadline:"2026-11-03T06:00:00Z",latest_start:"2026-11-03T04:48:20Z"}];}
+    revision="goal-"+calls.length;return {saved:true};
+  }
   if(message.type==="ehome_ems/manage_settings"){
     if(!fixtureHass.user.is_admin)throw {code:"unauthorized"};
     const key=message.identifier||"new-appliance";
@@ -119,6 +128,7 @@ window.fixtureHass={
   return {id:"simulated-copy"};
  }
 };
+fixtureHass.states["sensor.demo_water_total"]={state:"101",attributes:{unit_of_measurement:"kWh",state_class:"total_increasing",friendly_name:"Compteur cumulé cumulus"}};
 fixtureHass.states["input_number.demo_water_max"]={state:"57",attributes:{unit_of_measurement:"°C",friendly_name:"Maximum eau du jour simulé"}};
 fixtureHass.states["input_number.demo_wrong_unit"]={state:"57",attributes:{unit_of_measurement:"W"}};
 fixtureHass.states["sensor.pv_source"]={state:"1500",attributes:{unit_of_measurement:"W",friendly_name:"Source solaire"}};
