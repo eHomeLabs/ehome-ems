@@ -45,6 +45,14 @@ class SourceEditorTests(TestCase):
         helper.dashboard_snapshot = lambda *args: {"bindings": self.editor.binding_metadata(
             self.entry.options or self.entry.data, {"solar_power": "sensor.mirror", "home_power": "sensor.home_mirror"})}
 
+    def test_temperature_remapping_offers_helpers_without_expanding_power_domains(self):
+        mapping={'usages':{'h':{'name':'Water heater','temperature':'sensor.water'}}}
+        metadata=self.editor.binding_metadata(mapping,{'usage_h_temperature':'sensor.mirror'})
+        self.assertEqual(metadata['sensor.mirror']['domains'],['sensor','input_number'])
+        self.assertEqual(metadata['sensor.mirror']['units'],['°C','°F'])
+        power=self.editor.binding_metadata({'home_power':'sensor.home'},{'home_power':'sensor.power'})
+        self.assertEqual(power['sensor.power']['domains'],['sensor'])
+
     def remap(self, source="sensor.new", revision=None, expected="sensor.old", mirror="sensor.mirror"):
         return self.editor.remap_source(self.hass, self.entry, mirror, source, expected,
                                         revision or self.entry.modified_at.isoformat())

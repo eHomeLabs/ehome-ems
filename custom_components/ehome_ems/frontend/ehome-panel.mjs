@@ -11,7 +11,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.4";
+export const UI_VERSION = "0.2.5";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -661,12 +661,11 @@ export class EhomeEmsPanel extends BaseElement {
     layout.append(visual,details);card.append(layout);return card;
   }
   _storage(snapshot) {
-    const root=this._node("section",undefined,"stack");root.append(this._node("h2",this._t("Stockage électrique et eau chaude","Electrical storage and hot water")));
+    const root=this._node("section",undefined,"stack");root.append(this._node("h2",this._t("Batteries électriques","Electrical batteries")));
     const grid=this._node("div",undefined,"cards");
     for(const b of snapshot.flow?.batteries||[]){const card=this._vessel(b);this._equipmentActions(card,b,"batteries");grid.append(card);}
     if(this._hass?.user?.is_admin)root.append(this._button(this._t("Ajouter une batterie","Add battery"),()=>this._settingsDialog("batteries")));
-    for(const u of snapshot.flow?.usages||[])if(["solar_router","water_heater"].includes(u.kind)&&(u.kind==="water_heater"||u.router_type!=="f1atb")){const card=this._vessel(u,true);this._equipmentActions(card,u,"usages");grid.append(card);}
-    if(!grid.childElementCount)grid.append(this._integrationLink(this._t("Associer des batteries ou un cumulus","Map batteries or a water heater")));
+    if(!grid.childElementCount)grid.append(this._integrationLink(this._t("Associer des batteries électriques","Map electrical batteries")));
     root.append(grid);return root;
   }
   _subscribeWeather() {
@@ -968,7 +967,7 @@ export class EhomeEmsPanel extends BaseElement {
       if(type==="number"){input.step=key==="home_max_age_seconds"?"1":"any";input.min="0";}
       if(key==="name"){input.required=true;input.maxLength=80;}
       if(units){const list=this._node("datalist");list.id="sources-"+key;input.setAttribute("list",list.id);input.autocomplete="off";
-        for(const [id,state] of Object.entries(this._hass?.states||{}))if((key==="status"?["sensor","binary_sensor","switch","select"].includes(id.split(".")[0]):id.startsWith("sensor.")) && (!units.length||units.includes(state.attributes?.unit_of_measurement)) && !this._snapshotData?.bindings?.[id]){
+        for(const [id,state] of Object.entries(this._hass?.states||{}))if((key==="status"?["sensor","binary_sensor","switch","select"].includes(id.split(".")[0]):id.startsWith("sensor.")||(section==="usages"&&key==="temperature"&&id.startsWith("input_number."))) && (!units.length||units.includes(state.attributes?.unit_of_measurement)) && !this._snapshotData?.bindings?.[id]){
           const option=this._node("option");option.value=id;option.label=state.attributes?.friendly_name||id;list.append(option);
         }label.append(list);}
       label.append(input);form.append(label);controls[key]=input;return input;
@@ -1013,7 +1012,10 @@ export class EhomeEmsPanel extends BaseElement {
         add("control_entity","Entité de commande On/Off","On/Off control entity","select",controlOptions,null,current.control_entity||(["switch","input_boolean","light","fan"].includes(current.status?.split(".")[0])?current.status:""));
         add("control_enabled","Activer la commande manuelle On/Off pour cet appareil","Enable manual On/Off for this device","checkbox");
         form.append(this._node("p",this._t("Chaque clic On/Off envoie une commande réelle à l’entité choisie. Aucun scénario ni rafraîchissement ne commande automatiquement cet appareil. L’objectif quotidien mesure la progression d’énergie consommée, pas la chaleur restante.","Each On/Off click sends a real command to the chosen entity. Scenarios and refreshes never command this device automatically. Daily goal tracks consumed energy, not remaining heat."),"note"));
-        if(section==="usages")source("temperature","Température de l’eau (facultatif)","Water temperature (optional)",["°C","°F"]);
+        if(section==="usages"){
+          source("temperature","Température de l’eau (facultatif)","Water temperature (optional)",["°C","°F"]);
+          form.append(this._node("p",this._t("Capteur ou aide numérique input_number, avec une unité °C ou °F. La valeur affichée correspond à la source choisie (température actuelle, maximum du jour, etc.).","Sensor or input_number helper with °C or °F units. The displayed value follows the chosen source (current temperature, daily maximum, etc.)."),"note"));
+        }
         add("included_in_home","Sous-comptage inclus dans le périmètre maison","Submetering included in the home boundary","checkbox");
         form.append(this._node("p",this._t("Le compteur cumulé permet de calculer le jour par différence depuis minuit via History/Recorder. Sans référence à minuit, l’énergie et le coût du jour restent indisponibles. Un compteur de session ne devient pas un compteur journalier.","Lifetime counters can yield daily usage from the midnight difference using History/Recorder. Without a midnight baseline, daily energy and cost remain unavailable. Session energy is not daily energy."),"note"));
       }}else if(section==="daily"){

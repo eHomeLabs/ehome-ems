@@ -100,9 +100,9 @@ def usage_schema(existing):
         vol.Required("included_in_home", default=existing.get("included_in_home", False)): bool,
     }
     for key in USAGE_SOURCES:
-        config = {"domain": ["sensor", "binary_sensor", "switch", "select"]} if key == "status" else {
-            "domain": "sensor", "device_class": "power" if key == "power" else "temperature" if key == "temperature" else "energy"
-        }
+        config = ({"domain": ["sensor", "binary_sensor", "switch", "select"]} if key == "status" else
+                  {"domain": ["sensor", "input_number"]} if key == "temperature" else
+                  {"domain": "sensor", "device_class": "power" if key == "power" else "energy"})
         schema[vol.Optional(key, description={"suggested_value": existing[key]} if existing.get(key) else None)] = (
             selector.EntitySelector(selector.EntitySelectorConfig(**config))
         )

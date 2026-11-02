@@ -35,13 +35,13 @@ jobs:
       - run: python scripts/build_test_package.py
       - uses: actions/upload-artifact@v4
         with:
-          name: ehome-ems-0.2.4
+          name: ehome-ems-0.2.5
           path: |
-            dist/ehome-ems-0.2.4.zip
-            dist/ehome-ems-0.2.4.zip.sha256
+            dist/ehome-ems-0.2.5.zip
+            dist/ehome-ems-0.2.5.zip.sha256
             docs/INSTALLATION.md
             docs/INSTALLATION_BETA.md
-            docs/RELEASE_0_2_4.md
+            docs/RELEASE_0_2_5.md
             docs/REVUE_0_2_1.md
             docs/CONSOMMATION_MAISON.md
             docs/USAGES_OBSERVATION.md
@@ -80,7 +80,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: ehome-ems-0.2.4
+          name: ehome-ems-0.2.5
           path: release-artifact
       - name: Publish tested release
         env:
@@ -93,5 +93,5 @@ jobs:
           else
             release_flags=()
             if [[ "$version" == *b* ]]; then release_flags+=(--prerelease); fi
-            gh release create "v$version" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" "${release_flags[@]}" --title "eHome EMS $version" --notes-file docs/RELEASE_0_2_4.md release-artifact/dist/*.zip release-artifact/dist/*.sha256
+            gh release create "v$version" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" "${release_flags[@]}" --title "eHome EMS $version" --notes-file docs/RELEASE_0_2_5.md release-artifact/dist/*.zip release-artifact/dist/*.sha256
           fi

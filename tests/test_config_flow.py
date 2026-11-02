@@ -38,7 +38,7 @@ class SelectorDouble:
         self.config = config
 
     def __call__(self, value):
-        if not isinstance(value, str) or not value.startswith(("sensor.", "binary_sensor.", "switch.", "select.")):
+        if not isinstance(value, str) or not value.startswith(("sensor.", "binary_sensor.", "switch.", "select.", "input_number.")):
             raise ValueError(value)
         return value
 

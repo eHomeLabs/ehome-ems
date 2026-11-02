@@ -68,7 +68,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-4").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-5").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -134,6 +134,8 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.locator(".flow-links path.active").first().evaluate(el => getComputedStyle(el).animationName), "none");
       await page.getByRole("button", { name: "Stockage", exact: true }).click();
       assert.equal(await page.getByText("18 %", { exact: true }).count(), 1);
+      assert.equal(await page.getByRole("heading",{name:"Cumulus",exact:true}).count(),0);
+      assert.equal(await page.getByRole("button",{name:"Modifier Cumulus",exact:true}).count(),0);
       await page.getByRole("button", { name: "Historique", exact: true }).click();
       await page.locator(".history-chart svg").first().waitFor();
       assert.ok(await page.locator(".history-chart").getByText(/24 h/).count());
@@ -161,7 +163,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.4 · Intégration 0.2.4", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.5 · Intégration 0.2.5", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -292,10 +294,17 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button",{name:"Usages",exact:true}).click();
       await page.locator(".charger-card").getByRole("heading",{name:"Véhicule",exact:true}).waitFor();
       await page.screenshot({path:path.join(output,viewport.width<600?"loads-mobile.png":"loads-desktop.png"),fullPage:true});
+      await page.locator(".vessel-card").filter({has:page.getByRole("heading",{name:"Cumulus",exact:true})}).getByText("72 %",{exact:true}).waitFor();
+      await page.getByRole("button",{name:"Modifier Cumulus",exact:true}).click();
+      assert.equal(await page.locator('#sources-temperature option[value="input_number.demo_water_max"]').count(),1);
+      assert.equal(await page.locator('#sources-temperature option[value="input_number.demo_wrong_unit"]').count(),0);
+      await page.getByLabel("Température de l’eau (facultatif)",{exact:true}).fill("input_number.demo_water_max");
+      await page.getByRole("button",{name:"Enregistrer",exact:true}).click();
+      await page.getByText(/Température : 57 °C/).waitFor();
+      assert.equal(await page.evaluate(()=>fixtureFlow.usages.find(u=>u.id==="b").temperature),"input_number.demo_water_max");
       await page.getByRole("button",{name:"Stockage",exact:true}).click();
       await page.getByRole("heading",{name:"Aferiy",exact:true}).waitFor();
-      await page.locator(".vessel-card").filter({has:page.getByRole("heading",{name:"Cumulus",exact:true})}).getByText("72 %",{exact:true}).waitFor();
-      assert.ok(await page.getByText(/Température : 51 °C/).count());
+      assert.equal(await page.getByRole("heading",{name:"Cumulus",exact:true}).count(),0);
       await page.locator(".stack").first().screenshot({path:path.join(output,viewport.width<600?"storage-mobile.png":"storage-desktop.png")});
       await page.evaluate(() => {fixtureFlow.batteries[1].role="active";});
       await page.getByRole("button",{name:"Actualiser",exact:true}).click();

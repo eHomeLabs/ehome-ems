@@ -4,7 +4,7 @@ Le panneau suit des entités déjà disponibles dans HA. **Mes Appareils** perme
 
 ## Sources et icônes
 
-Nom, puissance W/kW, énergie Wh/kWh, période du compteur, état facultatif et confirmation du périmètre maison. Le cumulus accepte aussi une température d'eau facultative. Au moins une source est nécessaire.
+Nom, puissance W/kW, énergie Wh/kWh, période du compteur, état facultatif et confirmation du périmètre maison. Le cumulus accepte aussi une température d’eau facultative provenant d’un `sensor` ou d’un `input_number`, avec une unité °C ou °F. Une aide numérique sans unité ou portant une autre unité est refusée. La valeur affichée correspond à la source choisie : par exemple, un maximum du jour reste un maximum du jour, pas une température instantanée. Au moins une source est nécessaire.
 
 L'icône native MDI est choisie selon le nom : réfrigérateur, lave-linge, sèche-serviettes, piscine, climatisation, cafetière, etc. Le champ **Icône du produit** permet une sélection manuelle. Les sous-compteurs restent inclus dans Conso Maison ; ils ne sont jamais ajoutés ou soustraits à son bilan.
 
@@ -40,7 +40,7 @@ La tolérance négative est réglable de 0 à 20 W, 5 W par défaut. De −5 W i
 
 ## Objectif énergétique du cumulus
 
-Renseigner l’objectif quotidien en kWh dans Modifier l’usage, accessible aussi depuis la carte du cumulus dans Stockage. Avec 3 kWh d’objectif et 2,16 kWh du jour, l’avancement vaut **72 %**, sans décimale. La silhouette utilise cet avancement et la température reste distincte. Sans objectif, le visuel conserve son échelle de température. Sans énergie quotidienne exploitable, aucun pourcentage n’est inventé. Un compteur de session ne fournit pas cet indicateur journalier.
+Renseigner l’objectif quotidien en kWh dans Modifier l’usage, depuis Usages. Le cumulus reste dans Usages ; Stockage est réservé aux batteries électriques. Avec 3 kWh d’objectif et 2,16 kWh du jour, l’avancement vaut **72 %**, sans décimale. La silhouette utilise cet avancement et la température reste distincte. Sans objectif, le visuel conserve son échelle de température. Sans énergie quotidienne exploitable, aucun pourcentage n’est inventé. Un compteur de session ne fournit pas cet indicateur journalier.
 
 Cet objectif ne mesure pas la chaleur encore disponible : les soutirages et pertes thermiques ne sont pas déduits. Les batteries électriques continuent d’afficher leur SOC mesuré et leur stock réel ; leur capacité n’est pas un objectif journalier.
 

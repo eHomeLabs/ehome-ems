@@ -108,8 +108,9 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
         raise SettingsError("invalid_settings") from error
     # Only entity strings or empty slots can reach the registry.
     from .config_flow import source_items
-    for _, source, _ in source_items(candidate):
-        if source is not None and (not isinstance(source, str) or not source.startswith(("sensor.", "binary_sensor.", "switch.", "select."))):
+    for _, source, role in source_items(candidate):
+        domains = ("sensor.", "binary_sensor.", "switch.", "select.") + (("input_number.",) if role == "usage_temperature" else ())
+        if source is not None and (not isinstance(source, str) or not source.startswith(domains)):
             raise SettingsError("invalid_source")
     validator = PowerWizard()
     validator.hass = hass

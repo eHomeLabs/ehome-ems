@@ -6,9 +6,9 @@
 
 Une intégration Home Assistant pour comprendre la production solaire, la consommation réelle de la maison, les échanges réseau, le stockage et les appareils. Elle utilise les entités déjà présentes dans HA et fournit son panneau sans YAML à recopier.
 
-**[Version 0.2.4](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.4)** — support natif du routeur F1ATB par HTTP local, sans intégration supplémentaire : lecture des actions, mesures et commandes manuelles. Le mode MQTT existant est conservé ; le pilotage automatique reste futur.
+**[Version 0.2.5](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.5)** — températures d’usages depuis un capteur ou une aide `input_number` en °C/°F. Stockage est réservé aux batteries électriques ; le cumulus reste dans Usages. Le support F1ATB HTTP/MQTT et les commandes manuelles sont conservés.
 
-[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Notes 0.2.4](docs/RELEASE_0_2_4.md) · [Feuille de route](docs/ROADMAP.md)
+[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Notes 0.2.5](docs/RELEASE_0_2_5.md) · [Feuille de route](docs/ROADMAP.md)
 
 ## Découvrir le dashboard
 
@@ -80,7 +80,7 @@ Les raccourcis ouvrent directement chaque groupe de réglages. Les mesures valid
 
 ## Installation et mises à jour
 
-Home Assistant **2026.9.1 minimum**. Ajouter `https://github.com/eHomeLabs/ehome-ems` comme dépôt personnalisé HACS / Marketplace, catégorie **Intégration**, puis installer **0.2.4**. L'installation par dépôt personnalisé ne signifie pas validation officielle au catalogue.
+Home Assistant **2026.9.1 minimum**. Ajouter `https://github.com/eHomeLabs/ehome-ems` comme dépôt personnalisé HACS / Marketplace, catégorie **Intégration**, puis installer **0.2.5**. L'installation par dépôt personnalisé ne signifie pas validation officielle au catalogue.
 
 **Première installation ou nouveau code Python :** redémarrer Home Assistant Core, puis ajouter l'intégration ou recharger le navigateur après mise à jour. **Réglages courants :** enregistrer suffit, sans redémarrage global. Recharger seulement l'entrée ne remplace pas les modules Python déjà chargés.
 
@@ -100,7 +100,7 @@ Depuis la b15, conserver l'entrée et ses associations. Aucun serveur supplémen
 | 8 | Stratégie |
 | 9 | Configuration |
 
-| Disponible en 0.2.4 | Suite du projet |
+| Disponible en 0.2.5 | Suite du projet |
 | --- | --- |
 | Assistant et réglages ciblés, normalisation et bilan AC | Topologies hybrides/DC avancées |
 | Flux, tendances, historique 24 h, stockage et appareils | Analyses historiques et comparaisons |
@@ -128,7 +128,7 @@ La CI contrôle les calculs, les paramètres, le cycle reload/unload, le navigat
 - Libellé uniforme **Tendance sur 15 mn** ; flèche horizontale si les données sont insuffisantes. Le calcul compare des moyennes de quarts d’heure, avec historique récent disponible.
 - Petites puissances négatives d’un appareil corrigées en 0 W dans une tolérance configurable, **5 W par défaut**. La valeur brute et l’indication de correction restent dans les attributs du capteur EMS. La source originale, le réseau signé et le calcul Maison ne sont pas modifiés. Une valeur sous la tolérance reste indisponible.
 - Dans **Modifier** un appareil ou usage : choisir une **Entité de commande On/Off** puis cocher **Activer la commande manuelle**. Domaines pris en charge : switch, input_boolean, light et fan. Les boutons affichent l’état réel HA ; un clic administrateur envoie l’action opposée. Aucun capteur de puissance n’est transformé en actionneur.
-- Configurer l’**Objectif énergie quotidien (kWh)** depuis Usages ou Modifier le cumulus dans Stockage. **2,16 kWh / 3 kWh = 72 %**. La silhouette est remplie selon cet objectif ; la température reste indiquée séparément. Ce pourcentage représente l’énergie consommée aujourd’hui, **pas la chaleur restante**, ni le SOC d’une batterie. Le remplissage sature à 100 %, mais le pourcentage affiché peut dépasser l’objectif.
+- Configurer l’**Objectif énergie quotidien (kWh)** depuis Modifier le cumulus dans Usages. **2,16 kWh / 3 kWh = 72 %**. La silhouette est remplie selon cet objectif ; la température reste indiquée séparément. Ce pourcentage représente l’énergie consommée aujourd’hui, **pas la chaleur restante**, ni le SOC d’une batterie. Le remplissage sature à 100 %, mais le pourcentage affiché peut dépasser l’objectif.
 
 [Notes et configuration de la 0.2.3](docs/RELEASE_0_2_3.md)
 

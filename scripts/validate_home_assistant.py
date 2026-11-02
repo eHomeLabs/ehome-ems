@@ -66,11 +66,13 @@ async def validate(config_dir):
         hass.states.async_set("sensor.sim_router_power", "350", {"unit_of_measurement": "W", "device_class": "power"})
         hass.states.async_set("sensor.sim_router_energy", "1250", {"unit_of_measurement": "Wh", "device_class": "energy"})
         hass.states.async_set("switch.sim_router", "on")
+        hass.states.async_set("input_number.sim_water_max", "51", {"unit_of_measurement":"°C"})
         result = await hass.config_entries.flow.async_configure(flow_id, {"next_step_id": "add_usage"})
         json.dumps(to_field_list(result["data_schema"], custom_serializer=cv.custom_serializer))
         result = await hass.config_entries.flow.async_configure(flow_id, {
             "name": "Simulated router", "kind": "solar_router", "power": "sensor.sim_router_power",
             "energy": "sensor.sim_router_energy", "energy_period": "today", "status": "switch.sim_router",
+            "temperature": "input_number.sim_water_max",
             "included_in_home": True,
         })
         assert result["step_id"] == "usages", result
@@ -123,6 +125,17 @@ async def validate(config_dir):
         assert float(mirror(f"usage_{appliance_id}_energy")[1].state) == .8
         assert entry.data["daily"]["home"] == "sensor.sim_fridge_day"
         router_id = next(key for key, usage in entry.data["usages"].items() if usage["kind"] == "solar_router")
+        temp_id, temp = mirror(f"usage_{router_id}_temperature")
+        assert float(temp.state) == 51
+        hass.states.async_set("input_number.sim_water_max", "140", {"unit_of_measurement":"°F"})
+        await hass.async_block_till_done()
+        assert float(hass.states.get(temp_id).state) == 60
+        hass.states.async_set("input_number.sim_water_max", "unavailable", {"unit_of_measurement":"°C"})
+        await hass.async_block_till_done()
+        assert hass.states.get(temp_id).state == "unavailable"
+        hass.states.async_set("input_number.sim_water_max", "52", {"unit_of_measurement":"°C"})
+        await hass.async_block_till_done()
+        assert float(hass.states.get(temp_id).state) == 52
         router_energy_id, router_energy = mirror(f"usage_{router_id}_energy")
         assert float(router_energy.state) == 1.25
         assert router_energy.attributes["energy_period"] == "today"
@@ -262,7 +275,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.4.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.5.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -277,9 +290,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.4"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-4"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.4.js"
+                assert snapshot["version"] == "0.2.5"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-5"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.5.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]

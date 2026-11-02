@@ -31,6 +31,21 @@ class SettingsTests(TestCase):
     def save(self,section,values,identifier=None,action='save',revision=None):
         return settings.update_settings(self.hass,self.entry,section,action,values,identifier,revision or self.entry.modified_at.isoformat())
 
+    def test_usage_temperature_helper_preserves_id_and_requires_temperature_unit(self):
+        self.states['input_number.demo_water_max']=state('57','°C')
+        data={'name':'Water heater','kind':'water_heater','power':'sensor.other','temperature':'input_number.demo_water_max','included_in_home':True}
+        result=self.save('usages',data)
+        identifier=result['identifier']
+        self.assertEqual(self.entry.options['usages'][identifier]['temperature'],'input_number.demo_water_max')
+        self.states['input_number.demo_water_max'].attributes['unit_of_measurement']='°F'
+        self.save('usages',data,identifier)
+        self.assertEqual(len(self.entry.options['usages']),1)
+        self.states['input_number.demo_water_max'].attributes['unit_of_measurement']='W'
+        with self.assertRaises(settings.SettingsError):self.save('usages',data,identifier)
+        self.states['input_number.demo_water_max'].attributes.pop('unit_of_measurement')
+        with self.assertRaises(settings.SettingsError):self.save('usages',data,identifier)
+        with self.assertRaises(settings.SettingsError):self.save('solar',{'solar_power':'input_number.demo_water_max'})
+
     def test_daily_goal_tolerance_and_manual_control_are_explicit_and_preserved(self):
         self.states['switch.load']=state('off',None)
         result=self.save('appliances',{'name':'Load','power':'sensor.fridge','included_in_home':True,'daily_energy_goal_kwh':3,'negative_power_tolerance_w':5,'control_entity':'switch.load','control_enabled':True})

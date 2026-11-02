@@ -189,7 +189,7 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
@@ -228,7 +228,7 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
@@ -289,7 +289,8 @@
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically.",
-          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT."
+          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum."
         }
       },
       "appliance_details": {
@@ -325,7 +326,8 @@
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically.",
-          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT."
+          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum."
         }
       },
       "edit_appliance": {
@@ -573,7 +575,7 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
@@ -612,7 +614,7 @@
           "energy_period": "Choose the source's actual period: today, session or cumulative total. A cumulative counter is not automatically converted into today's energy.",
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically."
         }
       },
@@ -673,7 +675,8 @@
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically.",
-          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT."
+          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum."
         }
       },
       "appliance_details": {
@@ -709,7 +712,8 @@
           "status": "Read-only status: routing, charging or plugged state, depending on the selected source. Even switch entities are only read; no commands are offered.",
           "included_in_home": "These loads are breakdowns of the home total. They are not added or subtracted again in the Home calculation.",
           "control_enabled": "Each click sends a real command to the chosen entity. Scenarios never control it automatically.",
-          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT."
+          "kind": "Load type. The F1ATB profile supports a direct local connection or MQTT.",
+          "temperature": "Sensor or input_number helper in °C or °F. The displayed value follows the chosen source, for example its daily maximum."
         }
       },
       "edit_appliance": {
