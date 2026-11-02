@@ -776,8 +776,9 @@ export class EhomeEmsPanel extends BaseElement {
     return root;
   }
   _strategy(flow, expanded = false) {
+    const automatic=(this._snapshotData?.energy_goals||[]).filter(goal=>goal.mode==="auto").length;
     const panel = this._node("section", undefined, "card strategy");
-    panel.append(this._node("h2", this._t("Stratégie EMS", "EMS strategy")), this._node("span", this._t("Observation", "Observation"), "observation"));
+    panel.append(this._node("h2", this._t("Stratégie EMS", "EMS strategy")), this._node("span", automatic?this._t("Complément automatique autorisé","Automatic top-up permitted"):this._t("Observation", "Observation"), "observation"));
     panel.append(this._node("h3", this._t("Situation actuelle", "Current situation")));
     const entities = flow?.entities || {};
     for (const [label, entity] of [[this._t("Import réseau", "Grid import"), entities.grid_import],
@@ -786,7 +787,6 @@ export class EhomeEmsPanel extends BaseElement {
       const row = this._node("div", undefined, "row"), value = this._node("span", undefined, "value");
       this._bind(value, entity); value.style.color=this._tone(entity); row.append(this._node("span", label), value); panel.append(row);
     }
-    const automatic=(this._snapshotData?.energy_goals||[]).filter(goal=>goal.mode==="auto").length;
     panel.append(this._node("h3", this._t("Décisions et priorités", "Decisions and priorities")),
       this._node("p", automatic?this._t("Complément automatique activé pour ","Automatic top-up enabled for ")+automatic+this._t(" objectif(s)."," goal(s)."):
       this._t("Les objectifs en observation et les scénarios ne commandent aucun équipement.","Observation goals and scenarios do not command equipment."), "note"));
