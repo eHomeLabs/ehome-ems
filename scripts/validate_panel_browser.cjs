@@ -68,7 +68,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-3").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-4").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -161,7 +161,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.3 · Intégration 0.2.3", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.4 · Intégration 0.2.4", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -229,6 +229,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("textbox",{name:"Nom",exact:true}).fill("F1ATB Démo");
       await page.getByLabel("Type d’usage",{exact:true}).selectOption("solar_router");
       await page.getByLabel("Profil du routeur solaire",{exact:true}).selectOption("f1atb");
+      await page.getByLabel("Connexion F1ATB",{exact:true}).selectOption("mqtt");
       await page.getByLabel("Puissance (W/kW)",{exact:true}).fill("sensor.router_power");
       await page.getByLabel("Topic MQTT exact : nom routeur/nom action",{exact:true}).fill("demo_router/SSR");
       await page.getByLabel("Je confirme le protocole F1ATB V15+ et la souscription au forçage MQTT activée sur le routeur",{exact:true}).check();
@@ -247,6 +248,32 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button",{name:"Libérer le forçage",exact:true}).click();
       assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command").length),3);
 
+
+      await page.getByRole("button",{name:"Modifier F1ATB Démo",exact:true}).click();
+      await page.getByLabel("Connexion F1ATB",{exact:true}).selectOption("http");
+      await page.getByLabel("Adresse IP ou URL du routeur",{exact:true}).fill("router.example.local");
+      await page.getByRole("button",{name:"Lire le routeur et ses actions",exact:true}).click();
+      await page.getByText("Actions lues. Aucune commande envoyée.",{exact:true}).waitFor();
+      await page.getByLabel("Action du routeur",{exact:true}).selectOption("0");
+      await page.getByLabel("Activer les commandes HTTP manuelles F1ATB",{exact:true}).check();
+      await page.getByRole("button",{name:"Enregistrer",exact:true}).click();
+      await page.locator(".native-router").waitFor();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command").length),3);
+      await page.getByText("Paramétrage F1ATB",{exact:true}).click();
+      await page.getByRole("button",{name:"Forcer On temporairement",exact:true}).click();
+      await page.getByText("Réglage confirmé par relecture du routeur.",{exact:true}).waitFor();
+      await page.getByLabel("Ouverture en marche forcée (%)",{exact:true}).fill("60");
+      await page.getByRole("button",{name:"Enregistrer les réglages sur le routeur",exact:true}).click();
+      await page.waitForFunction(()=>calls.some(c=>c.action==="http_parameters"));
+      assert.equal(await page.evaluate(()=>calls.find(c=>c.action==="http_parameters").values.forced_opening),60);
+      assert.equal(await page.getByRole("button",{name:"Enregistrer les réglages sur le routeur",exact:true}).isDisabled(),true);
+      await page.locator(".native-router").screenshot({path:path.join(output,viewport.width<600?"router-http-mobile.png":"router-http-desktop.png")});
+      await page.evaluate(()=>{fixtureHass.states["sensor.native_status"].state="unavailable";fixtureHass.states["sensor.native_connection"].state="offline";fixturePanel.hass={...fixtureHass};});
+      assert.equal(await page.getByRole("button",{name:"Forcer On temporairement",exact:true}).isDisabled(),true);
+      await page.evaluate(()=>{fixtureHass.user.is_admin=false;fixturePanel.hass={...fixtureHass};});
+      await page.getByText("Paramétrage F1ATB",{exact:true}).click();
+      assert.equal(await page.getByRole("button",{name:"Forcer On temporairement",exact:true}).isDisabled(),true);
+      await page.evaluate(()=>{fixtureHass.user.is_admin=true;fixturePanel.hass={...fixtureHass};});
 
       await page.getByRole("button",{name:"Aujourd’hui",exact:true}).click();
       await page.getByText("J’ai produit",{exact:true}).waitFor();

@@ -26,8 +26,16 @@ def has_router_target(usage):
 
 
 def router_error(usage):
-    if not valid_web_url(usage.get("router_url")):return "invalid_router_url"
-    if usage.get("router_mqtt_enabled"):
+    if usage.get("router_connection", "mqtt") != "http" and not valid_web_url(usage.get("router_url")):return "invalid_router_url"
+    connection = usage.get("router_connection", "mqtt")
+    if connection not in ("mqtt", "http"):return "router_configuration"
+    if connection == "http":
+        from .f1atb_http import base_url
+        try:base_url(usage.get("router_url"))
+        except ValueError:return "invalid_router_url"
+        if usage.get("kind")!="solar_router" or usage.get("router_type")!="f1atb":return "router_configuration"
+        if type(usage.get("router_action",0)) is not int or not 0<=usage.get("router_action",0)<64:return "router_configuration"
+    if connection == "mqtt" and usage.get("router_mqtt_enabled"):
         if usage.get("kind")!="solar_router" or usage.get("router_type")!="f1atb" or not usage.get("router_protocol_confirmed") or not valid_topic(usage.get("router_mqtt_topic")):return "router_configuration"
     return None
 
@@ -62,6 +70,9 @@ def router_payload(usage, action, values):
 async def async_router_command(hass, entry, identifier, revision, action, values, context):
     if entry.modified_at.isoformat()!=revision:raise ValueError("conflict")
     usage=(entry.options or entry.data).get("usages",{}).get(identifier,{})
+    if usage.get("router_connection") == "http":
+        from .f1atb_runtime import async_http_command
+        return await async_http_command(hass,entry,identifier,revision,action,values)
     if router_error(usage) or not usage.get("router_mqtt_enabled"):raise ValueError("router_not_enabled")
     if not hass.services.has_service("mqtt","publish"):raise ValueError("mqtt_unavailable")
     payload=router_payload(usage,action,values); topic=usage["router_mqtt_topic"]

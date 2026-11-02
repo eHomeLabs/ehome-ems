@@ -91,6 +91,7 @@ async def async_setup_panel_domain(hass):
     websocket_api.async_register_command(hass, websocket_manage_settings)
     websocket_api.async_register_command(hass, websocket_manual_control)
     websocket_api.async_register_command(hass, websocket_router_command)
+    websocket_api.async_register_command(hass, websocket_router_discover)
     websocket_api.async_register_command(hass, websocket_save_simulation)
     websocket_api.async_register_command(hass, websocket_simulate)
 
@@ -175,7 +176,7 @@ async def websocket_manual_control(hass, connection, msg):
 
 
 @websocket_api.require_admin
-@websocket_api.websocket_command({"type":"ehome_ems/router_command","entry_id":str,"identifier":str,"revision":str,"action":vol.In(["force_on","force_off","release","parameters"]),"values":dict})
+@websocket_api.websocket_command({"type":"ehome_ems/router_command","entry_id":str,"identifier":str,"revision":str,"action":vol.In(["force_on","force_off","release","parameters","http_parameters"]),"values":dict})
 @websocket_api.async_response
 async def websocket_router_command(hass, connection, msg):
     entry=hass.config_entries.async_get_entry(msg["entry_id"])
@@ -187,5 +188,20 @@ async def websocket_router_command(hass, connection, msg):
     except ValueError as error:
         connection.send_error(msg["id"],str(error),"Router command rejected; check saved configuration.")
     except HomeAssistantError:
-        connection.send_error(msg["id"],"command_failed","MQTT publication failed.")
+        connection.send_error(msg["id"],"command_failed","Router communication failed.")
     else:connection.send_result(msg["id"],result)
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({"type": "ehome_ems/router_discover", "host": str})
+@websocket_api.async_response
+async def websocket_router_discover(hass, connection, msg):
+    """Read-only discovery before saving. Never expose raw router configuration."""
+    from homeassistant.helpers.aiohttp_client import async_get_clientsession
+    from .f1atb_http import F1atbClient, RouterError, public_config
+    try:
+        result = public_config(await F1atbClient(async_get_clientsession(hass), msg["host"]).read_config())
+    except RouterError as error:
+        connection.send_error(msg["id"], str(error), "Cannot read F1ATB configuration.")
+    else:
+        connection.send_result(msg["id"], result)

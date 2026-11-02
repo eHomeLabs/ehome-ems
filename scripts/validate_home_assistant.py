@@ -262,7 +262,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.3.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.4.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -277,9 +277,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.3"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-3"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.3.js"
+                assert snapshot["version"] == "0.2.4"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-4"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.4.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -457,6 +457,8 @@ async def validate(config_dir):
                 await command({**router_msg,"action":"parameters","values":{"period":0,"mode":"Decoupe"}},success=False)
                 await command({**router_msg,"action":"release","values":{}})
                 assert json.loads(mqtt_calls[-1].data["payload"])=={"tOnOff":0}
+                from validate_f1atb_ha import validate_native_router
+                await validate_native_router(hass, entry, command)
             ordinary = await hass.auth.async_create_user("Simulated reader", group_ids=["system-users"])
             refresh = await hass.auth.async_create_refresh_token(ordinary, client_id="https://example.local")
             access = hass.auth.async_create_access_token(refresh)
@@ -490,6 +492,8 @@ async def validate(config_dir):
                 await ws.send_json({"id":8,**router_msg})
                 assert not (await ws.receive_json())["success"]
                 assert len(mqtt_calls)==2
+                await ws.send_json({"id":9,"type":"ehome_ems/router_discover","host":"http://router.example.local"})
+                assert not (await ws.receive_json())["success"]
 
 
         assert await hass.config_entries.async_unload(entry.entry_id)

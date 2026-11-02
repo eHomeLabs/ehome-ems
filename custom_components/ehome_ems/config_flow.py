@@ -82,6 +82,9 @@ def usage_schema(existing):
             selector.SelectSelectorConfig(options=["solar_router", "water_heater", "ev_charger", "other", "appliance"],
                                           translation_key="usage_kind")),
         vol.Optional("router_type", default=existing.get("router_type","generic")): selector.SelectSelector(selector.SelectSelectorConfig(options=["generic","f1atb"])),
+        vol.Optional("router_connection", default=existing.get("router_connection","mqtt")): selector.SelectSelector(selector.SelectSelectorConfig(options=["http","mqtt"])),
+        vol.Optional("router_action", default=existing.get("router_action",0)): vol.All(int,vol.Range(min=0,max=63)),
+        vol.Optional("router_http_enabled", default=existing.get("router_http_enabled",False)): bool,
         vol.Optional("router_output", default=existing.get("router_output","ssr")): selector.SelectSelector(selector.SelectSelectorConfig(options=["ssr","triac","pwm"])),
         vol.Optional("router_url", description={"suggested_value":existing["router_url"]} if existing.get("router_url") else None): vol.All(str,vol.Length(max=2048)),
         vol.Optional("router_mqtt_topic", description={"suggested_value":existing["router_mqtt_topic"]} if existing.get("router_mqtt_topic") else None): vol.All(str,vol.Length(max=255)),
@@ -509,7 +512,7 @@ class PowerWizard:
                 reading=normalize_power(raw,unit,"grid_power") if key.endswith("power") else normalize_usage(raw,unit,key)
                 rows.append(f"- PV / {item['name']} / {key}: {reading.value if reading.value is not None else '—'} [{reading.quality}]")
         for item in self._draft.get(CONF_USAGES,{}).values():
-            if item.get("router_type")=="f1atb":rows.append(f"- F1ATB / {item['name']}: MQTT {'activé' if item.get('router_mqtt_enabled') else 'désactivé'} ; enregistrement sans commande")
+            if item.get("router_type")=="f1atb":rows.append(f"- F1ATB / {item['name']}: {item.get('router_connection','mqtt').upper()} ; commandes {'activées' if item.get('router_http_enabled' if item.get('router_connection') == 'http' else 'router_mqtt_enabled') else 'désactivées'} ; enregistrement sans commande")
         colored = []
         for row in rows:
             text = escape(row)
