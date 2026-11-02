@@ -63,7 +63,7 @@ window.fixtureHass={
  callWS:async message=>{
   window.calls.push(message);
   if(message.type==="ehome_ems/dashboard")return {
-    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.5",settings:structuredClone(settings),time_zone:"Europe/Paris",weather_entity:"weather.home",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home",import:"sensor.daily_import",export:"sensor.daily_export"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history),energy_goals:structuredClone(energyGoalResults)};
+    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:flow,version:"0.2.6",settings:structuredClone(settings),time_zone:"Europe/Paris",weather_entity:"weather.home",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home",import:"sensor.daily_import",export:"sensor.daily_export"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history),energy_goals:structuredClone(energyGoalResults)};
   if(message.type==="ehome_ems/energy_goals")return structuredClone(energyGoalResults);
   if(message.type==="ehome_ems/save_energy_goal"){
     if(!fixtureHass.user.is_admin)throw {code:"unauthorized"};

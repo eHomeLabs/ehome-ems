@@ -1,6 +1,6 @@
-# Objectif d’énergie avant une échéance — évolution en développement
+# Objectif d’énergie avant une échéance — version 0.2.6
 
-Cette fonction est développée après la version publiée 0.2.5. Elle ajoute des objectifs de chauffe à Stratégie ; la répartition hypothétique en W reste une simulation indépendante, sans commande.
+Cette fonction est disponible à partir de la version 0.2.6. Elle ajoute des objectifs de chauffe à Stratégie ; la répartition hypothétique en W reste une simulation indépendante, sans commande.
 
 ## Exemple : 3 kWh pour le matin
 

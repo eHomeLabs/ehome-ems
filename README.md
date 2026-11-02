@@ -6,9 +6,9 @@
 
 Une intégration Home Assistant pour comprendre la production solaire, la consommation réelle de la maison, les échanges réseau, le stockage et les appareils. Elle utilise les entités déjà présentes dans HA et fournit son panneau sans YAML à recopier.
 
-**[Version 0.2.5](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.5)** — températures d’usages depuis un capteur ou une aide `input_number` en °C/°F. Stockage est réservé aux batteries électriques ; le cumulus reste dans Usages. Le support F1ATB HTTP/MQTT et les commandes manuelles sont conservés.
+**[Version 0.2.6](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.6)** — objectifs d’énergie avant échéance et complément automatique F1ATB HTTP sur activation explicite ; températures d’usages depuis un capteur ou une aide `input_number` en °C/°F. Stockage est réservé aux batteries électriques ; le cumulus reste dans Usages. Le support F1ATB HTTP/MQTT et les commandes manuelles sont conservés.
 
-[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Notes 0.2.5](docs/RELEASE_0_2_5.md) · [Feuille de route](docs/ROADMAP.md)
+[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Notes 0.2.6](docs/RELEASE_0_2_6.md) · [Feuille de route](docs/ROADMAP.md)
 
 ## Découvrir le dashboard
 
@@ -80,7 +80,7 @@ Les raccourcis ouvrent directement chaque groupe de réglages. Les mesures valid
 
 ## Installation et mises à jour
 
-Home Assistant **2026.9.1 minimum**. Ajouter `https://github.com/eHomeLabs/ehome-ems` comme dépôt personnalisé HACS / Marketplace, catégorie **Intégration**, puis installer **0.2.5**. L'installation par dépôt personnalisé ne signifie pas validation officielle au catalogue.
+Home Assistant **2026.9.1 minimum**. Ajouter `https://github.com/eHomeLabs/ehome-ems` comme dépôt personnalisé HACS / Marketplace, catégorie **Intégration**, puis installer **0.2.6**. L'installation par dépôt personnalisé ne signifie pas validation officielle au catalogue.
 
 **Première installation ou nouveau code Python :** redémarrer Home Assistant Core, puis ajouter l'intégration ou recharger le navigateur après mise à jour. **Réglages courants :** enregistrer suffit, sans redémarrage global. Recharger seulement l'entrée ne remplace pas les modules Python déjà chargés.
 
@@ -100,7 +100,7 @@ Depuis la b15, conserver l'entrée et ses associations. Aucun serveur supplémen
 | 8 | Stratégie |
 | 9 | Configuration |
 
-| Disponible en 0.2.5 | Suite du projet |
+| Disponible en 0.2.6 | Suite du projet |
 | --- | --- |
 | Assistant et réglages ciblés, normalisation et bilan AC | Topologies hybrides/DC avancées |
 | Flux, tendances, historique 24 h, stockage et appareils | Analyses historiques et comparaisons |
@@ -152,4 +152,4 @@ Le profil F1ATB dans Usages propose une connexion **HTTP local direct**, sans in
 
 ## Évolution en développement : objectif énergétique avant une échéance
 
-Stratégie propose un objectif par cycle (kWh), une heure d’échéance et un créneau de complément réseau. Le manque et le temps de chauffe sont calculés depuis le compteur cumulé du cumulus, en conservant l’énergie reçue avant minuit. L’observation ne commande rien ; un mode automatique F1ATB HTTP peut être activé explicitement, avec des forçages courts et un retour Auto à l’objectif. Cette évolution n’est pas incluse dans l’archive 0.2.5 publiée. [Fonctionnement, limites et tests](docs/OBJECTIFS_ENERGIE.md).
+Stratégie propose un objectif par cycle (kWh), une heure d’échéance et un créneau de complément réseau. Le manque et le temps de chauffe sont calculés depuis le compteur cumulé du cumulus, en conservant l’énergie reçue avant minuit. L’observation ne commande rien ; un mode automatique F1ATB HTTP peut être activé explicitement, avec des forçages courts et un retour Auto à l’objectif. Cette évolution est incluse dans la version 0.2.6. [Fonctionnement, limites et tests](docs/OBJECTIFS_ENERGIE.md).
