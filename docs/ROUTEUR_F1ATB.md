@@ -1,6 +1,6 @@
 # Routeur solaire F1ATB — HTTP natif et MQTT
 
-Le mode **HTTP local direct** décrit ci-dessous est une évolution de développement, non incluse dans l’archive publiée 0.2.3. Le mode MQTT de cette version reste compatible.
+Le mode **HTTP local direct** est disponible depuis la version **0.2.4**, sans installer une autre intégration F1ATB. Le mode MQTT de la version 0.2.3 reste compatible.
 
 Dans Usages, sélectionner le type **Routeur solaire** et le profil **F1ATB**. Le cumulus conserve son type thermique distinct. Les anciens usages « routeur/cumulus » restent compatibles avec le profil générique.
 

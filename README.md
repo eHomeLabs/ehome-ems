@@ -6,9 +6,9 @@
 
 Une intégration Home Assistant pour comprendre la production solaire, la consommation réelle de la maison, les échanges réseau, le stockage et les appareils. Elle utilise les entités déjà présentes dans HA et fournit son panneau sans YAML à recopier.
 
-**[Version 0.2.3](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.3)** — suivi en observation, scénarios sans exécution et commandes manuelles On/Off facultatives. Cette version consolide le fonctionnement de la b15 validé en usage ; elle ne livre pas encore le pilotage automatique.
+**[Version 0.2.4](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.4)** — support natif du routeur F1ATB par HTTP local, sans intégration supplémentaire : lecture des actions, mesures et commandes manuelles. Le mode MQTT existant est conservé ; le pilotage automatique reste futur.
 
-[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Notes 0.2.3](docs/RELEASE_0_2_3.md) · [Feuille de route](docs/ROADMAP.md)
+[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Notes 0.2.4](docs/RELEASE_0_2_4.md) · [Feuille de route](docs/ROADMAP.md)
 
 ## Découvrir le dashboard
 
@@ -80,7 +80,7 @@ Les raccourcis ouvrent directement chaque groupe de réglages. Les mesures valid
 
 ## Installation et mises à jour
 
-Home Assistant **2026.9.1 minimum**. Ajouter `https://github.com/eHomeLabs/ehome-ems` comme dépôt personnalisé HACS / Marketplace, catégorie **Intégration**, puis installer **0.2.3**. L'installation par dépôt personnalisé ne signifie pas validation officielle au catalogue.
+Home Assistant **2026.9.1 minimum**. Ajouter `https://github.com/eHomeLabs/ehome-ems` comme dépôt personnalisé HACS / Marketplace, catégorie **Intégration**, puis installer **0.2.4**. L'installation par dépôt personnalisé ne signifie pas validation officielle au catalogue.
 
 **Première installation ou nouveau code Python :** redémarrer Home Assistant Core, puis ajouter l'intégration ou recharger le navigateur après mise à jour. **Réglages courants :** enregistrer suffit, sans redémarrage global. Recharger seulement l'entrée ne remplace pas les modules Python déjà chargés.
 
@@ -100,7 +100,7 @@ Depuis la b15, conserver l'entrée et ses associations. Aucun serveur supplémen
 | 8 | Stratégie |
 | 9 | Configuration |
 
-| Disponible en 0.2.3 | Suite du projet |
+| Disponible en 0.2.4 | Suite du projet |
 | --- | --- |
 | Assistant et réglages ciblés, normalisation et bilan AC | Topologies hybrides/DC avancées |
 | Flux, tendances, historique 24 h, stockage et appareils | Analyses historiques et comparaisons |
@@ -146,6 +146,6 @@ Les commandes manuelles MQTT sont désactivées par défaut : confirmer le proto
 
 Un ordre publié ne prouve pas sa réception par le F1ATB. Les réglages MQTT sont temporaires et ne remplacent pas sa configuration enregistrée, ses horaires complets ou ses sécurités. [Guide F1ATB et compatibilité](docs/ROUTEUR_F1ATB.md) · [Photovoltaïque](docs/PHOTOVOLTAIQUE.md)
 
-## Évolution en développement : F1ATB HTTP natif
+## Nouveauté 0.2.4 : F1ATB HTTP natif
 
-Le profil F1ATB dans Usages propose une connexion **HTTP local direct**, sans installer une autre intégration F1ATB : adresse IP, lecture des actions, suivi des mesures et commandes manuelles activées explicitement. Forçage temporisé, forme d’onde, ouverture forcée et plafond d’une période compatible sont pris en charge, avec relecture du résultat. Le mode MQTT existant reste disponible. Cette évolution n’est pas encore dans l’archive 0.2.3 publiée. [Configuration, périmètres et tests](docs/ROUTEUR_F1ATB.md).
+Le profil F1ATB dans Usages propose une connexion **HTTP local direct**, sans installer une autre intégration F1ATB : adresse IP, lecture des actions, suivi des mesures et commandes manuelles activées explicitement. Forçage temporisé, forme d’onde, ouverture forcée et plafond d’une période compatible sont pris en charge, avec relecture du résultat. Le mode MQTT existant reste disponible. Disponible à partir de la version 0.2.4. [Configuration, périmètres et tests](docs/ROUTEUR_F1ATB.md).

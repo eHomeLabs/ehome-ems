@@ -36,7 +36,7 @@ def main():
         packaged = json.loads(zipped.read("custom_components/ehome_ems/manifest.json"))
         assert packaged == manifest
         for required in ("__init__.py", "config_flow.py", "sensor.py", "dashboard.py", "home_balance.py", "usage.py",
-                         "panel.py", "manual_control.py", "photovoltaic.py", "f1atb.py", "source_editor.py", "settings.py", "simulation.py", "frontend/ehome-panel.mjs",
+                         "panel.py", "manual_control.py", "photovoltaic.py", "f1atb.py", "f1atb_http.py", "f1atb_runtime.py", "f1atb_sensor.py", "source_editor.py", "settings.py", "simulation.py", "frontend/ehome-panel.mjs",
                          "brand/icon.png", "brand/icon@2x.png",
                          "frontend/assets/house.webp", "frontend/assets/house-day.webp",
                          "dashboard_service.py", "services.yaml", "strings.json",

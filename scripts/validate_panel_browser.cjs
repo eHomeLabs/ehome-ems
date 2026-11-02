@@ -68,7 +68,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-3").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-4").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -161,7 +161,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.3 · Intégration 0.2.3", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.4 · Intégration 0.2.4", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
