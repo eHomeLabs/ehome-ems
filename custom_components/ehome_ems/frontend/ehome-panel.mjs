@@ -11,7 +11,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.5";
+export const UI_VERSION = "0.2.6";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -776,8 +776,9 @@ export class EhomeEmsPanel extends BaseElement {
     return root;
   }
   _strategy(flow, expanded = false) {
+    const automatic=(this._snapshotData?.energy_goals||[]).filter(goal=>goal.mode==="auto").length;
     const panel = this._node("section", undefined, "card strategy");
-    panel.append(this._node("h2", this._t("Stratégie EMS", "EMS strategy")), this._node("span", this._t("Observation", "Observation"), "observation"));
+    panel.append(this._node("h2", this._t("Stratégie EMS", "EMS strategy")), this._node("span", automatic?this._t("Complément automatique autorisé","Automatic top-up permitted"):this._t("Observation", "Observation"), "observation"));
     panel.append(this._node("h3", this._t("Situation actuelle", "Current situation")));
     const entities = flow?.entities || {};
     for (const [label, entity] of [[this._t("Import réseau", "Grid import"), entities.grid_import],
@@ -787,9 +788,9 @@ export class EhomeEmsPanel extends BaseElement {
       this._bind(value, entity); value.style.color=this._tone(entity); row.append(this._node("span", label), value); panel.append(row);
     }
     panel.append(this._node("h3", this._t("Décisions et priorités", "Decisions and priorities")),
-      this._node("p", this._t("Aucune stratégie de pilotage active. Les mesures sont observées sans modifier les régulations de vos équipements.",
-        "No active control strategy. Readings are monitored without changing device regulation."), "note"));
-    if (expanded) panel.append(this._simulation());
+      this._node("p", automatic?this._t("Complément automatique activé pour ","Automatic top-up enabled for ")+automatic+this._t(" objectif(s)."," goal(s)."):
+      this._t("Les objectifs en observation et les scénarios ne commandent aucun équipement.","Observation goals and scenarios do not command equipment."), "note"));
+    if (expanded) panel.append(this._energyGoals(),this._simulation());
     else {
       panel.append(this._node("h3", this._t("Priorités de simulation", "Simulation priorities")));
       const active = (this._snapshotData?.simulation?.targets || []).filter(item => item.enabled);
@@ -797,9 +798,46 @@ export class EhomeEmsPanel extends BaseElement {
       for (const item of active) list.append(this._node("li", item.name));
       if (active.length) panel.append(list);
       else panel.append(this._node("p", this._t("Aucun équipement inclus dans un scénario.", "No equipment included in a scenario."), "note"));
-      panel.append(this._button(this._t("Ouvrir Stratégie", "Open Strategy"), () => { this._tab = 6; this._render(); }));
+      panel.append(this._button(this._t("Ouvrir Stratégie", "Open Strategy"), () => { this._tab = 7; this._render(); }));
     }
-    panel.append(this._node("p", this._t("Aucune commande automatique", "No automatic commands"), "note")); return panel;
+    panel.append(this._node("p", automatic?this._t("Seuls les objectifs explicitement activés peuvent commander leur routeur.","Only explicitly enabled goals may control their router."):this._t("Aucune commande automatique", "No automatic commands"), "note")); return panel;
+  }
+  _energyGoals() {
+    const root=this._node("section",undefined,"energy-goals"),snapshot=this._snapshotData;
+    root.append(this._node("h2",this._t("Objectif d’énergie avant une échéance","Energy target by a deadline")),
+      this._node("p",this._t("Le cycle va de l’échéance de la veille à celle du jour : le solaire reçu avant minuit compte pour le matin suivant. Le complément réseau est limité au créneau autorisé. Un objectif en kWh ne mesure pas la chaleur restante.","The cycle runs from yesterday’s deadline to today’s: solar received before midnight counts towards the following morning. Grid top-up stays within its allowed window. A kWh target is not remaining heat."),"note"));
+    const stateBox=this._node("div",undefined,"goal-results");stateBox.setAttribute("aria-live","polite");
+    const reasons={lease_too_short:["Fin du créneau : aucun nouveau forçage","Window ending: no new override"],target_reached:["Objectif atteint","Target reached"],solar_priority:["Priorité au solaire","Solar priority"],waiting_window:["En attente du créneau autorisé","Waiting for allowed window"],complement_due:["Complément nécessaire maintenant","Top-up needed now"],insufficient_window:["Créneau insuffisant pour atteindre l’objectif","Window too short to reach target"],energy_unavailable:["Énergie du cycle indisponible","Cycle energy unavailable"],baseline_missing:["Référence de début de cycle absente dans History/Recorder","Cycle-start baseline missing from History/Recorder"],history_unavailable:["History/Recorder indisponible","History/Recorder unavailable"],counter_reset:["Compteur remis à zéro pendant le cycle : pilotage bloqué","Counter reset during cycle: control blocked"],stale_energy:["Compteur d’énergie trop ancien : complément suspendu","Energy counter too old: top-up suspended"],manual_override:["Commande manuelle prioritaire : cycle suspendu","Manual override takes priority: cycle suspended"],command_unconfirmed:["Commande non confirmée : vérifier puis réarmer","Unconfirmed command: check and re-arm"],runtime_unavailable:["Suivi interrompu : vérifier puis réarmer si nécessaire","Monitoring interrupted: check and re-arm if needed"],router_requires_full_opening:["Configurer la marche forcée du F1ATB à 100 %","Set F1ATB forced opening to 100%"],router_unavailable:["Routeur indisponible","Router unavailable"],router_already_managed:["Action déjà gérée par un autre objectif","Action already managed by another goal"],configuration_changed:["Configuration modifiée : rechargement nécessaire","Configuration changed: reload required"]};
+    const draw=values=>{stateBox.replaceChildren();for(const goal of values||[]){const card=this._node("div",undefined,"card"),label=reasons[goal.reason]||[goal.reason,goal.reason];card.append(this._node("h3",goal.name),this._node("p",(goal.mode==="auto"?this._t("Automatique","Automatic"):this._t("Observation","Observation"))+" · "+this._t(...label)));
+      if(goal.goal_kwh!==undefined)card.append(this._node("p",this._t("Objectif : ","Target: ")+displayNumber(goal.goal_kwh,this._hass?.language)+" kWh · "+this._t("Reçu sur le cycle : ","Received this cycle: ")+(goal.consumed_kwh==null?this._t("Indisponible","Unavailable"):displayNumber(goal.consumed_kwh,this._hass?.language)+" kWh")));
+      if(goal.missing_kwh!=null)card.append(this._node("p",this._t("À compléter : ","Top-up needed: ")+displayNumber(goal.missing_kwh,this._hass?.language)+" kWh · "+this._t("Chauffe estimée : ","Estimated heating: ")+goal.needed_minutes+" min"));
+      for(const [key,fr,en] of [["deadline","Échéance : ","Deadline: "],["latest_start","Début estimé du complément : ","Estimated top-up start: "]])if(goal[key])card.append(this._node("p",this._t(fr,en)+new Date(goal[key]).toLocaleString(this._hass?.language||"fr",{timeZone:snapshot.time_zone}),"note"));
+      card.append(this._node("p",goal.running?this._t("Complément EMS en cours · forçage temporisé","EMS top-up running · timed override"):this._t("Aucun forçage détenu par EMS","No override owned by EMS"),"note"));
+      if(this._hass?.user?.is_admin&&["manual_override","command_unconfirmed","runtime_unavailable"].includes(goal.reason))card.append(this._button(this._t("Réarmer après vérification","Re-arm after checking"),async()=>{try{await this._hass.callWS({type:"ehome_ems/rearm_energy_goal",entry_id:this._panel.config.entry_id,identifier:goal.id,revision:snapshot.revision});await refresh();}catch{this._message.textContent=this._t("Réarmement refusé. Actualisez.","Re-arm rejected. Refresh.");}}));stateBox.append(card);}};
+    draw(snapshot.energy_goals||[]);root.append(stateBox);
+    let loading=false,last=Date.now();const refresh=async()=>{if(loading)return;loading=true;try{const values=await this._hass.callWS({type:"ehome_ems/energy_goals",entry_id:this._panel.config.entry_id});snapshot.energy_goals=values;draw(values);}catch{stateBox.textContent=this._t("Suivi des objectifs indisponible.","Goal monitoring unavailable.");}finally{loading=false;last=Date.now();}};
+    root.append(this._button(this._t("Actualiser les objectifs","Refresh goals"),refresh));this._flowUpdates.push(()=>{if(Date.now()-last>=30000)refresh();});
+    if(!this._hass?.user?.is_admin)return root;
+    const usages=snapshot.settings?.usages||{},goals=snapshot.settings?.energy_goals||{},routers=Object.entries(usages).filter(([,u])=>u.kind==="solar_router"&&u.router_type==="f1atb"&&u.router_connection==="http"&&u.router_http_enabled);
+    for(const [id,usage] of Object.entries(usages).filter(([,u])=>["water_heater","solar_router"].includes(u.kind))){
+      const existing=goals[id],details=this._node("details",undefined,"router-settings goal-editor");details.append(this._node("summary",this._t("Configurer l’objectif · ","Configure goal · ")+usage.name));
+      const form=this._node("form",undefined,"settings-form"),controls={};form.addEventListener("submit",e=>e.preventDefault());
+      const add=(key,fr,en,type,value,options)=>{const row=this._node("label",this._t(fr,en)),input=this._node(options?"select":"input");if(options){for(const [v,text] of options){const o=this._node("option",text);o.value=v;input.append(o);}}else input.type=type;input.setAttribute("aria-label",this._t(fr,en)+" · "+usage.name);input.value=existing?.[key]??value;if(type==="checkbox")input.checked=!!existing?.[key];controls[key]=input;row.append(input);form.append(row);return input;};
+      add("mode","Mode de l’objectif","Goal mode","text","observe",[["observe",this._t("Observation · aucune commande","Observation · no commands")],["auto",this._t("Complément automatique autorisé","Automatic top-up permitted")]]);
+      for(const [key,fr,en,value,min,max,step] of [["goal_kwh","Objectif du cycle (kWh)","Cycle target (kWh)",usage.daily_energy_goal_kwh||3,.01,100,.01],["nominal_power_w","Puissance de chauffe à pleine ouverture (W)","Heating power at full opening (W)",1800,100,15000,1],["margin_minutes","Marge de démarrage (minutes)","Start margin (minutes)",5,0,120,1],["max_age_seconds","Ancienneté maximale du compteur (secondes)","Maximum counter age (seconds)",300,30,3600,1]]){const i=add(key,fr,en,"number",value);Object.assign(i,{min,max,step,required:true});}
+      for(const [key,fr,en,value] of [["deadline","Eau prête à","Water ready by","07:00"],["window_start","Début du complément autorisé","Allowed top-up starts","01:00"],["window_end","Fin du complément autorisé","Allowed top-up ends","07:00"]]){const i=add(key,fr,en,"time",value);i.required=true;}
+      const energyOptions=[["",this._t("Choisir le compteur du cumulus","Choose water-heater counter")],...Object.entries(this._hass.states||{}).filter(([entity,state])=>entity.startsWith("sensor.")&&["Wh","kWh"].includes(state.attributes?.unit_of_measurement)).map(([entity,state])=>[entity,(state.attributes?.friendly_name||entity)+" · "+entity])];
+      const e=add("energy_entity","Compteur cumulé dédié au cumulus","Dedicated cumulative water-heater counter","text",usage.energy_period==="total"?snapshot.bindings?.[usage.energy]?.source||usage.energy||"":"",energyOptions);e.required=true;
+      add("counter_confirmed","Je confirme que ce compteur est cumulatif et ne se remet pas à zéro à minuit","I confirm this is a lifetime counter with no midnight reset","checkbox",false);
+      add("router_usage","Routeur F1ATB HTTP à commander","F1ATB HTTP router to control","text",routers.length===1?routers[0][0]:"",[["",this._t("Non associé · observation seulement","Not mapped · observation only")],...routers.map(([key,u])=>[key,u.name])]);
+      form.append(this._node("p",this._t("L’activation du mode automatique autorise de vrais compléments réseau dans ce créneau. Choisir le compteur du seul cumulus. L’ouverture de marche forcée F1ATB doit être à 100 %. Une seule échéance par cycle ; le thermostat et les protections restent ceux du cumulus.","Enabling automatic mode permits real grid top-ups within this window. Choose the water-heater-only counter. F1ATB forced opening must be 100%. One deadline per cycle; thermostat and protections remain with the water heater."),"note"));
+      const feedback=this._node("p",undefined,"note");feedback.setAttribute("role","status");
+      const save=this._button(this._t("Enregistrer l’objectif","Save goal"),async()=>{if(!form.reportValidity())return;const values={};for(const [key,input] of Object.entries(controls))values[key]=input.type==="checkbox"?input.checked:input.type==="number"?Number(input.value):input.value;save.disabled=true;try{await this._hass.callWS({type:"ehome_ems/save_energy_goal",entry_id:this._panel.config.entry_id,identifier:id,revision:snapshot.revision,values});this._settingsRetries=5;await this._load();}catch(error){feedback.textContent=this._t("Objectif refusé : ","Goal rejected: ")+(error.code||"");}finally{save.disabled=false;}});
+      const modeLabel=()=>{save.textContent=controls.mode.value==="auto"?this._t("Activer et enregistrer le complément automatique","Enable and save automatic top-up"):this._t("Enregistrer l’objectif en observation","Save observation goal");};controls.mode.addEventListener("change",modeLabel);modeLabel();form.append(save);
+      if(existing)form.append(this._button(this._t("Retirer cet objectif","Remove this goal"),async()=>{try{await this._hass.callWS({type:"ehome_ems/save_energy_goal",entry_id:this._panel.config.entry_id,identifier:id,revision:snapshot.revision,values:{},remove:true});this._settingsRetries=5;await this._load();}catch(error){feedback.textContent=error.code||"Erreur";}}));
+      details.append(form,feedback);root.append(details);
+    }
+    return root;
   }
   _simulationResult(result) {
     const root = this._node("div", undefined, "scenario-result");

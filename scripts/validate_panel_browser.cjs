@@ -68,7 +68,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-5").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-6").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -146,6 +146,15 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.getByRole("button", { name: "Créer une copie modifiable", exact: true }).count(),0);
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="lovelace/dashboards/create"||call.type==="call_service")),false);
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
+      await page.getByText("Configurer l’objectif · Cumulus",{exact:true}).click();
+      await page.getByLabel("Objectif du cycle (kWh) · Cumulus",{exact:true}).fill("3");
+      await page.getByLabel("Compteur cumulé dédié au cumulus · Cumulus",{exact:true}).selectOption("sensor.demo_water_total");
+      await page.getByLabel("Je confirme que ce compteur est cumulatif et ne se remet pas à zéro à minuit · Cumulus",{exact:true}).check();
+      const goalCommands=await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command"||c.type==="ehome_ems/manual_control").length);
+      await page.getByRole("button",{name:"Enregistrer l’objectif en observation",exact:true}).click();
+      await page.locator(".goal-results").getByText(/À compléter : 2 kWh.*67 min/).waitFor();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command"||c.type==="ehome_ems/manual_control").length),goalCommands);
+      await page.locator(".energy-goals").screenshot({path:path.join(output,viewport.width<600?"energy-goal-mobile.png":"energy-goal-desktop.png")});
       assert.equal(await page.getByText("Aucune commande automatique", { exact: true }).count(), 1);
       await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).check();
       await page.getByRole("spinbutton",{name:"Plafond (W) · Zendure",exact:true}).fill("1000");
@@ -163,7 +172,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.5 · Intégration 0.2.5", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.6 · Intégration 0.2.6", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();

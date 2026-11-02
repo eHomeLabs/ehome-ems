@@ -1,4 +1,4 @@
-"""eHome EMS: read-only Home Assistant energy mapping integration."""
+"""eHome EMS: energy monitoring and explicitly enabled equipment controls."""
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -21,6 +21,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     try:
         await async_setup_entry_panel(hass, entry)
+        if (entry.options or entry.data).get("energy_goals"):
+            from .energy_goal_runtime import async_setup_goals
+            await async_setup_goals(hass, entry)
     except Exception:
         await hass.config_entries.async_unload_platforms(entry, ["sensor"])
         raise
@@ -37,6 +40,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload mapped sensors and registered listeners."""
     # HA runs entry.async_on_unload callbacks after the platforms unload.
     # Calling ConfigEntry.async_unload here would recurse into its lifecycle.
+    runtime = hass.data.get(DOMAIN, {}).get("energy_goal_runtime", {}).get(entry.entry_id)
+    if runtime:
+        await runtime.async_stop()
     return await hass.config_entries.async_unload_platforms(entry, ["sensor"])
 
 

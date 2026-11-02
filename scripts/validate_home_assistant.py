@@ -33,8 +33,10 @@ async def validate(config_dir):
         with socket.socket() as port_socket:
             port_socket.bind(("127.0.0.1", 0))
             port = port_socket.getsockname()[1]
-        config = {"http": {"server_host": "127.0.0.1", "server_port": port}}
+        config = {"http": {"server_host": "127.0.0.1", "server_port": port},
+                  "recorder": {"db_url": "sqlite:///" + hass.config.path("simulated-goal-history.db"), "auto_purge": False, "commit_interval": 0}}
         assert await bootstrap.async_from_config_dict(config, hass) is hass
+        await hass.async_start()
         assert await async_setup_component(hass, "ehome_ems", {})
         hass.states.async_set("sensor.sim_grid", "-250", {"unit_of_measurement": "W", "device_class": "power"})
         hass.states.async_set("sensor.sim_solar", "1.5", {"unit_of_measurement": "kW", "device_class": "power"})
@@ -275,7 +277,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.5.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.6.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -290,9 +292,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.5"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-5"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.5.js"
+                assert snapshot["version"] == "0.2.6"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-6"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.6.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -507,6 +509,12 @@ async def validate(config_dir):
                 assert len(mqtt_calls)==2
                 await ws.send_json({"id":9,"type":"ehome_ems/router_discover","host":"http://router.example.local"})
                 assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":10,"type":"ehome_ems/save_energy_goal","entry_id":entry.entry_id,"identifier":"denied","revision":entry.modified_at.isoformat(),"values":{}})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":11,"type":"ehome_ems/rearm_energy_goal","entry_id":entry.entry_id,"identifier":"denied","revision":entry.modified_at.isoformat()})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":12,"type":"ehome_ems/energy_goals","entry_id":entry.entry_id})
+                assert (await ws.receive_json())["success"]
 
 
         assert await hass.config_entries.async_unload(entry.entry_id)
