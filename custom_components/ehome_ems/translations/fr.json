@@ -189,7 +189,7 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
@@ -228,7 +228,7 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
@@ -289,7 +289,8 @@
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
-          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour."
         }
       },
       "appliance_details": {
@@ -325,7 +326,8 @@
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
-          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour."
         }
       },
       "edit_appliance": {
@@ -573,7 +575,7 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
@@ -612,7 +614,7 @@
           "energy_period": "Sélectionnez la période réelle du capteur : jour, session ou cumul total. Un compteur cumulé n’est pas transformé automatiquement en énergie du jour.",
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
-          "temperature": "Capteur de température en °C ou °F. Aucun niveau de stockage thermique n’est déduit.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement."
         }
       },
@@ -673,7 +675,8 @@
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
-          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour."
         }
       },
       "appliance_details": {
@@ -709,7 +712,8 @@
           "status": "État lu uniquement : routage, charge en cours ou véhicule branché selon le capteur sélectionné. Même une entité switch est seulement lue ; aucune commande n’est proposée.",
           "included_in_home": "Ces usages sont des détails du total maison. Ils ne sont ni ajoutés ni soustraits une seconde fois dans le calcul Maison.",
           "control_enabled": "Chaque clic envoie une commande réelle à l’entité choisie. Aucun scénario ne la commande automatiquement.",
-          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT."
+          "kind": "Type d’usage. Le profil F1ATB propose une connexion locale directe ou MQTT.",
+          "temperature": "Capteur ou aide numérique input_number en °C ou °F. La valeur affichée correspond à la source choisie, par exemple son maximum du jour."
         }
       },
       "edit_appliance": {

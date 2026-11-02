@@ -33,7 +33,8 @@ def binding_metadata(mapping, entities):
         if suffix not in entities:
             continue
         units = ["°C", "°F"] if role == "temperature" else ["%"] if role == "soc" else ["Wh", "kWh"] if role in ("remaining_energy", "energy") else ["W", "kW"]
-        domains = ["sensor", "binary_sensor", "switch", "select"] if role == "status" else ["sensor"]
+        domains = (["sensor", "binary_sensor", "switch", "select"] if role == "status" else
+                   ["sensor", "input_number"] if role == "temperature" else ["sensor"])
         bindings[entities[suffix]] = {
             "source": source_value(mapping, path), "domains": domains,
             "units": [] if role == "status" else units,

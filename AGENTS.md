@@ -1,6 +1,6 @@
 # eHome EMS — Instructions de développement
 
-La version 0.2.4 ajoute le support F1ATB HTTP natif au suivi énergétique en observation. Les références produit sont [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md) et [docs/ROADMAP.md](docs/ROADMAP.md).
+La version 0.2.5 accepte les températures input_number et réserve Stockage aux batteries électriques, en conservant F1ATB HTTP/MQTT. Les références produit sont [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md) et [docs/ROADMAP.md](docs/ROADMAP.md).
 
 - Développer une intégration Home Assistant distribuée via HACS / Marketplace ; réutiliser les intégrations HA existantes.
 - Aucun serveur autonome ni matériel dédié n'est requis. Validation de référence sur HA avec RPi4 et SSD, sans exclusivité matérielle.
