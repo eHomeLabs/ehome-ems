@@ -32,7 +32,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.8";
+export const UI_VERSION = "0.2.9";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -233,6 +233,7 @@ export class EhomeEmsPanel extends BaseElement {
     const style = this._node("style");
     style.textContent = `
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f6f8);color:var(--primary-text-color,#18232e);font:15px/1.5 system-ui,sans-serif}
+      .overview-daily-energy{font-size:16px;font-weight:650;line-height:1.5;margin:10px 0 0;min-height:48px;overflow-wrap:anywhere}.load-grid .cost{min-height:42px;margin:6px 0 0}
       .entity-picker{width:100%}.entity-options{max-height:260px;overflow:auto;border:1px solid var(--divider-color,#738391);border-radius:10px;padding:8px}.entity-options button{display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;margin:6px 0}
       .history-value{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:5px}.history-value:focus-visible{outline:3px solid var(--primary-color,#007b83)}
       .settings-primary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;width:100%;margin-bottom:20px}.settings-primary button{border:2px solid var(--primary-color,#007b83);font-weight:700;padding:18px;text-align:left;background:color-mix(in srgb,var(--primary-color,#007b83) 12%,var(--card-background-color,#fff))}
@@ -780,9 +781,19 @@ export class EhomeEmsPanel extends BaseElement {
     const secondary = this._node("section", undefined, "card secondary");
     secondary.append(this._node("h2", this._t("Usages et équipements", "Loads and equipment")));
     const loads = this._node("div", undefined, "load-grid");
-    for (const usage of flow.usages || []) loads.append(this._metricTile(usage.name, usage.power,
-      productIcon(usage),
-      ["solar_router","water_heater"].includes(usage.kind) ? "#e9a23d" : usage.kind === "ev_charger" ? "#ab78e2" : "#6eafff"));
+    for (const usage of flow.usages || []) {
+      const tile=this._metricTile(usage.name,usage.power,productIcon(usage),
+        ["solar_router","water_heater"].includes(usage.kind)?"#e9a23d":usage.kind==="ev_charger"?"#ab78e2":"#6eafff");
+      const energy=this._node("p",undefined,"overview-daily-energy"),cost=this._usageCost(usage);
+      this._historyLink(energy,usage.energy);
+      this._flowUpdates.push(()=>{
+        const value=this._dayEnergy(usage);
+        energy.textContent=value===null?this._t(usage.energy?"Énergie du jour indisponible":"Énergie du jour non associée",usage.energy?"Daily energy unavailable":"Daily energy not mapped"):
+          displayNumber(value,this._hass.language)+this._t(" kWh aujourd’hui"," kWh today");
+        energy.classList.toggle("bad",value===null);
+      });
+      tile.append(energy,cost);loads.append(tile);
+    }
     if (!flow.usages?.length) loads.append(this._node("p", this._t("Ajoutez des usages dans la configuration de l’intégration.", "Add loads in integration configuration."), "note"));
     secondary.append(loads); grid.append(secondary);
     const quality = this._node("section", undefined, "card quality-panel");
