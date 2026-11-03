@@ -507,11 +507,6 @@ async def validate(config_dir):
                                    "title": "Denied copy", "url_path": "ehome-denied-copy"})
                 denied = await ws.receive_json()
                 assert not denied["success"], denied
-                await ws.send_json({"id":90,"type":"ehome_ems/save_alerts","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"rules":[]})
-                assert not (await ws.receive_json())["success"]
-                await ws.send_json({"id":91,"type":"ehome_ems/alerts","entry_id":entry.entry_id})
-                public_alerts=await ws.receive_json()
-                assert public_alerts["success"] and "rules" not in public_alerts["result"] and "notify_services" not in public_alerts["result"]
 
                 await ws.send_json({"id": 2, "type": "ehome_ems/remap_source", "entry_id": entry.entry_id,
                                    "entity_id": solar_id, "source_id": "sensor.sim_solar",
@@ -543,6 +538,12 @@ async def validate(config_dir):
                 assert not (await ws.receive_json())["success"]
                 await ws.send_json({"id":12,"type":"ehome_ems/energy_goals","entry_id":entry.entry_id})
                 assert (await ws.receive_json())["success"]
+                await ws.send_json({"id":90,"type":"ehome_ems/save_alerts","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"rules":[]})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":91,"type":"ehome_ems/alerts","entry_id":entry.entry_id})
+                public_alerts=await ws.receive_json()
+                assert public_alerts["success"] and "rules" not in public_alerts["result"] and "notify_services" not in public_alerts["result"]
+
 
 
         assert await hass.config_entries.async_unload(entry.entry_id)
