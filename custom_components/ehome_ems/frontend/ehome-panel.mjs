@@ -1,3 +1,9 @@
+export function rankEntityOptions(options,deviceName="") {
+  const normal=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+  const name=normal(deviceName),tokens=name.split(" ").filter(t=>t.length>2&&!['les','des','une','pour','the'].includes(t));
+  const score=([id,label])=>{const text=normal(id+" "+label);return (name&&text.includes(name)?50:0)+tokens.reduce((total,t)=>total+(text.split(" ").includes(t)?10:0),0);};
+  return [...options].sort((a,b)=>score(b)-score(a)||String(a[1]).localeCompare(String(b[1]),"fr",{numeric:true,sensitivity:"base"})||a[0].localeCompare(b[0]));
+}
 export function pvProductionSources(items, resolve=id=>id) {
   const seen=new Set();return (items||[]).flatMap(item=>{
     const entity=item.dc_power || (item.kind!=="hybrid_inverter"?item.power:null);
@@ -32,7 +38,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.10";
+export const UI_VERSION = "0.2.11";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -188,6 +194,8 @@ export class EhomeEmsPanel extends BaseElement {
   async _load() {
     const request = ++this._request;
     const key = this._key();
+    const tabKey="ehome-ems-tab:"+(this._hass?.user?.id||"user")+":"+this._panel.config.entry_id;
+    if(this._tabStorageKey!==tabKey){this._tabStorageKey=tabKey;try{const value=sessionStorage.getItem(tabKey);this._tab=value!==null&&/^\d+$/.test(value)?Math.max(0,Math.min(9,Number(value))):0;}catch{}}
     this._loadedKey = key;
     try {
       const snapshot = await this._snapshot();
@@ -220,6 +228,7 @@ export class EhomeEmsPanel extends BaseElement {
     return button;
   }
   _render() {
+    if(this._tabStorageKey)try{sessionStorage.setItem(this._tabStorageKey,String(this._tab));}catch{}
     for (const observer of this._layoutObservers || []) observer.disconnect();
     this._layoutObservers = [];
     for (const cancel of this._holdCancels) cancel();
@@ -233,6 +242,7 @@ export class EhomeEmsPanel extends BaseElement {
     const style = this._node("style");
     style.textContent = `
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f6f8);color:var(--primary-text-color,#18232e);font:15px/1.5 system-ui,sans-serif}
+      .integration-meta{font-size:12px;margin:6px 0 0}.equipment-name{cursor:context-menu;text-decoration:underline dotted;text-underline-offset:4px;touch-action:pan-y}.equipment-name:focus-visible{outline:3px solid var(--primary-color,#007b83);outline-offset:3px}.battery-direction .flow-small{color:inherit}
       .pv-meta{font-size:15px;color:var(--secondary-text-color,#91a4b8)}.flow-day-energy{display:block;font-size:12px;line-height:1.45;margin-top:3px;overflow-wrap:anywhere;letter-spacing:0}.flow-house .flow-day-energy{font-size:13px;margin-left:20%;max-width:80%}
       .heater-layout{display:grid;grid-template-columns:minmax(100px,35%) minmax(0,1fr);gap:20px;align-items:center;margin:18px 0 24px}.heater-details{min-width:0}.heater-details .vessel-main{color:#ffa000;font-size:32px}.cumulus-visual{position:relative;width:min(100%,140px);height:205px;margin:10px auto 18px;border:3px solid #e9a23d;border-radius:45% / 12%;background:#173144;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:inset 12px 0 20px #0004}.cumulus-visual:after{content:"";position:absolute;top:7%;left:10%;right:10%;height:2px;background:#e9a23d99}.cumulus-visual ha-icon{position:relative;z-index:1;--mdc-icon-size:70px;color:#ffb74d}.cumulus-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(#ffa00088,#fb6c20cc);transition:height .3s}.heater-details .energy-value{font-size:24px}@media(max-width:450px){.heater-layout{grid-template-columns:90px minmax(0,1fr);gap:12px}.cumulus-visual{height:170px}.heater-details .vessel-main{font-size:26px}.heater-details .energy-value{font-size:21px}}
       .alert-rule{border:1px solid var(--divider-color,#738391);border-radius:10px;padding:10px 12px}.alert-rule summary{cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;min-height:24px}.alert-rule fieldset{margin-top:12px}
@@ -319,6 +329,9 @@ export class EhomeEmsPanel extends BaseElement {
     const title = this._node("div");
     title.append(this._node("h1", "eHome EMS"),
       this._node("p", this._t("Votre énergie · observation", "Your energy · observation"), "subtitle"));
+    const meta=this._node("p",this._t("Interface ","Interface ")+UI_VERSION+this._t(" · Intégration "," · Integration ")+(this._snapshotData?.version||this._t("chargement…","loading…")),"integration-meta note");
+    if(this._hass?.config?.version)meta.textContent+=" · HA "+this._hass.config.version;
+    const equipmentCount=this._snapshotData?.flow?.usages?.length;if(equipmentCount!==undefined)meta.textContent+=" · "+equipmentCount+this._t(" usages/appareils suivis"," monitored loads/devices");title.append(meta);
     const actions = this._node("div", undefined, "actions");
     const menu = document.createElement("ha-menu-button");
     this._menu = menu;
@@ -364,7 +377,7 @@ export class EhomeEmsPanel extends BaseElement {
         main.append(content);
       }
     }
-    if (this._hass?.user?.is_admin) main.append(this._node("p", this._t("Cliquez sur une valeur pour son historique. Appui prolongé ou Maj+Entrée pour changer sa source.", "Click a value for history. Hold or Shift+Enter to change its source."), "note"));
+    if (this._hass?.user?.is_admin) main.append(this._node("p", this._t("Cliquez sur une valeur pour son historique. Appui prolongé sur un nom : modifier ou retirer. Appui prolongé sur une mesure : changer sa source.", "Click a value for history. Hold a name to edit or remove. Hold a reading to change its source."), "note"));
     this.shadowRoot.append(main); this._refresh();
   }
   _bind(element, entity, attribute, gauge) {
@@ -389,6 +402,7 @@ export class EhomeEmsPanel extends BaseElement {
     if (entity && entity === f?.entities?.solar_power) return "#ffc83d";
     if(entity && entity === f?.entities?.grid_import)return "#ff6565";
     if(entity && [f?.entities?.grid_export,f?.entities?.grid_power].includes(entity))return "#58aeff";
+    if(f?.batteries?.some(b=>b.discharge_power===entity))return "#58aeff";
     if (f?.batteries?.some(b => Object.values(b).includes(entity))) return "#42dca4";
     const u = f?.usages?.find(u => Object.values(u).includes(entity));
     return ["solar_router","water_heater"].includes(u?.kind) ? "#ffa000" : u?.kind === "ev_charger" ? "#bb86fc" : "#5bb8ff";
@@ -710,7 +724,7 @@ export class EhomeEmsPanel extends BaseElement {
       const charge=flowPower(this._hass?.states,thermal?config.power:config.charge_power), discharge=thermal?0:flowPower(this._hass?.states,config.discharge_power);
       direction.textContent=thermal?reading(this._hass?.states,config.power).text:charge===null&&discharge===null?this._t("Puissance indisponible","Power unavailable"):
         `${charge>=FLOW_MIN_WATTS?"↓ ":discharge>=FLOW_MIN_WATTS?"↑ ":""}${displayNumber(charge>=FLOW_MIN_WATTS?charge:discharge??charge,this._hass?.language)} W`;
-      direction.style.color = thermal ? "#ffa000" : "#65c487";
+      direction.style.color = thermal ? "#ffa000" : charge>=10?"#50e49b":discharge>=10?"#58aeff":"#65c487";
       mode.textContent=thermal?(charge>=10?this._t("Je chauffe l’eau","Heating water"):charge===null?this._t("Puissance non associée","Power not mapped"):this._t("Veille / faible puissance","Idle / low power")):
         charge>=10?this._t("Je stocke","Charging"):discharge>=10?this._t("Je restitue","Discharging"):charge===null||discharge===null?this._t("Mesure de puissance incomplète","Incomplete power readings"):this._t("Au repos / faible puissance","Idle / low power");
       if(!thermal) {
@@ -759,7 +773,7 @@ export class EhomeEmsPanel extends BaseElement {
   _today(snapshot) {
     const root=this._node("section",undefined,"card today");root.append(this._node("h2",this._t("Aujourd’hui","Today")),this._node("p",this._t("Compteurs journaliers associés · prix fixe estimatif, hors abonnement et revente. Charge/restitution toutes origines, aucun gain solaire déduit.","Mapped daily counters · estimated flat price excluding standing charges and export revenue. Charge/discharge includes all energy origins; no solar savings inferred."),"note"));
     const grid=this._node("div",undefined,"cards");
-    for(const [key,fr,en,icon,color] of [["solar","J’ai produit","Produced","mdi:white-balance-sunny","#ffcc45"],["home","J’ai consommé","Consumed","mdi:home","#5bb8ff"],["charge","J’ai stocké","Charged","mdi:battery-charging","#42dca4"],["discharge","J’ai restitué","Discharged","mdi:battery-high","#42dca4"],["import","J’ai importé","Imported","mdi:transmission-tower","#ff6565"],["export","J’ai exporté","Exported","mdi:transmission-tower","#58aeff"]]) {
+    for(const [key,fr,en,icon,color] of [["solar","J’ai produit","Produced","mdi:white-balance-sunny","#ffcc45"],["home","J’ai consommé","Consumed","mdi:home","#5bb8ff"],["charge","J’ai stocké","Charged","mdi:battery-charging","#42dca4"],["discharge","J’ai restitué","Discharged","mdi:battery-high","#58aeff"],["import","J’ai importé","Imported","mdi:transmission-tower","#ff6565"],["export","J’ai exporté","Exported","mdi:transmission-tower","#58aeff"]]) {
       const entity=snapshot.daily?.[key],tile=this._metricTile(this._t(fr,en),entity,icon,color);
       if(key!=="export")tile.append(this._cost(entity,"today"));else tile.append(this._node("p",this._t("Revente non valorisée","Export revenue not valued"),"note"));grid.append(tile);
     }
@@ -810,7 +824,7 @@ export class EhomeEmsPanel extends BaseElement {
           displayNumber(value,this._hass.language)+this._t(" kWh aujourd’hui"," kWh today");
         energy.classList.toggle("bad",value===null);
       });
-      tile.append(energy,cost);loads.append(tile);
+      tile.append(energy,cost);this._equipmentActions(tile,usage,usage.kind==="appliance"?"appliances":"usages");loads.append(tile);
     }
     if (!flow.usages?.length) loads.append(this._node("p", this._t("Ajoutez des usages dans la configuration de l’intégration.", "Add loads in integration configuration."), "note"));
     secondary.append(loads); grid.append(secondary);
@@ -818,7 +832,7 @@ export class EhomeEmsPanel extends BaseElement {
     quality.append(this._node("h2", this._t("Qualité des données", "Data quality")),
       this._node("p", flow.home_calculated ? this._t("Conso Maison : tous les usages inclus, calcul EMS.", "Home boundary: EMS calculated total.") :
         this._t("Conso Maison : le capteur existant doit inclure le cumulus, la borne et tous les usages.", "Home boundary: source boundary. Check whether the water heater is included."), "note"),
-      this._button(this._t("Vérifier les associations", "Check mappings"), () => { this._tab = 7; this._render(); }));
+      this._button(this._t("Vérifier les associations", "Check mappings"), () => { this._tab = 8; this._render(); }));
     const available = this._node("p", undefined, "note"); quality.append(available);
     this._flowUpdates.push(() => {
       const ids = Object.keys(snapshot.bindings || {});
@@ -915,7 +929,7 @@ export class EhomeEmsPanel extends BaseElement {
       for(const [key,fr,en,value,min,max,step] of [["goal_kwh","Objectif du cycle (kWh)","Cycle target (kWh)",usage.daily_energy_goal_kwh||3,.01,100,.01],["nominal_power_w","Puissance de chauffe à pleine ouverture (W)","Heating power at full opening (W)",1800,100,15000,1],["margin_minutes","Marge de démarrage (minutes)","Start margin (minutes)",5,0,120,1],["max_age_seconds","Ancienneté maximale du compteur (secondes)","Maximum counter age (seconds)",300,30,3600,1]]){const i=add(key,fr,en,"number",value);Object.assign(i,{min,max,step,required:true});}
       for(const [key,fr,en,value] of [["deadline","Eau prête à","Water ready by","07:00"],["window_start","Début du complément autorisé","Allowed top-up starts","01:00"],["window_end","Fin du complément autorisé","Allowed top-up ends","07:00"]]){const i=add(key,fr,en,"time",value);i.required=true;}
       const energyOptions=[["",this._t("Choisir le compteur du cumulus","Choose water-heater counter")],...Object.entries(this._hass.states||{}).filter(([entity,state])=>entity.startsWith("sensor.")&&["Wh","kWh"].includes(state.attributes?.unit_of_measurement)).map(([entity,state])=>[entity,(state.attributes?.friendly_name||entity)+" · "+entity])];
-      const e=add("energy_entity","Compteur cumulé dédié au cumulus","Dedicated cumulative water-heater counter","text",usage.energy_period==="total"?snapshot.bindings?.[usage.energy]?.source||usage.energy||"":"");e.required=true;this._entityPicker(e.parentElement,e,energyOptions.filter(([id])=>id));
+      const e=add("energy_entity","Compteur cumulé dédié au cumulus","Dedicated cumulative water-heater counter","text",usage.energy_period==="total"?snapshot.bindings?.[usage.energy]?.source||usage.energy||"":"");e.required=true;this._entityPicker(e.parentElement,e,energyOptions.filter(([id])=>id),()=>usage.name);
       add("counter_confirmed","Je confirme que ce compteur est cumulatif et ne se remet pas à zéro à minuit","I confirm this is a lifetime counter with no midnight reset","checkbox",false);
       add("router_usage","Routeur F1ATB HTTP à commander","F1ATB HTTP router to control","text",routers.length===1?routers[0][0]:"",[["",this._t("Non associé · observation seulement","Not mapped · observation only")],...routers.map(([key,u])=>[key,u.name])]);
       form.append(this._node("p",this._t("L’activation du mode automatique autorise de vrais compléments réseau dans ce créneau. Choisir le compteur du seul cumulus. L’ouverture de marche forcée F1ATB doit être à 100 %. Une seule échéance par cycle ; le thermostat et les protections restent ceux du cumulus.","Enabling automatic mode permits real grid top-ups within this window. Choose the water-heater-only counter. F1ATB forced opening must be 100%. One deadline per cycle; thermostat and protections remain with the water heater."),"note"));
@@ -1064,11 +1078,27 @@ export class EhomeEmsPanel extends BaseElement {
     layout.append(visual,details);root.append(layout);return root;
   }
   _equipmentActions(parent,equipment,section) {
-    if(!this._hass?.user?.is_admin || !equipment.id)return;
-    const actions=this._node("div",undefined,"equipment-actions");
-    const edit=this._button(this._t("Modifier","Edit"),()=>this._settingsDialog(section,equipment.id));edit.setAttribute("aria-label",this._t("Modifier ","Edit ")+equipment.name);
-    const remove=this._button(this._t("Retirer du suivi","Remove monitoring"),()=>this._settingsDialog(section,equipment.id,true));remove.setAttribute("aria-label",this._t("Retirer ","Remove ")+equipment.name);
-    actions.append(edit,remove);parent.append(actions);
+    if(!this._hass?.user?.is_admin||!equipment.id)return;
+    const name=parent.querySelector("h2,h3,.kpi-label,.flow-title");if(!name||name.dataset.equipmentName)return;
+    name.dataset.equipmentName=equipment.id;name.classList.add("equipment-name");name.tabIndex=0;name.setAttribute("aria-haspopup","dialog");
+    name.title=this._t("Appui prolongé, clic droit ou Entrée : modifier ou retirer","Hold, right-click or Enter: edit or remove");
+    const open=()=>this._equipmentMenu(equipment,section);let timer,x,y;
+    const cancel=()=>clearTimeout(timer);this._holdCancels.push(cancel);
+    name.addEventListener("pointerdown",event=>{event.stopPropagation();if(event.button!==0)return;x=event.clientX;y=event.clientY;timer=setTimeout(open,600);});
+    name.addEventListener("pointermove",event=>{if(Math.abs(event.clientX-x)+Math.abs(event.clientY-y)>10)cancel();});
+    for(const type of ["pointerup","pointercancel","pointerleave"])name.addEventListener(type,cancel);
+    name.addEventListener("contextmenu",event=>{event.preventDefault();event.stopPropagation();cancel();open();});
+    name.addEventListener("keydown",event=>{if(["Enter"," "].includes(event.key)){event.preventDefault();event.stopPropagation();open();}});
+  }
+  _equipmentMenu(equipment,section) {
+    if(!this._hass?.user?.is_admin||this._dialog?.open)return;
+    const dialog=this._node("dialog");this._dialog=dialog;dialog.setAttribute("aria-label",this._t("Actions · ","Actions · ")+equipment.name);
+    const close=()=>{dialog.close();dialog.remove();if(this._dialog===dialog)this._dialog=null;};
+    const action=remove=>{close();this._settingsDialog(section,equipment.id,remove);};
+    const edit=this._button(this._t("Modifier","Edit"),()=>action(false)),remove=this._button(this._t("Retirer du suivi","Remove monitoring"),()=>action(true));
+    edit.setAttribute("aria-label",this._t("Modifier ","Edit ")+equipment.name);remove.setAttribute("aria-label",this._t("Retirer ","Remove ")+equipment.name);
+    dialog.append(this._node("h2",equipment.name),edit,remove,this._button(this._t("Annuler","Cancel"),close));
+    dialog.addEventListener("close",()=>{dialog.remove();if(this._dialog===dialog)this._dialog=null;});this.shadowRoot.append(dialog);dialog.showModal();edit.focus();
   }
   _settingsShortcuts(snapshot) {
     const root=this._node("div",undefined,"settings-shortcuts");
@@ -1206,7 +1236,7 @@ export class EhomeEmsPanel extends BaseElement {
     const integration = this._node("a", this._t("Ouvrir l’intégration eHome EMS", "Open eHome EMS integration"));
     integration.href = "/config/integrations/integration/ehome_ems"; links.append(integration); root.append(links);
     if(this._hass?.user?.is_admin)root.append(this._settingsShortcuts(snapshot));
-    root.append(this._node("p", this._t("Interface ", "Interface ") + UI_VERSION + this._t(" · Intégration ", " · Integration ") + (snapshot.version || this._t("ancienne ou inconnue", "old or unknown")), "note"));
+
     root.append(this._node("p", this._t("Seuil d’animation : 10 W. Ce seuil visuel ne modifie ni les mesures ni les calculs. Une valeur sous ce seuil ne prouve pas qu’un équipement est arrêté.",
       "Animation threshold: 10 W. This visual threshold changes neither readings nor calculations. A reading below this threshold does not prove a device is off."), "note"));
     const list = this._node("div", undefined, "source-list");
@@ -1322,7 +1352,7 @@ export class EhomeEmsPanel extends BaseElement {
     const connectedBatteries = (config.batteries || []).filter(b => b.role === "active" && b.coupling === "ac");
     const batteryPaths = connectedBatteries.map(b => [
       link("M460 480 H180", "#50e49b", b.charge_power),
-      link("M180 480 H460", "#50e49b", b.discharge_power),
+      link("M180 480 H460", "#58aeff", b.discharge_power),
     ]);
     stage.append(svg);
     const icon = (name) => { const el = this._node("ha-icon"); el.setAttribute("icon", name); return el; };
@@ -1362,9 +1392,9 @@ export class EhomeEmsPanel extends BaseElement {
     metric(house, entities.home_power);day(house,this._snapshotData?.daily?.home);stage.append(house);
     const batteryTile = (battery, className) => {
       const el = this._node("div", undefined, className);
-      el.append(icon("mdi:battery-high"), this._node("span", battery.name, "flow-title"));
+      el.append(icon("mdi:battery-high"), this._node("span", battery.name, "flow-title"));this._equipmentActions(el,battery,"batteries");
       for (const [key, other, label] of [["charge_power", "discharge_power", this._t("Charge", "Charge")], ["discharge_power", "charge_power", this._t("Décharge", "Discharge")]]) {
-        const group = this._node("div"); group.append(this._node("span", label, "flow-small"));
+        const group = this._node("div",undefined,"battery-direction");group.dataset.direction=key;group.style.color=key==="charge_power"?"#50e49b":"#58aeff"; group.append(this._node("span", label, "flow-small"));
         const row = this._node("div"); metric(row, battery[key]);day(row,connectedBatteries.length===1?this._snapshotData?.daily?.[key==="charge_power"?"charge":"discharge"]:null); group.append(row); el.append(group);
         this._flowUpdates.push(() => { group.hidden = false; });
       }
@@ -1425,7 +1455,7 @@ export class EhomeEmsPanel extends BaseElement {
     const usages = this._node("div", undefined, "flow-usages");
     for (const usage of config.usages || []) {
       const mdi = productIcon(usage);
-      const el = tile("flow-usage", usage.name, mdi, usage.power);
+      const el = tile("flow-usage", usage.name, mdi, usage.power);this._equipmentActions(el,usage,"usages");
       day(el,usage);
       el.style.color = ["solar_router","water_heater"].includes(usage.kind) ? "#ffab4d" : usage.kind === "ev_charger" ? "#c18aff" : "#edf4ff";
       usages.append(el);
@@ -1442,12 +1472,12 @@ export class EhomeEmsPanel extends BaseElement {
     }
     return root;
   }
-  _entityPicker(parent,input,options) {
+  _entityPicker(parent,input,options,contextName=null) {
     if(!input.hasAttribute("aria-label"))input.setAttribute("aria-label",parent.firstChild?.textContent||this._t("Entité","Entity"));
     const picker=this._node("div",undefined,"entity-picker"),list=this._node("div",undefined,"entity-options");list.hidden=true;
     const button=this._button(this._t("Choisir une entité","Choose an entity"),()=>{list.hidden=!list.hidden;if(!list.hidden){draw("");input.focus();}button.setAttribute("aria-expanded",String(!list.hidden));});
     button.setAttribute("aria-label",this._t("Choisir une entité · ","Choose an entity · ")+input.getAttribute("aria-label"));button.setAttribute("aria-expanded","false");
-    const draw=query=>{list.replaceChildren();const needle=query.toLocaleLowerCase(),matches=options.filter(([id,name])=>(id+" "+name).toLocaleLowerCase().includes(needle));
+    const draw=query=>{list.replaceChildren();const needle=query.toLocaleLowerCase(),matches=rankEntityOptions(options.filter(([id,name])=>(id+" "+name).toLocaleLowerCase().includes(needle)),contextName?.()||parent.closest("form")?.querySelector("[name=name]")?.value||"");
       for(const [id,name] of matches.slice(0,100)){const choice=this._button(name===id?id:name+" · "+id,()=>{input.value=id;list.hidden=true;button.setAttribute("aria-expanded","false");input.dispatchEvent(new Event("change",{bubbles:true}));input.focus();});choice.title=id;list.append(choice);}
       if(!matches.length)list.append(this._node("p",this._t("Aucune entité compatible","No compatible entity"),"note"));
       if(matches.length>100)list.append(this._node("p",this._t("Saisissez quelques lettres pour affiner les résultats.","Type a few letters to narrow the results."),"note"));

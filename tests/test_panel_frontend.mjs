@@ -149,3 +149,11 @@ test("situation interprets observed flows without inferring energy origin or mis
  assert.equal(situationFacts({solar:null,home:1000,imported:0,exported:0})[0],"incomplete");
  assert.equal(situationFacts({solar:100,home:1500,imported:1400,exported:0})[0],"import");
 });
+
+import {rankEntityOptions} from "../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+test("entity ordering prioritizes device names with accents without hiding other sources",()=>{
+ const options=[["sensor.frigo","Frigo"],["sensor.lave_linge","Lave linge énergie"],["sensor.seche_linge_power","Sèche-linge puissance"]];
+ const ranked=rankEntityOptions(options,"Seche Linge");
+ assert.equal(ranked[0][0],"sensor.seche_linge_power");assert.equal(ranked.length,options.length);assert.equal(options[0][0],"sensor.frigo");
+ assert.equal(rankEntityOptions(options,"").length,3);
+});

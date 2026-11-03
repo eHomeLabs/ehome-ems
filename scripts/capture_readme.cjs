@@ -27,6 +27,6 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'docs/screenshots');
   await page.getByRole('button',{name:'Actualiser',exact:true}).click();await page.getByRole('button',{name:'Usages',exact:true}).click();await page.getByText('Paramétrage F1ATB',{exact:true}).click();await page.getByLabel('Ouverture maximale (%)',{exact:true}).fill('60');await page.getByLabel('Mode immédiat de l’action (facultatif)',{exact:true}).selectOption('Train');await page.locator('.router-card').screenshot({path:path.join(out,'router-f1atb.png')});
   await page.getByRole('button',{name:'Configuration',exact:true}).click();await page.locator('.settings-shortcuts').waitFor();
   await page.locator('main').screenshot({path:path.join(out,'configuration.png')});
-  console.log('Captured 10 actual 0.2.10 UI screenshots with simulated data.');
+  console.log('Captured 10 actual 0.2.11 UI screenshots with simulated data.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});
