@@ -17,5 +17,5 @@ La version 0.2.5 accepte les températures input_number et réserve Stockage aux
 - Tests simulés significatifs : signes, unités, bilans, qualité, unités de stock, historique, changements d'heure, droits, conflits et migrations.
 - Pour le code, lancer les tests appropriés et les contrôles CI HA/navigateur. Pour la documentation, vérifier liens, captures et cohérence ; aucun test matériel implicite.
 
-- Les fiches photovoltaïques sont descriptives et ne doivent pas être agrégées implicitement dans le total solaire ou le bilan Maison.
+- Les fiches photovoltaïques alimentent un total indicatif explicite dans leur onglet (une source de production par équipement, dédoublonnage), sans remplacement implicite du bilan Maison AC. Les hybrides exigent une source DC solaire et leur énergie AC est exclue du cumul de production.
 - Le support F1ATB natif utilise HTTP local sans intégration supplémentaire, ou MQTT HA selon le transport choisi. Les commandes sont manuelles par défaut ; seul le contrôleur d’objectif explicitement activé peut envoyer des baux HTTP courts. HTTP : sérialisation par routeur, configuration complète préservée, contrôle de conflit avant écriture persistante et relecture sans supposer un succès. MQTT : topic explicite, messages non retenus, aucun accusé de réception supposé ni identifiant de broker dupliqué.

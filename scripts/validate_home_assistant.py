@@ -265,6 +265,28 @@ async def validate(config_dir):
                         pass
                     assert answer["success"] is success, answer
                     return answer.get("result")
+                # Alert APIs: isolated fake notifier, no personal destination.
+                from custom_components.ehome_ems.const import DOMAIN
+                hass.states.async_set("sensor.alert_import_today","13",{"unit_of_measurement":"kWh"})
+                notifications=[]
+                async def notify_demo(call):notifications.append(dict(call.data))
+                hass.services.async_register("notify","ems_simulated",notify_demo)
+                rules=[{"id":"daily_test","kind":"daily_import","entity":"sensor.alert_import_today","threshold":12,"duration_minutes":0,"enabled":False,"notify_service":"notify.ems_simulated","daily_confirmed":True}]
+                await command({"type":"ehome_ems/save_alerts","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"rules":rules})
+                await hass.async_block_till_done()
+                alerts_snapshot=await command({"type":"ehome_ems/alerts","entry_id":entry.entry_id})
+                assert alerts_snapshot["rules"][0]["enabled"] is False and notifications==[]
+                rules[0]["enabled"]=True
+                await command({"type":"ehome_ems/save_alerts","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"rules":rules})
+                await hass.async_block_till_done()
+                assert len(notifications)==1 and "12 kWh" in notifications[0]["message"]
+                await hass.data[DOMAIN]["alerts_runtime"][entry.entry_id].async_tick()
+                assert len(notifications)==1
+                assert await hass.config_entries.async_reload(entry.entry_id)
+                await hass.async_block_till_done()
+                assert len(notifications)==1
+                await command({"type":"ehome_ems/save_alerts","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"rules":[]})
+                await hass.async_block_till_done()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 copy_path = "ehome-test-copy-" + entry.entry_id.lower()
                 await command({"type": "lovelace/dashboards/create", "title": "Independent copy",
@@ -277,7 +299,7 @@ async def validate(config_dir):
                 await hass.async_block_till_done()
                 preserved = await command({"type": "lovelace/config", "url_path": copy_path})
                 assert preserved["title"] == "Preserved custom title"
-                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.6.js")
+                asset = await session.get(f"http://127.0.0.1:{port}/ehome_ems_panel_0.2.7.js")
                 assert asset.status == 200
                 assert "javascript" in asset.headers.get("Content-Type", "")
                 assert "ehome-ems-panel" in await asset.text()
@@ -292,9 +314,9 @@ async def validate(config_dir):
                 assert await house_asset.read() == (ROOT / "custom_components/ehome_ems/frontend/assets/house.webp").read_bytes()
                 snapshot = await command({"type": "ehome_ems/dashboard", "entry_id": entry.entry_id})
                 assert solar_id in snapshot["bindings"]
-                assert snapshot["version"] == "0.2.6"
-                assert PANEL_TAG == "ehome-ems-panel-0-2-6"
-                assert PANEL_URL == "/ehome_ems_panel_0.2.6.js"
+                assert snapshot["version"] == "0.2.7"
+                assert PANEL_TAG == "ehome-ems-panel-0-2-7"
+                assert PANEL_URL == "/ehome_ems_panel_0.2.7.js"
                 assert snapshot["flow"]["entities"]["solar_power"] == solar_id
                 hass.states.async_set("sensor.sim_pv_new", "2.1", {"unit_of_measurement": "kW", "device_class": "power"})
                 old_revision = snapshot["revision"]
@@ -485,6 +507,12 @@ async def validate(config_dir):
                                    "title": "Denied copy", "url_path": "ehome-denied-copy"})
                 denied = await ws.receive_json()
                 assert not denied["success"], denied
+                await ws.send_json({"id":90,"type":"ehome_ems/save_alerts","entry_id":entry.entry_id,"revision":entry.modified_at.isoformat(),"rules":[]})
+                assert not (await ws.receive_json())["success"]
+                await ws.send_json({"id":91,"type":"ehome_ems/alerts","entry_id":entry.entry_id})
+                public_alerts=await ws.receive_json()
+                assert public_alerts["success"] and "rules" not in public_alerts["result"] and "notify_services" not in public_alerts["result"]
+
                 await ws.send_json({"id": 2, "type": "ehome_ems/remap_source", "entry_id": entry.entry_id,
                                    "entity_id": solar_id, "source_id": "sensor.sim_solar",
                                    "expected_source": "sensor.sim_pv_new", "revision": entry.modified_at.isoformat()})

@@ -137,3 +137,15 @@ test("HA midnight follows Paris timezone including 23 and 25 hour days",async()=
 test("native product icons infer French names and permit explicit overrides",async()=>{const {productIcon}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");for(const [name,icon] of [["Lave Linge","washing-machine"],["Sèche Serviette","radiator"],["Filtration Piscine","pool"],["Clim Labo","air-conditioner"],["Frigo/Congélateur","fridge"],["Expresso","coffee-maker"]])assert.equal(productIcon({name}),"mdi:"+icon);assert.equal(productIcon({name:"Frigo",icon:"mdi:pool"}),"mdi:pool");assert.equal(productIcon({name:"unknown",icon:"javascript:bad"}),"mdi:power-plug");});
 
 test("daily goal is consumed energy progress, distinct from SOC and can exceed target",async()=>{const {dailyGoalPercent}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");assert.ok(Math.abs(dailyGoalPercent(2.16,3)-72)<1e-9);assert.ok(Math.abs(dailyGoalPercent(4,3)-400/3)<1e-9);for(const [energy,goal] of [[null,3],[2,0],[2,-1],[2,NaN],[-1,3]])assert.equal(dailyGoalPercent(energy,goal),null);});
+
+import {pvProductionSources, strictSum, situationFacts} from "../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+test("PV totals choose one production per equipment and deduplicate original sources",()=>{
+ const selected=pvProductionSources([{power:"a",dc_power:"dc"},{power:"alias"},{power:"a"},{kind:"hybrid_inverter",power:"hybridAC"},{kind:"hybrid_inverter",dc_power:"hybridDC"}],id=>id==="alias"?"a":id);
+ assert.deepEqual(selected.map(p=>p.production),["dc","alias","hybridDC"]);
+ assert.equal(strictSum([100,0,200]),300);assert.equal(strictSum([100,null]),null);assert.equal(strictSum([]),null);assert.equal(strictSum([1,NaN]),null);
+});
+test("situation interprets observed flows without inferring energy origin or missing zeros",()=>{
+ assert.deepEqual(situationFacts({solar:2500,home:1000,imported:0,exported:200,charge:1200,discharge:0,water:600}),["surplus","water","charge","export"]);
+ assert.equal(situationFacts({solar:null,home:1000,imported:0,exported:0})[0],"incomplete");
+ assert.equal(situationFacts({solar:100,home:1500,imported:1400,exported:0})[0],"import");
+});

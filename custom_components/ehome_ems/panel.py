@@ -86,6 +86,8 @@ async def async_setup_panel_domain(hass):
         StaticPathConfig(PANEL_URL, str(Path(__file__).parent / "frontend/ehome-panel.mjs"), False),
         StaticPathConfig("/ehome_ems_assets", str(Path(__file__).parent / "frontend/assets"), False),
     ])
+    websocket_api.async_register_command(hass, websocket_alerts)
+    websocket_api.async_register_command(hass, websocket_save_alerts)
     websocket_api.async_register_command(hass, websocket_dashboard)
     websocket_api.async_register_command(hass, websocket_remap)
     websocket_api.async_register_command(hass, websocket_manage_settings)
@@ -254,3 +256,33 @@ async def websocket_rearm_energy_goal(hass, connection, msg):
         return
     await runtime.async_rearm(msg["identifier"])
     connection.send_result(msg["id"],{"rearmed":True})
+
+
+@websocket_api.websocket_command({"type":"ehome_ems/alerts", "entry_id":str})
+@callback
+def websocket_alerts(hass, connection, msg):
+    entry=hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain != DOMAIN:
+        connection.send_error(msg["id"],"not_ready","eHome EMS is not ready.")
+        return
+    runtime=hass.data.get(DOMAIN,{}).get("alerts_runtime",{}).get(entry.entry_id)
+    result={"journal":list(runtime.journal) if runtime else []}
+    if connection.user.is_admin:
+        result["rules"]=(entry.options or entry.data).get("alerts",[])
+        result["notify_services"]=["persistent_notification.create"]+["notify."+name for name in hass.services.async_services().get("notify",{})]
+    connection.send_result(msg["id"],result)
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({"type":"ehome_ems/save_alerts", "entry_id":str,"revision":str,"rules":vol.All(list,vol.Length(max=20))})
+@callback
+def websocket_save_alerts(hass,connection,msg):
+    from .alerts import save_alerts
+    entry=hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain != DOMAIN:
+        connection.send_error(msg["id"],"not_ready","eHome EMS is not ready.")
+        return
+    try:save_alerts(hass,entry,msg["rules"],msg["revision"])
+    except (ValueError,TypeError,KeyError) as error:
+        connection.send_error(msg["id"],str(error),"Alert settings rejected.")
+    else:connection.send_result(msg["id"],{"saved":True})
