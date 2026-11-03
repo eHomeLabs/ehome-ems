@@ -181,7 +181,7 @@ async def websocket_manual_control(hass, connection, msg):
 
 
 @websocket_api.require_admin
-@websocket_api.websocket_command({"type":"ehome_ems/router_command","entry_id":str,"identifier":str,"revision":str,"action":vol.In(["force_on","force_off","release","parameters","http_parameters"]),"values":dict})
+@websocket_api.websocket_command({"type":"ehome_ems/router_command","entry_id":str,"identifier":str,"revision":str,"action":vol.In(["force_on","force_off","release","parameters","http_parameters","boost_hour"]),"values":dict})
 @websocket_api.async_response
 async def websocket_router_command(hass, connection, msg):
     entry=hass.config_entries.async_get_entry(msg["entry_id"])

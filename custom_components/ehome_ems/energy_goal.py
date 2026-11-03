@@ -149,5 +149,5 @@ def evaluate(goal, now, zone_name, consumed_kwh, *, running=False):
               "complement_due" if due else "waiting_window" if not in_window else "solar_priority")
     return {**result, "reason": reason, "missing_kwh": round(missing, 4),
             "needed_minutes": ceil(minutes), "allowed_minutes": round(remaining, 1),
-            "latest_start": latest.isoformat() if latest else None,
+            "latest_start": latest.isoformat() if latest and not reached else None,
             "should_heat": due, "reachable": reached or remaining >= minutes}

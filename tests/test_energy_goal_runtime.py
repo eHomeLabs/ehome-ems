@@ -57,6 +57,24 @@ class GoalRuntimeTests(IsolatedAsyncioTestCase):
     def make_runtime(self):return runtime.EnergyGoalRuntime(self.hass,self.entry,history_reader=self.history,now=lambda:self.clock)
     def advance(self,seconds=60):self.clock+=timedelta(seconds=seconds);self.energy.last_reported=self.clock
 
+    async def test_reached_target_wins_over_old_report_and_no_start_is_shown(self):
+        self.energy.state='103.33';self.clock+=timedelta(seconds=400)
+        await self.rt.async_tick()
+        result=self.rt.results['h']
+        self.assertEqual(result['reason'],'target_reached')
+        self.assertEqual(result['warning'],'stale_energy')
+        self.assertIsNone(result['latest_start'])
+        self.assertFalse(result['running'])
+
+    async def test_today_and_cycle_have_independent_baselines(self):
+        async def history(hass,entity,start,end):
+            return (100.,100.,'valid') if start.hour==6 else (100.5,100.5,'valid')
+        await self.rt.async_stop()
+        rt=runtime.EnergyGoalRuntime(self.hass,self.entry,history_reader=history,now=lambda:self.clock)
+        await rt.async_start()
+        self.assertEqual(rt.results['h']['consumed_kwh'],1)
+        self.assertEqual(rt.results['h']['day_energy_kwh'],.5)
+
     async def test_due_starts_short_lease_renews_and_releases_at_target(self):
         self.assertEqual(self.client.writes,[(0,2)])
         self.advance();await self.rt.async_tick();self.assertEqual(self.client.writes,[(0,2),(0,2)])

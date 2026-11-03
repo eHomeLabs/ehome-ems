@@ -91,7 +91,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-7").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-8").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -171,7 +171,9 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button", { name: "Stratégie", exact: true }).click();
       await page.getByText("Configurer l’objectif · Cumulus",{exact:true}).click();
       await page.getByLabel("Objectif du cycle (kWh) · Cumulus",{exact:true}).fill("3");
-      await page.getByLabel("Compteur cumulé dédié au cumulus · Cumulus",{exact:true}).selectOption("sensor.demo_water_total");
+      await page.getByRole("button",{name:"Choisir une entité · Compteur cumulé dédié au cumulus · Cumulus",exact:true}).click();
+      await page.getByLabel("Compteur cumulé dédié au cumulus · Cumulus",{exact:true}).fill("demo_water_total");
+      await page.locator(".entity-options button").filter({hasText:"sensor.demo_water_total"}).click();
       await page.getByLabel("Je confirme que ce compteur est cumulatif et ne se remet pas à zéro à minuit · Cumulus",{exact:true}).check();
       const goalCommands=await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command"||c.type==="ehome_ems/manual_control").length);
       await page.getByRole("button",{name:"Enregistrer l’objectif en observation",exact:true}).click();
@@ -195,7 +197,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.7 · Intégration 0.2.7", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.8 · Intégration 0.2.8", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -218,7 +220,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button",{name:"Mes Appareils",exact:true}).click();
       await page.getByText("Frigo",{exact:true}).waitFor();
       await page.getByText("0,81 kWh",{exact:true}).waitFor();
-      assert.ok(await page.getByText(/Énergie Totale : 1524,81 kWh/).count());
+      assert.equal(await page.getByText(/Énergie Totale :/).count(),0);
       const toggle=page.getByRole("button",{name:"Éteindre Frigo",exact:true});await toggle.click();
       await page.getByRole("button",{name:"Allumer Frigo",exact:true}).waitFor();
       assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/manual_control").length),1);
@@ -298,6 +300,10 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByText("Paramétrage F1ATB",{exact:true}).click();
       await page.getByRole("button",{name:"Forcer On temporairement",exact:true}).click();
       await page.getByText("Réglage confirmé par relecture du routeur.",{exact:true}).waitFor();
+      await page.getByRole("button",{name:"Forcer 1 h à 100 %",exact:true}).click();
+      assert.equal(await page.evaluate(()=>calls.filter(c=>c.action==="boost_hour").length),1);
+      await page.getByRole("button",{name:"Actualiser",exact:true}).click();
+      await page.getByText("Paramétrage F1ATB",{exact:true}).click();
       await page.getByLabel("Ouverture en marche forcée (%)",{exact:true}).fill("60");
       await page.getByRole("button",{name:"Enregistrer les réglages sur le routeur",exact:true}).click();
       await page.waitForFunction(()=>calls.some(c=>c.action==="http_parameters"));

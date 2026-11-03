@@ -51,3 +51,12 @@ Désactiver ou retirer un objectif, modifier ses réglages ou recharger l’int�
 ## Validation
 
 Tests simulés : manque de 2 kWh, déclenchement tardif, minuit, changement d’heure, fenêtres insuffisantes, historique manquant, remise à zéro, fraîcheur, priorité manuelle, bail court et libération à la cible. Les tests HA vérifient les droits WebSocket, la persistance de configuration et le rechargement, avec un historique de cycle et un routeur simulés. Un test supplémentaire vérifie la référence de début de cycle, la progression, la remise à zéro et la référence absente via la véritable API Recorder sur une base SQLite temporaire. Ces tests ne constituent pas une validation sur un cumulus réel.
+
+
+## Lisibilité et forçage manuel (0.2.8)
+
+L’état principal « Objectif atteint — aucun complément nécessaire » est conservé si le compteur n’a pas publié récemment. L’ancienneté reste affichée en avertissement séparé et interdit toute nouvelle chauffe si la cible n’est pas atteinte. Une absence de nouveau rapport n’est pas assimilée à une panne, ni à un nouveau zéro. Une heure de complément n’est affichée que s’il reste de l’énergie à fournir.
+
+L’énergie depuis minuit et l’énergie depuis le début du cycle (échéance précédente) sont calculées indépendamment depuis le compteur cumulé choisi. La référence Recorder manquante reste indisponible. Le cumul à vie reste une source de calcul et un historique ; il n’est plus affiché sur les fiches Usages/Appareils.
+
+Le bouton administrateur « Forcer 1 h à 100 % » est accessible depuis l’objectif et la fiche F1ATB HTTP, après activation des commandes manuelles. Il vérifie la configuration, enregistre l’ouverture de marche forcée à 100 % si nécessaire, confirme sa relecture puis envoie 60 minutes. Le réglage d’ouverture à 100 % reste enregistré ; ce n’est pas une restauration différée. Si le réglage n’est pas confirmé, aucun forçage n’est envoyé. Le thermostat matériel reste actif. À expiration, le routeur revient en Auto ; l’objectif EMS reste suspendu pour le cycle en cours jusqu’au réarmement explicite, conformément à la priorité manuelle. Aucun envoi n’est déclenché par l’affichage.

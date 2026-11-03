@@ -84,7 +84,19 @@ async def async_http_command(hass, entry, identifier, revision, action, values):
             except RouterError:
                 confirmed = False
         else:
-            if action in ("force_on", "force_off") and set(values) == {"minutes"}:
+            if action == "boost_hour" and set(values) == {"config_token"}:
+                if values["config_token"] != config_token(config):
+                    raise RouterError("router_config_conflict")
+                if target.get("Actif") not in range(1,6):
+                    raise RouterError("router_action_inactive")
+                if target.get("ForceOuvre") != 100:
+                    expected=await coordinator.client.patch(config,index,{"config_token":values["config_token"],"forced_opening":100})
+                    actual=await coordinator.client.read_config()
+                    if actions(actual)[index] != actions(expected)[index]:
+                        raise RouterError("router_opening_unconfirmed")
+                    check_revision()
+                minutes=60
+            elif action in ("force_on", "force_off") and set(values) == {"minutes"}:
                 minutes = bounded_int(values["minutes"], 1, 1440) * (1 if action == "force_on" else -1)
             elif action == "release" and not values:
                 minutes = 0
@@ -102,4 +114,4 @@ async def async_http_command(hass, entry, identifier, revision, action, values):
                 confirmed = False
     # Refresh never sends another write. Failure does not imply the write was undone.
     await coordinator.async_refresh()
-    return {"sent": True, "confirmed_by_router": confirmed, "persistent": action == "http_parameters"}
+    return {"sent": True, "confirmed_by_router": confirmed, "persistent": action in ("http_parameters","boost_hour")}

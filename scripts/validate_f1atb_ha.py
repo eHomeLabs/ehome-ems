@@ -79,11 +79,16 @@ async def validate_native_router(hass, entry, command):
         assert float(hass.states.get(sensor('probe_power')).state)==300
         from validate_energy_goals_ha import validate_energy_goals
         await validate_energy_goals(hass, entry, command, identifier, config, writes, forces)
+        config['Actions'][0]['ForceOuvre']=80
+        boost={'type':'ehome_ems/router_command','entry_id':entry.entry_id,'identifier':identifier,'revision':entry.modified_at.isoformat(),'action':'boost_hour','values':{'config_token':config_token(config)}}
+        assert (await command(boost))['confirmed_by_router']
+        assert forces[0]==60 and config['Actions'][0]['ForceOuvre']==100
+
         await command({'type':'ehome_ems/manage_settings','entry_id':entry.entry_id,'revision':entry.modified_at.isoformat(),
             'section':'usages','action':'remove','identifier':identifier,'values':{}})
         await hass.async_block_till_done()
         assert entry.entry_id not in hass.data[DOMAIN]['router_http']
-        assert writes==['/ForceAction','/ParaNew','/ForceAction','/ForceAction']
+        assert writes==['/ForceAction','/ParaNew','/ForceAction','/ForceAction','/ParaNew','/ForceAction']
         print('PASS native F1ATB: direct HTTP, secrets redacted, measurements, manual writes, conflict, unload/reload')
     finally:
         await runner.cleanup()
