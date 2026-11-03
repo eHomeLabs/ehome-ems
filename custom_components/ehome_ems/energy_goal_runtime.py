@@ -4,7 +4,8 @@ Automatic control v1 uses native F1ATB HTTP only, with 2-minute leases.
 The router remains responsible for its thermostat, protection and regulation.
 """
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, time
+from zoneinfo import ZoneInfo
 from functools import partial
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
@@ -55,6 +56,7 @@ class EnergyGoalRuntime:
         self.zone = hass.config.time_zone
         self.store = Store(hass, 1, f"{DOMAIN}_energy_goals_{entry.entry_id}")
         self.faults, self.records, self.owned, self.results = {}, {}, {}, {}
+        self.day_records = {}
         self.lock, self.stopped, self.unsubscribers = asyncio.Lock(), False, []
 
     async def async_start(self):
@@ -135,6 +137,21 @@ class EnergyGoalRuntime:
                 self.faults.pop(identifier, None)
                 await self.persist()
 
+    async def daily_reading(self, goal, now, current):
+        local=now.astimezone(ZoneInfo(self.zone))
+        start=datetime.combine(local.date(),time.min,tzinfo=local.tzinfo).astimezone(timezone.utc)
+        key=(goal["energy_entity"],start.isoformat())
+        record=self.day_records.get(key)
+        if record is None or now >= record["retry_at"]:
+            baseline,previous,quality=await self.history_reader(self.hass,goal["energy_entity"],start,now)
+            record=self.day_records[key]={"baseline":baseline,"previous":previous,"quality":quality,"retry_at":now+timedelta(minutes=1)}
+            self.day_records={k:v for k,v in self.day_records.items() if k[1]==start.isoformat()}
+        value,quality=progress(record["baseline"],record["previous"],current)
+        if record["quality"]!="valid":return None,record["quality"]
+        if quality=="counter_reset":record["quality"]=quality
+        if current is not None:record["previous"]=current
+        return value,quality
+
     async def reading(self, identifier, goal, now):
         start, end = cycle(goal, now, self.zone)
         key = (end.isoformat(), goal["energy_entity"])
@@ -160,11 +177,13 @@ class EnergyGoalRuntime:
             record["previous"] = current
         result = evaluate(goal, now, self.zone, consumed, running=identifier in self.owned)
         result.update(id=identifier, name=self.mapping.get("usages", {}).get(identifier, {}).get("name", identifier), quality=quality)
+        daily,daily_quality=await self.daily_reading(goal,now,current)
+        result.update(day_energy_kwh=daily,day_quality=daily_quality,energy_entity=goal["energy_entity"],router_usage=goal["router_usage"])
         reported = getattr(state, "last_reported", None) if state else None
         if quality != "valid":
             result.update(reason=quality, should_heat=False)
         elif reported is None or (now - reported).total_seconds() > goal["max_age_seconds"] or reported > now + timedelta(seconds=5):
-            result.update(reason="stale_energy", should_heat=False)
+            result.update(reason="target_reached" if result["reason"]=="target_reached" else "stale_energy", warning="stale_energy", should_heat=False)
         return result
 
     async def control(self, identifier, goal, result, now):

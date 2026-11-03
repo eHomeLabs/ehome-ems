@@ -32,7 +32,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.7";
+export const UI_VERSION = "0.2.8";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -233,6 +233,7 @@ export class EhomeEmsPanel extends BaseElement {
     const style = this._node("style");
     style.textContent = `
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f6f8);color:var(--primary-text-color,#18232e);font:15px/1.5 system-ui,sans-serif}
+      .entity-picker{width:100%}.entity-options{max-height:260px;overflow:auto;border:1px solid var(--divider-color,#738391);border-radius:10px;padding:8px}.entity-options button{display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;margin:6px 0}
       .history-value{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:5px}.history-value:focus-visible{outline:3px solid var(--primary-color,#007b83)}
       .settings-primary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;width:100%;margin-bottom:20px}.settings-primary button{border:2px solid var(--primary-color,#007b83);font-weight:700;padding:18px;text-align:left;background:color-mix(in srgb,var(--primary-color,#007b83) 12%,var(--card-background-color,#fff))}
       .situation-comment{font-size:17px;line-height:1.8;border-left:4px solid #42bfa0;padding:12px 16px}.reading-history{width:min(900px,95vw);max-height:90vh;overflow:auto}.history-series svg{width:100%;height:200px;background:color-mix(in srgb,var(--primary-color,#007b83) 5%,transparent)}
@@ -484,7 +485,7 @@ export class EhomeEmsPanel extends BaseElement {
     const result=dailyFromCounter(records,value,unit,start);this._dayEnergyCache.set(config.energy,{records,source,value,unit,start,result});return result;
   }
   _usageEnergy(config) {
-    const box=this._node("div",undefined,"usage-energy"),daily=this._node("p",undefined,"energy-value"),caption=this._node("p",undefined,"note"),raw=this._node("p",undefined,"note");const progress=this._node("p",undefined,"note goal-progress");box.append(daily,caption,raw,progress);
+    const box=this._node("div",undefined,"usage-energy"),daily=this._node("p",undefined,"energy-value"),caption=this._node("p",undefined,"note"),raw=this._node("p",undefined,"note");const progress=this._node("p",undefined,"note goal-progress");box.append(daily,caption,progress);
     this._flowUpdates.push(()=>{const n=this._dayEnergy(config),session=config.energy_period==="session";
       daily.textContent=session?reading(this._hass?.states,config.energy,undefined,this._hass?.language).text:n===null?this._t("Jour indisponible","Daily unavailable"):displayNumber(n,this._hass?.language)+" kWh";
       daily.classList.toggle("bad",!session&&n===null);
@@ -592,6 +593,7 @@ export class EhomeEmsPanel extends BaseElement {
       if(busy||!this._hass?.user?.is_admin)return;
       let values={};
       if(action==="force_on"||action==="force_off"){if(!minutes.reportValidity())return;values.minutes=Number(minutes.value);}
+      if(action==="boost_hour")values.config_token=native.config_token;
       if(action==="http_parameters"){
         values.config_token=native.config_token;
         for(const key of ["mode","forced_opening","opening_max"]){if(!fields[key].reportValidity())return;if(fields[key].value!=="")values[key]=Number(fields[key].value);}
@@ -601,11 +603,13 @@ export class EhomeEmsPanel extends BaseElement {
       busy=true;buttons.forEach(b=>b.disabled=true);
       try{const result=await this._hass.callWS({type:"ehome_ems/router_command",entry_id:this._panel.config.entry_id,identifier:config.id,revision:this._snapshotData.revision,action,values});
         feedback.textContent=result.confirmed_by_router?this._t("Réglage confirmé par relecture du routeur.","Setting confirmed by router readback."):this._t("Ordre envoyé, résultat non confirmé. Actualisez avant toute nouvelle commande.","Command sent, result unconfirmed. Refresh before another command.");
-        if(action==="http_parameters")native.config_token=null;
+        if(action==="http_parameters"||action==="boost_hour")native.config_token=null;
       }catch(error){feedback.textContent=this._t("Commande refusée ou communication impossible. Actualisez et vérifiez le routeur : ","Command rejected or communication failed. Refresh and check router: ")+(error.code||"");}
       finally{busy=false;updateButtons();}
     };
     for(const [action,fr,en] of [["force_on","Forcer On temporairement","Temporary On"],["force_off","Forcer Off temporairement","Temporary Off"],["release","Libérer le forçage","Release override"]]){const b=this._button(this._t(fr,en),()=>send(action));b.dataset.action=action;buttons.push(b);form.append(b);}
+    const boost=this._button(this._t("Forcer 1 h à 100 %","Force 1 h at 100%"),()=>send("boost_hour"));boost.dataset.action="boost_hour";buttons.push(boost);root.append(boost);
+    root.append(this._node("p",this._t("Action manuelle prioritaire : règle l’ouverture de marche forcée à 100 %, puis force 60 minutes. Le réglage 100 % reste enregistré. Retour Auto à expiration ; thermostat du cumulus conservé.","Manual priority: sets forced opening to 100%, then forces 60 minutes. The 100% setting remains saved. Auto resumes on expiry; heater thermostat remains in control."),"note"));
     form.append(this._node("p",this._t("Réglages enregistrés dans le routeur : seules les valeurs renseignées sont modifiées. Les horaires, protections et paramètres réseau sont conservés.","Settings saved in the router: only filled values change. Schedules, protections and network settings are preserved."),"note"));
     add("mode",this._t("Forme d’onde (facultatif)","Waveform (optional)"),"",null,null,[["",this._t("Conserver","Keep")],[0,this._t("Inactif","Inactive")],[1,config.router_action===0?this._t("Découpe sinus","Phase cut"):"On/Off"],[5,this._t("Demi-sinus","Half sine")],[2,this._t("Multi-sinus","Multi sine")],[3,this._t("Train de sinus","Burst fire")],[4,"PWM"]]);
     add("forced_opening",this._t("Ouverture en marche forcée (%)","Forced On opening (%)"),"",0,100);
@@ -616,9 +620,9 @@ export class EhomeEmsPanel extends BaseElement {
     const updateButtons=()=>{
       const online=entities.connection?this._hass?.states?.[entities.connection]?.state==="online":native.available;
       const actionAvailable=!!this._hass?.states?.[entities.status]&&!['unknown','unavailable'].includes(this._hass.states[entities.status].state);
-      for(const b of buttons)b.disabled=busy||!this._hass?.user?.is_admin||!online||(b.dataset.action==="http_parameters"?!native.config_token:!actionAvailable);
+      for(const b of buttons)b.disabled=busy||!this._hass?.user?.is_admin||!online||(["http_parameters","boost_hour"].includes(b.dataset.action)?!native.config_token||!actionAvailable:!actionAvailable);
     };
-    updateButtons();this._flowUpdates.push(updateButtons);details.append(form,feedback);root.append(details);return root;
+    updateButtons();this._flowUpdates.push(updateButtons);details.append(form);root.append(feedback,details);return root;
   }
   _loads(snapshot, appliances) {
     const root=this._node("section",undefined,"stack");
@@ -852,12 +856,22 @@ export class EhomeEmsPanel extends BaseElement {
     root.append(this._node("h2",this._t("Objectif d’énergie avant une échéance","Energy target by a deadline")),
       this._node("p",this._t("Le cycle va de l’échéance de la veille à celle du jour : le solaire reçu avant minuit compte pour le matin suivant. Le complément réseau est limité au créneau autorisé. Un objectif en kWh ne mesure pas la chaleur restante.","The cycle runs from yesterday’s deadline to today’s: solar received before midnight counts towards the following morning. Grid top-up stays within its allowed window. A kWh target is not remaining heat."),"note"));
     const stateBox=this._node("div",undefined,"goal-results");stateBox.setAttribute("aria-live","polite");
-    const reasons={lease_too_short:["Fin du créneau : aucun nouveau forçage","Window ending: no new override"],target_reached:["Objectif atteint","Target reached"],solar_priority:["Priorité au solaire","Solar priority"],waiting_window:["En attente du créneau autorisé","Waiting for allowed window"],complement_due:["Complément nécessaire maintenant","Top-up needed now"],insufficient_window:["Créneau insuffisant pour atteindre l’objectif","Window too short to reach target"],energy_unavailable:["Énergie du cycle indisponible","Cycle energy unavailable"],baseline_missing:["Référence de début de cycle absente dans History/Recorder","Cycle-start baseline missing from History/Recorder"],history_unavailable:["History/Recorder indisponible","History/Recorder unavailable"],counter_reset:["Compteur remis à zéro pendant le cycle : pilotage bloqué","Counter reset during cycle: control blocked"],stale_energy:["Compteur d’énergie trop ancien : complément suspendu","Energy counter too old: top-up suspended"],manual_override:["Commande manuelle prioritaire : cycle suspendu","Manual override takes priority: cycle suspended"],command_unconfirmed:["Commande non confirmée : vérifier puis réarmer","Unconfirmed command: check and re-arm"],runtime_unavailable:["Suivi interrompu : vérifier puis réarmer si nécessaire","Monitoring interrupted: check and re-arm if needed"],router_requires_full_opening:["Configurer la marche forcée du F1ATB à 100 %","Set F1ATB forced opening to 100%"],router_unavailable:["Routeur indisponible","Router unavailable"],router_already_managed:["Action déjà gérée par un autre objectif","Action already managed by another goal"],configuration_changed:["Configuration modifiée : rechargement nécessaire","Configuration changed: reload required"]};
+    const reasons={lease_too_short:["Fin du créneau : aucun nouveau forçage","Window ending: no new override"],target_reached:["Objectif atteint","Target reached"],solar_priority:["Priorité au solaire","Solar priority"],waiting_window:["En attente du créneau autorisé","Waiting for allowed window"],complement_due:["Complément nécessaire maintenant","Top-up needed now"],insufficient_window:["Créneau insuffisant pour atteindre l’objectif","Window too short to reach target"],energy_unavailable:["Énergie du cycle indisponible","Cycle energy unavailable"],baseline_missing:["Référence de début de cycle absente dans History/Recorder","Cycle-start baseline missing from History/Recorder"],history_unavailable:["History/Recorder indisponible","History/Recorder unavailable"],counter_reset:["Baisse du compteur détectée : vérifier la source ; complément suspendu","Counter decrease detected: check source; top-up suspended"],stale_energy:["Compteur d’énergie trop ancien : complément suspendu","Energy counter too old: top-up suspended"],manual_override:["Commande manuelle prioritaire : cycle suspendu","Manual override takes priority: cycle suspended"],command_unconfirmed:["Commande non confirmée : vérifier puis réarmer","Unconfirmed command: check and re-arm"],runtime_unavailable:["Suivi interrompu : vérifier puis réarmer si nécessaire","Monitoring interrupted: check and re-arm if needed"],router_requires_full_opening:["Configurer la marche forcée du F1ATB à 100 %","Set F1ATB forced opening to 100%"],router_unavailable:["Routeur indisponible","Router unavailable"],router_already_managed:["Action déjà gérée par un autre objectif","Action already managed by another goal"],configuration_changed:["Configuration modifiée : rechargement nécessaire","Configuration changed: reload required"]};
     const draw=values=>{stateBox.replaceChildren();for(const goal of values||[]){const card=this._node("div",undefined,"card"),label=reasons[goal.reason]||[goal.reason,goal.reason];card.append(this._node("h3",goal.name),this._node("p",(goal.mode==="auto"?this._t("Automatique","Automatic"):this._t("Observation","Observation"))+" · "+this._t(...label)));
       if(goal.goal_kwh!==undefined)card.append(this._node("p",this._t("Objectif : ","Target: ")+displayNumber(goal.goal_kwh,this._hass?.language)+" kWh · "+this._t("Reçu sur le cycle : ","Received this cycle: ")+(goal.consumed_kwh==null?this._t("Indisponible","Unavailable"):displayNumber(goal.consumed_kwh,this._hass?.language)+" kWh")));
       if(goal.missing_kwh!=null)card.append(this._node("p",this._t("À compléter : ","Top-up needed: ")+displayNumber(goal.missing_kwh,this._hass?.language)+" kWh · "+this._t("Chauffe estimée : ","Estimated heating: ")+goal.needed_minutes+" min"));
-      for(const [key,fr,en] of [["deadline","Échéance : ","Deadline: "],["latest_start","Début estimé du complément : ","Estimated top-up start: "]])if(goal[key])card.append(this._node("p",this._t(fr,en)+new Date(goal[key]).toLocaleString(this._hass?.language||"fr",{timeZone:snapshot.time_zone}),"note"));
+      const day=this._node("p",this._t("Énergie consommée aujourd’hui (depuis minuit) : ","Energy consumed today (since midnight): ")+(goal.day_energy_kwh===null||goal.day_energy_kwh===undefined?this._t("Indisponible","Unavailable"):displayNumber(goal.day_energy_kwh,this._hass.language)+" kWh"),"note");this._historyLink(day,goal.energy_entity);card.append(day);
+      card.append(this._node("p",this._t("Cycle : ","Cycle: ")+(goal.cycle_start?new Date(goal.cycle_start).toLocaleString(this._hass.language,{timeZone:snapshot.time_zone}):"—")+this._t(" → échéance ci-dessous"," → deadline below"),"note"));
+      if(goal.warning==="stale_energy")card.append(this._node("p",this._t("Dernier rapport du compteur ancien. Une valeur stable peut être normale hors chauffe ; aucun nouveau complément ne sera lancé sans rapport récent.","The last meter report is old. A stable value can be normal while idle; no new top-up starts without a recent report."),"note warn"));
+      if(goal.reason==="target_reached")card.append(this._node("p",this._t("Objectif atteint — aucun complément nécessaire","Target reached — no top-up needed"),"good"));
+      for(const [key,fr,en] of [["deadline","Échéance : ","Deadline: "],["latest_start","Début estimé du complément : ","Estimated top-up start: "]])if(goal[key]&&(key!=="latest_start"||goal.missing_kwh>0))card.append(this._node("p",this._t(fr,en)+new Date(goal[key]).toLocaleString(this._hass?.language||"fr",{timeZone:snapshot.time_zone}),"note"));
       card.append(this._node("p",goal.running?this._t("Complément EMS en cours · forçage temporisé","EMS top-up running · timed override"):this._t("Aucun forçage détenu par EMS","No override owned by EMS"),"note"));
+      const router=snapshot.flow?.usages?.find(u=>u.id===(goal.router_usage||snapshot.settings?.energy_goals?.[goal.id]?.router_usage));
+      if(this._hass?.user?.is_admin&&router?.router_connection==="http"&&router.router_http_enabled){
+        const message=this._node("p",undefined,"note");message.setAttribute("role","status");
+        const boost=this._button(this._t("Forcer 1 h à 100 %","Force 1 h at 100%"),async()=>{boost.disabled=true;try{const result=await this._hass.callWS({type:"ehome_ems/router_command",entry_id:this._panel.config.entry_id,identifier:router.id,revision:snapshot.revision,action:"boost_hour",values:{config_token:router.router_native.config_token}});message.textContent=result.confirmed_by_router?this._t("Forçage 60 min à 100 % confirmé. L’ouverture de marche forcée reste réglée à 100 %.","60 min override at 100% confirmed. Forced opening remains set to 100%."):this._t("Envoi non confirmé : vérifier le routeur avant de réessayer.","Send unconfirmed: check router before retrying.");}catch(error){message.textContent=this._t("Forçage refusé : ","Override rejected: ")+(error.code||"");}finally{boost.disabled=true;}});
+        boost.disabled=!router.router_native?.available||!router.router_native?.config_token;card.append(boost,message);
+      }
       if(this._hass?.user?.is_admin&&["manual_override","command_unconfirmed","runtime_unavailable"].includes(goal.reason))card.append(this._button(this._t("Réarmer après vérification","Re-arm after checking"),async()=>{try{await this._hass.callWS({type:"ehome_ems/rearm_energy_goal",entry_id:this._panel.config.entry_id,identifier:goal.id,revision:snapshot.revision});await refresh();}catch{this._message.textContent=this._t("Réarmement refusé. Actualisez.","Re-arm rejected. Refresh.");}}));stateBox.append(card);}};
     draw(snapshot.energy_goals||[]);root.append(stateBox);
     let loading=false,last=Date.now();const refresh=async()=>{if(loading)return;loading=true;try{const values=await this._hass.callWS({type:"ehome_ems/energy_goals",entry_id:this._panel.config.entry_id});snapshot.energy_goals=values;draw(values);}catch{stateBox.textContent=this._t("Suivi des objectifs indisponible.","Goal monitoring unavailable.");}finally{loading=false;last=Date.now();}};
@@ -872,7 +886,7 @@ export class EhomeEmsPanel extends BaseElement {
       for(const [key,fr,en,value,min,max,step] of [["goal_kwh","Objectif du cycle (kWh)","Cycle target (kWh)",usage.daily_energy_goal_kwh||3,.01,100,.01],["nominal_power_w","Puissance de chauffe à pleine ouverture (W)","Heating power at full opening (W)",1800,100,15000,1],["margin_minutes","Marge de démarrage (minutes)","Start margin (minutes)",5,0,120,1],["max_age_seconds","Ancienneté maximale du compteur (secondes)","Maximum counter age (seconds)",300,30,3600,1]]){const i=add(key,fr,en,"number",value);Object.assign(i,{min,max,step,required:true});}
       for(const [key,fr,en,value] of [["deadline","Eau prête à","Water ready by","07:00"],["window_start","Début du complément autorisé","Allowed top-up starts","01:00"],["window_end","Fin du complément autorisé","Allowed top-up ends","07:00"]]){const i=add(key,fr,en,"time",value);i.required=true;}
       const energyOptions=[["",this._t("Choisir le compteur du cumulus","Choose water-heater counter")],...Object.entries(this._hass.states||{}).filter(([entity,state])=>entity.startsWith("sensor.")&&["Wh","kWh"].includes(state.attributes?.unit_of_measurement)).map(([entity,state])=>[entity,(state.attributes?.friendly_name||entity)+" · "+entity])];
-      const e=add("energy_entity","Compteur cumulé dédié au cumulus","Dedicated cumulative water-heater counter","text",usage.energy_period==="total"?snapshot.bindings?.[usage.energy]?.source||usage.energy||"":"",energyOptions);e.required=true;
+      const e=add("energy_entity","Compteur cumulé dédié au cumulus","Dedicated cumulative water-heater counter","text",usage.energy_period==="total"?snapshot.bindings?.[usage.energy]?.source||usage.energy||"":"");e.required=true;this._entityPicker(e.parentElement,e,energyOptions.filter(([id])=>id));
       add("counter_confirmed","Je confirme que ce compteur est cumulatif et ne se remet pas à zéro à minuit","I confirm this is a lifetime counter with no midnight reset","checkbox",false);
       add("router_usage","Routeur F1ATB HTTP à commander","F1ATB HTTP router to control","text",routers.length===1?routers[0][0]:"",[["",this._t("Non associé · observation seulement","Not mapped · observation only")],...routers.map(([key,u])=>[key,u.name])]);
       form.append(this._node("p",this._t("L’activation du mode automatique autorise de vrais compléments réseau dans ce créneau. Choisir le compteur du seul cumulus. L’ouverture de marche forcée F1ATB doit être à 100 %. Une seule échéance par cycle ; le thermostat et les protections restent ceux du cumulus.","Enabling automatic mode permits real grid top-ups within this window. Choose the water-heater-only counter. F1ATB forced opening must be 100%. One deadline per cycle; thermostat and protections remain with the water heater."),"note"));
@@ -1051,11 +1065,11 @@ export class EhomeEmsPanel extends BaseElement {
       input.name=key;input.setAttribute("aria-label",this._t(fr,en));
       if(type==="number"){input.step=key==="home_max_age_seconds"?"1":"any";input.min="0";}
       if(key==="name"){input.required=true;input.maxLength=80;}
-      if(units){const list=this._node("datalist");list.id="sources-"+key;input.setAttribute("list",list.id);input.autocomplete="off";
+      if(units){const list=this._node("datalist");list.id="sources-"+key;input.autocomplete="off";
         for(const [id,state] of Object.entries(this._hass?.states||{}))if((key==="status"?["sensor","binary_sensor","switch","select"].includes(id.split(".")[0]):id.startsWith("sensor.")||(section==="usages"&&key==="temperature"&&id.startsWith("input_number."))) && (!units.length||units.includes(state.attributes?.unit_of_measurement)) && !this._snapshotData?.bindings?.[id]){
           const option=this._node("option");option.value=id;option.label=state.attributes?.friendly_name||id;list.append(option);
         }label.append(list);}
-      label.append(input);form.append(label);controls[key]=input;return input;
+      label.append(input);if(units)this._entityPicker(label,input,[...label.querySelectorAll("datalist option")].map(o=>[o.value,o.label]));form.append(label);controls[key]=input;return input;
     };
     const source=(key,fr,en,units=["W","kW"])=>add(key,fr,en,"text",null,units);
     if(remove)dialog.append(this._node("p",this._t("Retirer uniquement l’association EMS de ","Remove only the EMS mapping of ")+(current.name||"")+this._t(" ? Aucun appareil ni capteur source ne sera supprimé.","? No device or source sensor will be deleted.")));
@@ -1393,6 +1407,20 @@ export class EhomeEmsPanel extends BaseElement {
     }
     return root;
   }
+  _entityPicker(parent,input,options) {
+    if(!input.hasAttribute("aria-label"))input.setAttribute("aria-label",parent.firstChild?.textContent||this._t("Entité","Entity"));
+    const picker=this._node("div",undefined,"entity-picker"),list=this._node("div",undefined,"entity-options");list.hidden=true;
+    const button=this._button(this._t("Choisir une entité","Choose an entity"),()=>{list.hidden=!list.hidden;if(!list.hidden){draw("");input.focus();}button.setAttribute("aria-expanded",String(!list.hidden));});
+    button.setAttribute("aria-label",this._t("Choisir une entité · ","Choose an entity · ")+input.getAttribute("aria-label"));button.setAttribute("aria-expanded","false");
+    const draw=query=>{list.replaceChildren();const needle=query.toLocaleLowerCase(),matches=options.filter(([id,name])=>(id+" "+name).toLocaleLowerCase().includes(needle));
+      for(const [id,name] of matches.slice(0,100)){const choice=this._button(name===id?id:name+" · "+id,()=>{input.value=id;list.hidden=true;button.setAttribute("aria-expanded","false");input.dispatchEvent(new Event("change",{bubbles:true}));input.focus();});choice.title=id;list.append(choice);}
+      if(!matches.length)list.append(this._node("p",this._t("Aucune entité compatible","No compatible entity"),"note"));
+      if(matches.length>100)list.append(this._node("p",this._t("Saisissez quelques lettres pour affiner les résultats.","Type a few letters to narrow the results."),"note"));
+    };
+    input.addEventListener("input",()=>{list.hidden=false;button.setAttribute("aria-expanded","true");draw(input.value);});
+    input.addEventListener("keydown",e=>{if(e.key==="Escape"&&!list.hidden){e.preventDefault();e.stopPropagation();list.hidden=true;button.setAttribute("aria-expanded","false");}});
+    picker.append(button,list);parent.append(picker);
+  }
   _historyLink(element,entities) {
     const ids=[...new Set((Array.isArray(entities)?entities:[entities]).filter(Boolean))];if(!ids.length)return;
     element.classList.add("history-value");element.tabIndex=0;element.setAttribute("role","button");
@@ -1442,7 +1470,7 @@ export class EhomeEmsPanel extends BaseElement {
             const field=(label,key,control)=>{const l=this._node("label",label);l.append(control);row.append(l);control.addEventListener("change",()=>{rule[key]=control.type==="checkbox"?control.checked:control.type==="number"?Number(control.value):control.value;});};
             const select=(values,current)=>{const el=this._node("select");for(const [value,name]of values){const option=this._node("option",name);option.value=value;el.append(option);}el.value=current;return el;};
             field(this._t("Type","Type"),"kind",select([["daily_import",this._t("Import réseau quotidien (kWh)","Daily grid import (kWh)")],["import_power",this._t("Puissance d’import (W)","Grid import power (W)")],["entity_unavailable",this._t("Entité indisponible","Unavailable entity")]],rule.kind));
-            const entity=this._node("input");entity.value=rule.entity;entity.setAttribute("list","alert-entities");entity.required=true;field(this._t("Entité source","Source entity"),"entity",entity);
+            const entity=this._node("input");entity.value=rule.entity;entity.setAttribute("list","alert-entities");entity.required=true;field(this._t("Entité source","Source entity"),"entity",entity);entity.removeAttribute("list");this._entityPicker(entity.parentElement,entity,Object.entries(this._hass.states).map(([id,state])=>[id,state.attributes?.friendly_name||id]));
             for(const [key,label]of [["threshold",this._t("Seuil (kWh ou W selon type)","Threshold (kWh or W by type)")],["duration_minutes",this._t("Durée avant alerte (minutes)","Delay before alert (minutes)")]]){const input=this._node("input");input.type="number";input.min=key==="threshold"?"0.01":"0";input.max=key==="threshold"?"1000000":"1440";input.step="any";input.value=rule[key];input.required=true;field(label,key,input);}
             field(this._t("Notifier via","Notify via"),"notify_service",select((data.notify_services||["persistent_notification.create"]).map(n=>[n,n]),rule.notify_service));
             for(const [key,label]of [["daily_confirmed",this._t("Pour l’import quotidien : je confirme que cette entité mesure le jour civil et se remet à zéro chaque jour.","For daily import: I confirm this entity measures the current calendar day and resets daily.")],["enabled",this._t("Activer cette alerte","Enable this alert")]]){const input=this._node("input");input.type="checkbox";input.checked=rule[key];field(label,key,input);}

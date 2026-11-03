@@ -86,6 +86,26 @@ class HttpRouterTests(IsolatedAsyncioTestCase):
     async def command(self, action, values, revision=None):
         return await runtime.async_http_command(self.hass,self.entry,'r',revision or self.entry.modified_at.isoformat(),action,values)
 
+    async def test_hour_boost_sets_full_opening_and_forces_sixty_minutes(self):
+        preserved=deepcopy(self.config)
+        result=await self.command('boost_hour',{'config_token':api.config_token(self.config)})
+        self.assertTrue(result['confirmed_by_router'])
+        self.assertEqual(self.config['Actions'][0]['ForceOuvre'],100)
+        preserved['Actions'][0]['ForceOuvre']=100
+        self.assertEqual(self.config,preserved)
+        self.assertEqual(self.forces[0],60)
+
+    async def test_hour_boost_does_not_force_when_full_opening_is_not_confirmed(self):
+        self.ignore_write=True
+        with self.assertRaises(api.RouterError):
+            await self.command('boost_hour',{'config_token':api.config_token(self.config)})
+        self.assertEqual(self.forces,{})
+
+    async def test_hour_boost_rejects_stale_configuration(self):
+        with self.assertRaisesRegex(api.RouterError,'router_config_conflict'):
+            await self.command('boost_hour',{'config_token':'stale'})
+        self.assertFalse(any(path=='/ForceAction' for _,path,_ in self.calls))
+
     async def test_read_only_discovery_redacts_credentials_preserves_missing_measurements(self):
         data=await self.client.read()
         self.assertNotIn('never_expose',json.dumps(data))
