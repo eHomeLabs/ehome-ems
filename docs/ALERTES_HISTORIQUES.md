@@ -14,7 +14,7 @@ L’énergie quotidienne additionne les compteurs uniques déclarés des équipe
 
 Dernier onglet, configuration administrateur ; journal lisible par les utilisateurs du panneau. Aucune alerte n’est ajoutée ou activée lors d’une mise à jour.
 
-- **Import quotidien** : seuil en kWh (exemple 12), avec confirmation d’un compteur du jour civil qui se remet à zéro quotidiennement. Ce n’est pas un compteur cumulé à vie. Le seuil est strictement supérieur ; une notification maximum par jour civil HA.
+- **Import quotidien** : seuil en kWh (exemple 12), avec confirmation d’un compteur du jour civil qui se remet à zéro quotidiennement. Ce n’est pas un compteur cumulé à vie. Le seuil est strictement supérieur ; une notification maximum par jour civil HA. Une valeur dont la dernière mise à jour date de la veille ne déclenche pas l’alerte du nouveau jour.
 - **Puissance d’import** : seuil en W et durée minimale configurable. W/kW sont convertis. Une notification par épisode ; une mesure revenue sous le seuil réarme l’alerte.
 - **Entité indisponible** : état absent, unknown ou unavailable pendant une durée configurable, par exemple 5 minutes. Une notification par épisode ; le retour d’un état disponible réarme l’alerte. Un capteur qui reste bloqué sur une valeur numérique n’est pas détecté par cette règle.
 

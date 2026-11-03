@@ -73,13 +73,14 @@ class AlertRuntime:
         self.records,self.journal={},[]
         self.busy,self.stopped=False,False
         self.task=None
+        self._persisted=None
 
     async def async_start(self):
         data=await self.store.async_load() or {}
         # Only preserve latches for exactly the same rule after configuration reload.
         self.records={r['id']:data.get('records',{}).get(r['id'],{}) for r in self.rules}
         self.journal=data.get('journal',[])[-50:]
-        self.unsubscribe=async_track_time_interval(self.hass,self.async_tick,timedelta(seconds=30))
+        self.unsubscribe=async_track_time_interval(self.hass,self.async_tick,timedelta(seconds=30)) if any(r.get("enabled") for r in self.rules) else lambda:None
         self.entry.async_on_unload(self.async_stop)
         await self.async_tick()
 
@@ -89,7 +90,10 @@ class AlertRuntime:
         self.hass.data.get(DOMAIN,{}).get('alerts_runtime',{}).pop(self.entry.entry_id,None)
 
     async def persist(self):
-        await self.store.async_save({'records':self.records,'journal':self.journal[-50:]})
+        data={'records':self.records,'journal':self.journal[-50:]}
+        if data != self._persisted:
+            await self.store.async_save(data)
+            self._persisted=deepcopy(data)
 
     async def async_tick(self,_now=None):
         if self.stopped or self.busy:return
@@ -114,6 +118,11 @@ class AlertRuntime:
                         # Missing energy never resets a daily latch or produces a zero.
                         record.pop('since',None)
                         continue
+                    if kind=='daily_import':
+                        updated=getattr(state,'last_updated',None)
+                        if updated is None or updated.astimezone(ZoneInfo(self.hass.config.time_zone)).date().isoformat() != day:
+                            record.pop('since',None)
+                            continue
                     active=value > rule['threshold']
                     message=(f"Votre consommation réseau est élevée. Vous avez importé plus de {rule['threshold']:g} kWh aujourd’hui."
                              if kind=='daily_import' else f"Votre puissance d’import réseau dépasse {rule['threshold']:g} W.")

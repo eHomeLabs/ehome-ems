@@ -25,7 +25,7 @@ def rule(**kw):return dict(id='daily',kind='daily_import',entity='sensor.import'
 class AlertTests(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         MemoryStore.data.clear();self.now=datetime(2026,11,3,12,tzinfo=timezone.utc)
-        self.state=SimpleNamespace(state='13',attributes={'unit_of_measurement':'kWh'})
+        self.state=SimpleNamespace(state='13',last_updated=self.now,attributes={'unit_of_measurement':'kWh'})
         self.entry=SimpleNamespace(entry_id='entry',options={'alerts':[rule()]},data={},modified_at=self.now,async_on_unload=lambda cb:None)
         self.hass=SimpleNamespace(data={},config=SimpleNamespace(time_zone='Europe/Paris'),states=SimpleNamespace(get=lambda _:self.state),services=SimpleNamespace(async_call=AsyncMock(),has_service=lambda d,s:True),config_entries=SimpleNamespace(async_update_entry=lambda *a,**kw:None))
         self.rt=alerts.AlertRuntime(self.hass,self.entry,now=lambda:self.now)
@@ -38,6 +38,8 @@ class AlertTests(IsolatedAsyncioTestCase):
         rt=alerts.AlertRuntime(self.hass,self.entry,now=lambda:self.now);await rt.async_start()
         self.assertEqual(self.hass.services.async_call.await_count,1)
         self.now+=timedelta(days=1);await rt.async_tick()
+        self.assertEqual(self.hass.services.async_call.await_count,1)
+        self.state.last_updated=self.now;await rt.async_tick()
         self.assertEqual(self.hass.services.async_call.await_count,2)
         self.assertIn('plus de 12 kWh',self.rt.journal[0]['message'])
     async def test_disabled_alert_never_sends_and_threshold_is_strict(self):
