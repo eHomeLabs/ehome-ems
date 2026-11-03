@@ -43,6 +43,9 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       const carSummary=page.locator(".load-grid .kpi").filter({has:page.getByText("Véhicule",{exact:true})});
       assert.equal(await carSummary.getByText("Énergie du jour non associée",{exact:true}).count(),1);
       await page.locator(".situation-comment").waitFor();
+      await page.locator(".flow-solar .flow-day-energy").waitFor();
+      assert.ok((await page.locator(".flow-solar .flow-day-energy").textContent()).includes("kWh"));
+      assert.equal(await page.locator(".flow .cost").count(),0);
       assert.ok((await page.locator(".situation-comment").textContent()).length>40);
       await page.locator(".kpis .value.history-value").first().click();
       await page.getByRole("dialog",{name:"Historique des mesures",exact:true}).waitFor();
@@ -55,6 +58,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       assert.equal(await page.locator(".settings-primary button").count(),4);
       await page.getByRole("button",{name:"Alertes et Notifications",exact:true}).click();
       await page.getByRole("button",{name:"Ajouter une alerte",exact:true}).click();
+      await page.getByLabel("Nom de l’alerte",{exact:true}).fill("Import du jour");
       await page.getByLabel("Entité source",{exact:true}).fill("sensor.daily_import");
       await page.getByLabel(/Pour l’import quotidien/).check();
       assert.equal(await page.getByLabel("Activer cette alerte",{exact:true}).isChecked(),false);
@@ -62,6 +66,8 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button",{name:"Enregistrer les alertes",exact:true}).click();
       await page.getByRole("button",{name:"Ajouter une alerte",exact:true}).waitFor();
       assert.equal(await page.evaluate(()=>fixtureSettings.alerts?.length||0),1);
+      assert.equal(await page.locator(".alert-rule[open]").count(),0);
+      assert.ok((await page.locator(".alert-rule summary").textContent()).includes("Import du jour"));
       await page.screenshot({path:path.join(output,viewport.width<600?"alerts-mobile.png":"alerts-desktop.png"),fullPage:true});
       await page.getByRole("button",{name:"Vue d’ensemble",exact:true}).click();
       await page.locator(".trend-head").first().waitFor();
@@ -96,7 +102,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-9").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-10").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -202,7 +208,7 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok(await page.getByText("Interface 0.2.9 · Intégration 0.2.9", { exact: true }).count());
+      assert.ok(await page.getByText("Interface 0.2.10 · Intégration 0.2.10", { exact: true }).count());
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -260,6 +266,9 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("heading",{name:"Micro-onduleur Démo",exact:true}).waitFor();
       await page.getByRole("heading",{name:"Production globale",exact:true}).waitFor();
       assert.ok((await page.locator(".pv-totals").textContent()).includes("W"));
+      assert.ok((await page.locator(".pv-totals").textContent()).includes("800 W max"));
+      assert.ok((await page.locator(".pv-totals").textContent()).includes("économie potentielle"));
+      await page.locator(".pv-totals").screenshot({path:path.join(output,viewport.width<600?"pv-totals-mobile.png":"pv-totals-desktop.png")});
       await page.getByRole("button",{name:"Ajouter un équipement photovoltaïque",exact:true}).click();
       await page.getByRole("textbox",{name:"Nom",exact:true}).fill("Hybride test");
       await page.getByLabel("Type d’équipement",{exact:true}).selectOption("hybrid_inverter");
@@ -302,6 +311,9 @@ const output = path.resolve(process.argv[2] || path.join(root, "artifacts/panel"
       await page.getByRole("button",{name:"Enregistrer",exact:true}).click();
       await page.locator(".native-router").waitFor();
       assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/router_command").length),3);
+      const hero=await page.locator(".native-router .heater-layout").boundingBox();
+      const opening=await page.locator(".native-router .kpi").first().boundingBox();
+      assert.ok(hero.y+hero.height<=opening.y);
       await page.getByText("Paramétrage F1ATB",{exact:true}).click();
       await page.getByRole("button",{name:"Forcer On temporairement",exact:true}).click();
       await page.getByText("Réglage confirmé par relecture du routeur.",{exact:true}).waitFor();

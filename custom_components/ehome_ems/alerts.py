@@ -18,11 +18,14 @@ def validate_rules(hass, rules):
         raise ValueError('invalid_alerts')
     clean, seen = [], set()
     for rule in rules:
-        if not isinstance(rule, dict) or set(rule) != {'id','kind','entity','threshold','duration_minutes','enabled','notify_service','daily_confirmed'}:
+        if not isinstance(rule, dict) or set(rule)-{'label'} != {'id','kind','entity','threshold','duration_minutes','enabled','notify_service','daily_confirmed'}:
             raise ValueError('invalid_alert')
         identifier, kind, entity = rule['id'], rule['kind'], rule['entity']
         if not isinstance(identifier,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}', identifier) or identifier in seen or kind not in KINDS:
             raise ValueError('invalid_alert')
+        label=rule.get("label","")
+        if not isinstance(label,str) or len(label.strip())>80 or any(ord(c)<32 for c in label):
+            raise ValueError("invalid_alert_label")
         seen.add(identifier)
         if type(rule['enabled']) is not bool or type(rule['daily_confirmed']) is not bool:
             raise ValueError('invalid_alert')
@@ -41,7 +44,7 @@ def validate_rules(hass, rules):
         target=rule['notify_service']
         if target != 'persistent_notification.create' and (not isinstance(target,str) or not re.fullmatch(r'notify\.[a-z0-9_]+',target) or not hass.services.has_service(*target.split('.'))):
             raise ValueError('alert_notify_service_missing')
-        clean.append(dict(rule))
+        clean.append({**rule,"label":label.strip() or {"daily_import":"Import quotidien","import_power":"Puissance réseau","entity_unavailable":"Entité indisponible"}[kind]})
     return clean
 
 
@@ -105,8 +108,10 @@ class AlertRuntime:
             for rule in self.rules:
                 if self.stopped or not rule.get('enabled'):continue
                 record=self.records.setdefault(rule['id'],{})
-                if record.get('rule') != rule:
-                    record.clear();record['rule']=dict(rule)
+                definition={key:value for key,value in rule.items() if key!='label'}
+                stored={key:value for key,value in record.get('rule',{}).items() if key!='label'}
+                if stored != definition:
+                    record.clear();record['rule']=definition
                 state=self.hass.states.get(rule['entity'])
                 kind=rule['kind']
                 if kind=='entity_unavailable':
@@ -135,13 +140,13 @@ class AlertRuntime:
                 record.setdefault('since',now.isoformat())
                 if record.get('notified') or (now-datetime.fromisoformat(record['since'])).total_seconds() < rule['duration_minutes']*60:continue
                 record['notified']=True
-                event={'time':now.isoformat(),'rule_id':rule['id'],'message':message,'status':'pending'}
+                event={'time':now.isoformat(),'rule_id':rule['id'],'label':rule.get('label',rule['id']),'message':message,'status':'pending'}
                 self.journal.append(event);self.journal=self.journal[-50:]
                 # Persist before dispatch: no repeated sends after a reload/crash.
                 await self.persist()
                 try:
                     domain,service=rule['notify_service'].split('.')
-                    payload={'title':'eHome EMS','message':message}
+                    payload={'title':'eHome EMS · '+rule.get('label',rule['id']),'message':message}
                     if domain=='persistent_notification':payload['notification_id']=f'ehome_ems_{self.entry.entry_id}_{rule["id"]}'
                     async with asyncio.timeout(10):
                         await self.hass.services.async_call(domain,service,payload,blocking=True)

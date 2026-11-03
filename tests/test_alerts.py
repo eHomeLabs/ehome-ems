@@ -42,6 +42,20 @@ class AlertTests(IsolatedAsyncioTestCase):
         self.state.last_updated=self.now;await rt.async_tick()
         self.assertEqual(self.hass.services.async_call.await_count,2)
         self.assertIn('plus de 12 kWh',self.rt.journal[0]['message'])
+    async def test_renaming_preserves_latch_and_label_validation(self):
+        self.entry.options['alerts'][0]['label']='Import élevé'
+        await self.rt.async_start()
+        self.assertIn('Import élevé',self.hass.services.async_call.call_args.args[2]['title'])
+        self.entry.options['alerts'][0]['label']='Nouveau nom'
+        await self.rt.async_stop()
+        rt=alerts.AlertRuntime(self.hass,self.entry,now=lambda:self.now)
+        await rt.async_start()
+        self.assertEqual(self.hass.services.async_call.await_count,1)
+        for label in ['x'*81,'bad\nlabel',12]:
+            value=rule();value['label']=label
+            with self.assertRaises(ValueError):alerts.validate_rules(self.hass,[value])
+        self.assertTrue(alerts.validate_rules(self.hass,[rule()])[0]['label'])
+
     async def test_disabled_alert_never_sends_and_threshold_is_strict(self):
         self.entry.options['alerts'][0]['enabled']=False
         await self.rt.async_start();self.assertEqual(self.hass.services.async_call.await_count,0)

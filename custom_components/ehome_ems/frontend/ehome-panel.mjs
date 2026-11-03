@@ -32,7 +32,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.9";
+export const UI_VERSION = "0.2.10";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -233,6 +233,9 @@ export class EhomeEmsPanel extends BaseElement {
     const style = this._node("style");
     style.textContent = `
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f6f8);color:var(--primary-text-color,#18232e);font:15px/1.5 system-ui,sans-serif}
+      .pv-meta{font-size:15px;color:var(--secondary-text-color,#91a4b8)}.flow-day-energy{display:block;font-size:12px;line-height:1.45;margin-top:3px;overflow-wrap:anywhere;letter-spacing:0}.flow-house .flow-day-energy{font-size:13px;margin-left:20%;max-width:80%}
+      .heater-layout{display:grid;grid-template-columns:minmax(100px,35%) minmax(0,1fr);gap:20px;align-items:center;margin:18px 0 24px}.heater-details{min-width:0}.heater-details .vessel-main{color:#ffa000;font-size:32px}.cumulus-visual{position:relative;width:min(100%,140px);height:205px;margin:10px auto 18px;border:3px solid #e9a23d;border-radius:45% / 12%;background:#173144;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:inset 12px 0 20px #0004}.cumulus-visual:after{content:"";position:absolute;top:7%;left:10%;right:10%;height:2px;background:#e9a23d99}.cumulus-visual ha-icon{position:relative;z-index:1;--mdc-icon-size:70px;color:#ffb74d}.cumulus-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(#ffa00088,#fb6c20cc);transition:height .3s}.heater-details .energy-value{font-size:24px}@media(max-width:450px){.heater-layout{grid-template-columns:90px minmax(0,1fr);gap:12px}.cumulus-visual{height:170px}.heater-details .vessel-main{font-size:26px}.heater-details .energy-value{font-size:21px}}
+      .alert-rule{border:1px solid var(--divider-color,#738391);border-radius:10px;padding:10px 12px}.alert-rule summary{cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;min-height:24px}.alert-rule fieldset{margin-top:12px}
       .overview-daily-energy{font-size:16px;font-weight:650;line-height:1.5;margin:10px 0 0;min-height:48px;overflow-wrap:anywhere}.load-grid .cost{min-height:42px;margin:6px 0 0}
       .entity-picker{width:100%}.entity-options{max-height:260px;overflow:auto;border:1px solid var(--divider-color,#738391);border-radius:10px;padding:8px}.entity-options button{display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;margin:6px 0}
       .history-value{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:5px}.history-value:focus-visible{outline:3px solid var(--primary-color,#007b83)}
@@ -526,13 +529,19 @@ export class EhomeEmsPanel extends BaseElement {
     const totals=this._node("div",undefined,"cards pv-totals"),powerTile=this._node("div",undefined,"card"),energyTile=this._node("div",undefined,"card");
     const powerValue=this._node("span",undefined,"value"),energyValue=this._node("span",undefined,"value"),coverage=this._node("p",undefined,"note");
     powerTile.append(this._node("h3",this._t("Production globale","Total production")),powerValue);energyTile.append(this._node("h3",this._t("Énergie produite aujourd’hui","Energy produced today")),energyValue);totals.append(powerTile,energyTile);root.append(totals,coverage);
+    const maximum=this._node("span",undefined,"pv-meta"),savings=this._node("span",undefined,"pv-meta");powerTile.append(maximum);energyTile.append(savings);
     this._historyLink(powerValue,productions.map(p=>p.production));this._historyLink(energyValue,energyItems.map(p=>p.energy));
     this._flowUpdates.push(()=>{
       const power=strictSum(productions.map(p=>flowPower(this._hass?.states,p.production))),energy=strictSum(energyItems.map(p=>this._dayEnergy(p)));
       powerValue.textContent=power===null?this._t("Indisponible","Unavailable"):displayNumber(power,this._hass?.language)+" W";
       energyValue.textContent=energy===null?this._t("Indisponible","Unavailable"):displayNumber(energy,this._hass?.language)+" kWh";
+      const nominal=strictSum(productions.map(p=>p.nominal_power_w??null)),tariff=snapshot.tariff_eur_kwh;
+      maximum.textContent=nominal===null?this._t(" · maximum déclaré non renseigné"," · declared maximum not configured"):" · "+displayNumber(nominal,this._hass.language)+this._t(" W max déclarés"," W declared max");
+      savings.textContent=energy!==null&&typeof tariff==="number"&&Number.isFinite(tariff)?" · ≈ "+new Intl.NumberFormat(this._hass.language,{style:"currency",currency:"EUR"}).format(energy*tariff)+this._t(" d’économie potentielle"," potential savings"):this._t(" · valorisation indisponible"," · valuation unavailable");
+      savings.title=this._t("Production valorisée au tarif fixe : estimation maximale si toute cette énergie remplace un achat réseau, sans déduction des exports.","Production valued at the flat tariff: maximum estimate if all energy replaces grid purchases, before deducting exports.");
       coverage.textContent=this._t("Sources additionnées : ","Summed sources: ")+productions.length+" / "+items.length+this._t(" équipements (puissance), "," equipment (power), ")+energyItems.length+this._t(" compteurs d’énergie uniques. Une source manquante rend le total suivi indisponible. Les périmètres chevauchants doivent être retirés du suivi. L’énergie des hybrides est exclue : une sortie AC peut inclure la batterie."," unique energy counters. A missing source makes the monitored total unavailable. Overlapping scopes must be removed from monitoring.");
     });
+    root.append(this._node("p",this._t("Économie potentielle : production valorisée au tarif configuré, avant déduction de l’export. Le maximum est la somme des puissances nominales renseignées, pas un pic mesuré.","Potential savings: production valued at the configured tariff before deducting exports. Maximum is the sum of configured nominal powers, not a measured peak."),"note"));
     if(this._hass?.user?.is_admin)root.append(this._button(this._t("Ajouter un équipement photovoltaïque","Add PV equipment"),()=>this._settingsDialog("photovoltaic")));
     const grid=this._node("div",undefined,"cards");
     for(const item of snapshot.flow?.photovoltaic||[]){
@@ -546,11 +555,20 @@ export class EhomeEmsPanel extends BaseElement {
     }
     if(!grid.childElementCount)grid.append(this._node("p",this._t("Ajoutez vos micro-onduleurs, onduleurs DC ou hybrides depuis leurs entités HA existantes.","Add microinverters, DC or hybrid inverters using existing HA entities."),"note"));root.append(grid);return root;
   }
+  _heaterSummary(config) {
+    const root=this._node("div",undefined,"heater-layout"),visual=this._node("div",undefined,"cumulus-visual"),fill=this._node("div",undefined,"cumulus-fill");
+    visual.setAttribute("aria-label",this._t("Cumulus · progression de l’objectif énergétique","Water heater · energy goal progress"));visual.append(fill,this._icon("mdi:water-boiler"));
+    const details=this._node("div",undefined,"heater-details"),power=this._node("div",undefined,"vessel-main");this._bind(power,config.power);details.append(power,this._usageEnergy(config),this._usageCost(config));
+    const caption=this._node("p",this._t("Progression énergétique du jour ; ne mesure pas la chaleur restante.","Today’s energy progress; not remaining heat."),"note");
+    this._flowUpdates.push(()=>{const level=dailyGoalPercent(this._dayEnergy(config),config.daily_energy_goal_kwh);fill.style.height=(level===null?0:Math.max(0,Math.min(100,level)))+"%";caption.hidden=!config.daily_energy_goal_kwh;});
+    root.append(visual,details);details.append(caption);return root;
+  }
   _routerCard(config) {
     if(config.router_connection==="http")return this._routerHttpCard(config);
     const root=this._node("section",undefined,"card router-card"),details=this._node("details",undefined,"router-settings");root.append(this._node("h2",config.name),this._node("p","F1ATB · "+(config.router_output||"ssr").toUpperCase(),"note"));
-    if(config.power)root.append(this._metricTile(this._t("Puissance routée mesurée","Measured routed power"),config.power,"mdi:white-balance-sunny","#ffa000"));
-    if(config.energy)root.append(this._usageEnergy(config),this._usageCost(config));
+    root.append(this._heaterSummary(config));
+
+
     for(const [key,fr,en] of [["temperature","Température","Temperature"],["status","État","Status"]])if(config[key]){const line=this._node("p",undefined,"note"),value=this._node("span");this._bind(value,config[key]);line.append(this._t(fr,en)+" : ",value);root.append(line);}
     if(!config.power&&!config.energy&&!config.status)root.append(this._node("p",this._t("Mesures non associées : aucune puissance supposée.","No readings mapped: no assumed power."),"note"));details.append(this._node("summary",this._t("Paramétrage F1ATB","F1ATB settings")));
     details.append(this._node("p",this._t("Commandes MQTT manuelles V15+ : temporaires, non sauvegardées par le routeur. Vérifiez le firmware et le retour d’état. Les horaires complets, sécurités et paramètres réseau restent gérés dans la page native.","Manual V15+ MQTT commands: temporary, not saved by the router. Check firmware and state feedback. Full schedules, protections and network settings remain on the native page."),"note"));
@@ -574,6 +592,7 @@ export class EhomeEmsPanel extends BaseElement {
     const root=this._node("section",undefined,"card router-card native-router"),native=config.router_native||{},entities=config.router_entities||{},selected=(native.actions||[]).find(a=>a.index===config.router_action);
     root.append(this._node("h2",config.name),this._node("p",this._t("F1ATB · connexion locale directe","F1ATB · direct local connection"),"note"));
     const status=this._node("p",undefined,"note"),state=this._node("span");status.append(this._t("Action : ","Action: ")+(selected?.name||String(config.router_action??0))+" · ",state);root.append(status);
+    root.append(this._heaterSummary(config));
     for(const [key,fr,en] of [["opening","Ouverture de l’action","Action opening"],["force_minutes","Forçage restant (+ On / − Off)","Override remaining (+ On / − Off)"]])if(entities[key])root.append(this._metricTile(this._t(fr,en),entities[key],"mdi:white-balance-sunny","#ffa000"));
     const meter=this._node("details");meter.append(this._node("summary",this._t("Mesures du routeur","Router measurements")));
     meter.append(this._node("p",this._t("La seconde voie de mesure est globale au routeur. Elle n’est pas attribuée à cette action et n’est pas ajoutée au bilan Maison. Une ouverture n’est pas une mesure de puissance.","The second measurement channel belongs to the router. It is not assigned to this action or added to Home balance. Opening is not a power measurement."),"note"));
@@ -581,8 +600,7 @@ export class EhomeEmsPanel extends BaseElement {
     for(let i=0;i<4;i++)if(entities["temperature_"+i])meter.append(this._metricTile(this._t("Température ","Temperature ")+i,entities["temperature_"+i],"mdi:water-boiler","#ffa000"));
     this._flowUpdates.push(()=>{const value=this._hass?.states?.[entities.status]?.state;state.textContent=({auto:this._t("Automatique","Automatic"),forced_on:this._t("Marche forcée","Forced On"),forced_off:this._t("Arrêt forcé","Forced Off")})[value]||this._t("Indisponible ou action inactive","Unavailable or inactive action");});
     root.append(meter);
-    if(config.power)root.append(this._metricTile(this._t("Puissance associée à l’usage","Mapped load power"),config.power,"mdi:white-balance-sunny","#ffa000"));
-    if(config.energy)root.append(this._usageEnergy(config),this._usageCost(config));
+
     const link=this._node("a",this._t("Ouvrir la page du routeur","Open router page"));link.href=config.router_url?.includes("://")?config.router_url:"http://"+config.router_url;link.target="_blank";link.rel="noopener noreferrer";root.append(link);
     const details=this._node("details",undefined,"router-settings");details.append(this._node("summary",this._t("Paramétrage F1ATB","F1ATB settings")));
     if(!config.router_http_enabled){details.append(this._node("p",this._t("Lecture seule. Activez les commandes HTTP manuelles dans Modifier pour piloter cette action.","Read only. Enable manual HTTP commands in Edit to control this action."),"note"));root.append(details);return root;}
@@ -1316,12 +1334,16 @@ export class EhomeEmsPanel extends BaseElement {
       const el = this._node("div", undefined, className); el.append(icon(mdi), this._node("span", title, "flow-title"));
       metric(el, entity); return el;
     };
-    const solarTile=tile("flow-tile flow-solar", this._t("Solaire", "Solar"), "mdi:white-balance-sunny", entities.solar_power);stage.append(solarTile);
+    const day=(parent,source)=>{
+      const el=this._node("span",undefined,"flow-day-energy"),entity=typeof source==="string"?source:source?.energy;
+      this._historyLink(el,entity);this._flowUpdates.push(()=>{const energy=source&&typeof source==="object"?this._dayEnergy(source):this._energy(source);el.textContent=energy===null?this._t("Jour : indisponible","Today: unavailable"):displayNumber(energy,this._hass.language)+this._t(" kWh aujourd’hui"," kWh today");});parent.append(el);
+    };
+    const solarTile=tile("flow-tile flow-solar", this._t("Solaire", "Solar"), "mdi:white-balance-sunny", entities.solar_power);day(solarTile,this._snapshotData?.daily?.solar);stage.append(solarTile);
     const grid = this._node("div", undefined, "flow-tile flow-grid");
     grid.append(icon("mdi:transmission-tower"), this._node("span", this._t("Réseau", "Grid"), "flow-title"));
     for (const [key, label] of [["grid_import", this._t("Import", "Import")], ["grid_export", this._t("Export", "Export")]]) {
       grid.append(this._node("span", label, "flow-small"));
-      const row = this._node("div"); row.style.color=key === "grid_import" ? "#ff6565" : "#58aeff"; metric(row, entities[key]); grid.append(row);
+      const row = this._node("div"); row.style.color=key === "grid_import" ? "#ff6565" : "#58aeff"; metric(row, entities[key]);day(row,this._snapshotData?.daily?.[key==="grid_import"?"import":"export"]); grid.append(row);
     }
     this._flowUpdates.push(()=>{
       const incoming=flowPower(this._hass?.states,entities.grid_import),outgoing=flowPower(this._hass?.states,entities.grid_export);
@@ -1337,14 +1359,14 @@ export class EhomeEmsPanel extends BaseElement {
     });
     picture.width = 600; picture.height = 300;
     house.append(picture, this._node("div", this._t("Conso Maison", "Home consumption"), "flow-title"));
-    metric(house, entities.home_power); stage.append(house);
+    metric(house, entities.home_power);day(house,this._snapshotData?.daily?.home);stage.append(house);
     const batteryTile = (battery, className) => {
       const el = this._node("div", undefined, className);
       el.append(icon("mdi:battery-high"), this._node("span", battery.name, "flow-title"));
       for (const [key, other, label] of [["charge_power", "discharge_power", this._t("Charge", "Charge")], ["discharge_power", "charge_power", this._t("Décharge", "Discharge")]]) {
         const group = this._node("div"); group.append(this._node("span", label, "flow-small"));
-        const row = this._node("div"); metric(row, battery[key]); group.append(row); el.append(group);
-        this._flowUpdates.push(() => { group.hidden = flowPower(this._hass?.states, battery[key]) === 0 && flowPower(this._hass?.states, battery[other]) > 0; });
+        const row = this._node("div"); metric(row, battery[key]);day(row,connectedBatteries.length===1?this._snapshotData?.daily?.[key==="charge_power"?"charge":"discharge"]:null); group.append(row); el.append(group);
+        this._flowUpdates.push(() => { group.hidden = false; });
       }
       const progress = this._node("progress"); progress.max = 100;
       progress.setAttribute("aria-label", this._t("État de charge", "State of charge")); el.append(progress);
@@ -1366,9 +1388,10 @@ export class EhomeEmsPanel extends BaseElement {
     const reserveScene = () => {
       if (!stage.isConnected) return;
       const bounds = stage.getBoundingClientRect();
+      if(bounds.width&&bounds.height)house.style.top=Math.max(bounds.height*.22,Math.max(solarTile.getBoundingClientRect().bottom,grid.getBoundingClientRect().bottom)-bounds.top+16)+"px";
       if (bounds.width && bounds.height && batteryTiles.length) {
         const houseBounds = house.getBoundingClientRect();
-        let nextTop = bounds.height * (bounds.width < 600 ? .59 : .47);
+        let nextTop = Math.max(bounds.height * (bounds.width < 600 ? .59 : .47),houseBounds.top-bounds.top+houseBounds.height*.45);
         batteryTiles.forEach((tile,index) => {
           tile.style.top = nextTop + "px";
           const tileBounds = tile.getBoundingClientRect();
@@ -1403,6 +1426,7 @@ export class EhomeEmsPanel extends BaseElement {
     for (const usage of config.usages || []) {
       const mdi = productIcon(usage);
       const el = tile("flow-usage", usage.name, mdi, usage.power);
+      day(el,usage);
       el.style.color = ["solar_router","water_heater"].includes(usage.kind) ? "#ffab4d" : usage.kind === "ev_charger" ? "#c18aff" : "#edf4ff";
       usages.append(el);
     }
@@ -1473,27 +1497,29 @@ export class EhomeEmsPanel extends BaseElement {
     const root=this._node("section",undefined,"card alerts-panel");root.append(this._node("h2",this._t("Alertes et Notifications","Alerts and Notifications")),this._node("p",this._t("Configurez les seuils et le destinataire HA. Aucune alerte n’est activée par défaut. Import quotidien : une notification par jour ; puissance et indisponibilité : une par épisode.","Configure thresholds and HA notification service. Alerts are disabled by default. Daily import: once per day; power and unavailability: once per episode."),"note"));
     const content=this._node("div");root.append(content);const load=async()=>{
       try{const data=await this._hass.callWS({type:"ehome_ems/alerts",entry_id:this._panel.config.entry_id});if(!root.isConnected)return;content.replaceChildren();
-        let rules=structuredClone(data.rules||[]);
+        let rules=structuredClone(data.rules||[]);const savedIds=new Set(rules.map(r=>r.id));
         if(this._hass.user?.is_admin){
           const form=this._node("form",undefined,"alert-form"),list=this._node("div"),message=this._node("p",undefined,"note");message.setAttribute("role","status");
           const draw=()=>{list.replaceChildren();for(const rule of rules){
-            const row=this._node("fieldset"),legend=this._node("legend",this._t("Alerte","Alert"));row.append(legend);
-            const field=(label,key,control)=>{const l=this._node("label",label);l.append(control);row.append(l);control.addEventListener("change",()=>{rule[key]=control.type==="checkbox"?control.checked:control.type==="number"?Number(control.value):control.value;});};
+            const detail=this._node("details",undefined,"alert-rule"),summary=this._node("summary"),row=this._node("fieldset");detail.open=!savedIds.has(rule.id);detail.append(summary,row);
+            const summaryText=()=>{summary.textContent=(rule.label||this._t("Alerte sans nom","Unnamed alert"))+" · "+(rule.enabled?this._t("Activée","Enabled"):this._t("Désactivée","Disabled"))+" · "+({daily_import:rule.threshold+" kWh",import_power:rule.threshold+" W",entity_unavailable:rule.duration_minutes+" min"}[rule.kind]||rule.kind);};summaryText();
+            const field=(label,key,control)=>{const l=this._node("label",label);l.append(control);row.append(l);control.addEventListener("change",()=>{rule[key]=control.type==="checkbox"?control.checked:control.type==="number"?Number(control.value):control.value;summaryText();});};
             const select=(values,current)=>{const el=this._node("select");for(const [value,name]of values){const option=this._node("option",name);option.value=value;el.append(option);}el.value=current;return el;};
+            const name=this._node("input");name.value=rule.label||"";name.maxLength=80;name.placeholder=this._t("Ex. Import supérieur à 12 kWh","E.g. Import above 12 kWh");field(this._t("Nom de l’alerte","Alert name"),"label",name);
             field(this._t("Type","Type"),"kind",select([["daily_import",this._t("Import réseau quotidien (kWh)","Daily grid import (kWh)")],["import_power",this._t("Puissance d’import (W)","Grid import power (W)")],["entity_unavailable",this._t("Entité indisponible","Unavailable entity")]],rule.kind));
             const entity=this._node("input");entity.value=rule.entity;entity.setAttribute("list","alert-entities");entity.required=true;field(this._t("Entité source","Source entity"),"entity",entity);entity.removeAttribute("list");this._entityPicker(entity.parentElement,entity,Object.entries(this._hass.states).map(([id,state])=>[id,state.attributes?.friendly_name||id]));
             for(const [key,label]of [["threshold",this._t("Seuil (kWh ou W selon type)","Threshold (kWh or W by type)")],["duration_minutes",this._t("Durée avant alerte (minutes)","Delay before alert (minutes)")]]){const input=this._node("input");input.type="number";input.min=key==="threshold"?"0.01":"0";input.max=key==="threshold"?"1000000":"1440";input.step="any";input.value=rule[key];input.required=true;field(label,key,input);}
             field(this._t("Notifier via","Notify via"),"notify_service",select((data.notify_services||["persistent_notification.create"]).map(n=>[n,n]),rule.notify_service));
             for(const [key,label]of [["daily_confirmed",this._t("Pour l’import quotidien : je confirme que cette entité mesure le jour civil et se remet à zéro chaque jour.","For daily import: I confirm this entity measures the current calendar day and resets daily.")],["enabled",this._t("Activer cette alerte","Enable this alert")]]){const input=this._node("input");input.type="checkbox";input.checked=rule[key];field(label,key,input);}
-            row.append(this._button(this._t("Supprimer cette alerte","Remove this alert"),()=>{rules=rules.filter(r=>r!==rule);draw();}));list.append(row);
+            row.append(this._button(this._t("Supprimer cette alerte","Remove this alert"),()=>{rules=rules.filter(r=>r!==rule);draw();}));list.append(detail);
           }};
           const choices=this._node("datalist");choices.id="alert-entities";for(const [id,state]of Object.entries(this._hass.states)){const o=this._node("option");o.value=id;o.label=state.attributes?.friendly_name||id;choices.append(o);}
-          const add=this._button(this._t("Ajouter une alerte","Add an alert"),()=>{rules.push({id:newCopyToken().replaceAll("-","").slice(0,32),kind:"daily_import",entity:this._snapshotData?.daily?.import||"",threshold:12,duration_minutes:0,enabled:false,notify_service:"persistent_notification.create",daily_confirmed:false});draw();});
+          const add=this._button(this._t("Ajouter une alerte","Add an alert"),()=>{rules.push({id:newCopyToken().replaceAll("-","").slice(0,32),kind:"daily_import",label:"",entity:this._snapshotData?.daily?.import||"",threshold:12,duration_minutes:0,enabled:false,notify_service:"persistent_notification.create",daily_confirmed:false});draw();});
           const save=this._node("button",this._t("Enregistrer les alertes","Save alerts"));save.type="submit";form.addEventListener("submit",async event=>{event.preventDefault();save.disabled=true;try{await this._hass.callWS({type:"ehome_ems/save_alerts",entry_id:this._panel.config.entry_id,revision:this._snapshotData.revision,rules});await this._load();}catch(error){message.textContent=this._t("Enregistrement refusé : vérifier entités, unités, confirmation du compteur du jour et actualiser. ","Save rejected: check entities, units, daily counter confirmation and refresh. ")+(error.code||"");}finally{save.disabled=false;}});
           form.append(choices,list,add,save,message);draw();content.append(form);
         }
         content.append(this._node("h3",this._t("Journal des notifications","Notification journal")),this._button(this._t("Actualiser le journal","Refresh journal"),load));
-        for(const item of [...(data.journal||[])].reverse()){content.append(this._node("p",new Date(item.time).toLocaleString(this._hass.language,{timeZone:this._snapshotData.time_zone})+" · "+item.message+" · "+({sent:this._t("Envoyée","Sent"),failed:this._t("Échec d’envoi : vérifier le service","Send failed: check service"),pending:this._t("Envoi non confirmé","Send unconfirmed")}[item.status]||item.status),"note"));}
+        for(const item of [...(data.journal||[])].reverse()){content.append(this._node("p",new Date(item.time).toLocaleString(this._hass.language,{timeZone:this._snapshotData.time_zone})+" · "+(item.label||item.rule_id)+" · "+item.message+" · "+({sent:this._t("Envoyée","Sent"),failed:this._t("Échec d’envoi : vérifier le service","Send failed: check service"),pending:this._t("Envoi non confirmé","Send unconfirmed")}[item.status]||item.status),"note"));}
         if(!data.journal?.length)content.append(this._node("p",this._t("Aucune notification émise.","No notifications sent."),"note"));
       }catch{content.textContent=this._t("Alertes indisponibles : actualisez après le rechargement de l’intégration.","Alerts unavailable: refresh after integration reload.");}
     };queueMicrotask(load);return root;
