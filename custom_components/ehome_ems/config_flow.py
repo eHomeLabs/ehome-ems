@@ -130,6 +130,7 @@ class PowerWizard:
         self._draft = {key: (existing or {}).get(key) for key in SOURCES}
         self._draft[CONF_BATTERIES] = deepcopy((existing or {}).get(CONF_BATTERIES, {}))
         self._draft[CONF_USAGES] = deepcopy((existing or {}).get(CONF_USAGES, {}))
+        self._draft["alerts"] = deepcopy((existing or {}).get("alerts", []))
         self._draft["energy_goals"] = deepcopy((existing or {}).get("energy_goals", {}))
         self._draft["photovoltaic"] = deepcopy((existing or {}).get("photovoltaic", {}))
         self._draft["daily"] = deepcopy((existing or {}).get("daily", {}))
