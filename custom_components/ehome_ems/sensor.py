@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.core import callback
+from homeassistant.helpers.restore_state import RestoreSensor
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 
 from .const import (
@@ -42,6 +43,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         for key in (CONF_GRID_IMPORT, CONF_GRID_EXPORT) if not mapping.get(key))
     if mapping.get(HOME_MODE) == "calculated":
         entities.append(CalculatedHomePower(entry.entry_id, mapping))
+        entities.append(CalculatedHomeEnergy(entry.entry_id, mapping))
     for battery_id, battery in mapping.get(CONF_BATTERIES, {}).items():
         entities.extend(
             MappedPowerSensor(entry.entry_id, key, battery[key],
@@ -225,6 +227,82 @@ class CalculatedHomePower(SensorEntity):
             "freshness_check_enabled": bool(max_age),
             "freshness_policy": self._mapping.get("home_freshness_policy", "warn"),
             "source_age_warning": bool(stale_sources),
+        }
+
+
+
+class CalculatedHomeEnergy(RestoreSensor):
+    """Cumulative home consumption, integrated from the same AC balance as power.
+
+    The previous valid sample is held over short intervals (left Riemann sum).
+    Gaps, restarts and unavailable sources are never extrapolated.
+    """
+
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = "kWh"
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_should_poll = False
+
+    def __init__(self, entry_id, mapping):
+        self._attr_unique_id = f"{entry_id}_home_energy"
+        self._attr_name = "eHome EMS Énergie Maison"
+        self._mapping = mapping
+        self._sources, self._setup_reason = home_sources(mapping)
+        self._attr_native_value = 0.0
+        self._last_power = None
+        self._last_sample = None
+
+    async def async_added_to_hass(self):
+        await super().async_added_to_hass()
+        restored = await self.async_get_last_sensor_data()
+        if restored is not None:
+            try:
+                value = float(restored.native_value)
+                if 0 <= value < float("inf"):
+                    self._attr_native_value = value
+            except (ValueError, TypeError, OverflowError):
+                pass
+
+        @callback
+        def changed(event):
+            self._sample()
+            self.async_write_ha_state()
+
+        if self._sources:
+            self.async_on_remove(async_track_state_change_event(
+                self.hass, list({source for _, source, _ in self._sources}), changed
+            ))
+        self.async_on_remove(async_track_time_interval(
+            self.hass, changed, timedelta(seconds=30)
+        ))
+        # Start a new interval: never integrate elapsed time across HA restarts.
+        self._sample()
+
+    @callback
+    def _sample(self):
+        now = datetime.now(timezone.utc)
+        values = {}
+        for role, source, _ in self._sources:
+            state = self.hass.states.get(source)
+            if state:
+                values[source] = (
+                    state.state, state.attributes.get("unit_of_measurement")
+                )
+        reading = calculate_home(self._mapping, values)
+        power = reading.value
+        # Ignore gaps longer than 90 seconds instead of inventing consumption.
+        if self._last_sample is not None and self._last_power is not None:
+            seconds = (now - self._last_sample).total_seconds()
+            if 0 < seconds <= 90:
+                self._attr_native_value += max(0.0, self._last_power) * seconds / 3_600_000
+        self._last_power = power if power is not None and power >= 0 else None
+        self._last_sample = now
+        self._attr_extra_state_attributes = {
+            "value_origin": "integrated_home_balance",
+            "integration_method": "left",
+            "source_quality": reading.quality,
+            "source_available": power is not None,
+            "gap_policy": "skip_intervals_over_90_seconds",
         }
 
 
