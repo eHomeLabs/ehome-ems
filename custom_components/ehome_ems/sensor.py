@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.core import callback
-from homeassistant.helpers.restore_state import RestoreSensor
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 
 from .const import (
@@ -231,7 +231,7 @@ class CalculatedHomePower(SensorEntity):
 
 
 
-class CalculatedHomeEnergy(RestoreSensor):
+class CalculatedHomeEnergy(SensorEntity, RestoreEntity):
     """Cumulative home consumption, integrated from the same AC balance as power.
 
     The previous valid sample is held over short intervals (left Riemann sum).
@@ -254,10 +254,10 @@ class CalculatedHomeEnergy(RestoreSensor):
 
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
-        restored = await self.async_get_last_sensor_data()
+        restored = await self.async_get_last_state()
         if restored is not None:
             try:
-                value = float(restored.native_value)
+                value = float(restored.state)
                 if 0 <= value < float("inf"):
                     self._attr_native_value = value
             except (ValueError, TypeError, OverflowError):
