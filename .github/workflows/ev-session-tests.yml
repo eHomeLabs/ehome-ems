@@ -1,0 +1,22 @@
+name: EV session regression tests
+on:
+  pull_request:
+    paths:
+      - 'custom_components/ehome_ems/ev_session*.py'
+      - 'custom_components/ehome_ems/ev_runtime.py'
+      - 'tests/test_ev_session*.py'
+      - '.github/workflows/ev-session-tests.yml'
+  push:
+    branches: [eHome]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pytest
+      - run: python -m pytest -q tests/test_ev_session_math.py tests/test_ev_session_tracker.py
+      - run: python -m compileall -q custom_components/ehome_ems
