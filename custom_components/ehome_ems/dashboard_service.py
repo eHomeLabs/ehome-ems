@@ -93,6 +93,12 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                     **{key: entities.get(f"usage_{identifier}_{key}") for key in USAGE_SOURCES}}
                    for identifier, usage in mapping.get(CONF_USAGES, {}).items()],
     }
+    ev_runtime = getattr(hass, "data", {}).get(DOMAIN, {}).get("ev_runtime", {}).get(entry.entry_id)
+    if ev_runtime:
+        for usage in result["flow"]["usages"]:
+            tracker = ev_runtime.trackers.get(usage["id"])
+            if tracker:
+                usage["ev_session"] = tracker.snapshot()
     native = getattr(hass, "data", {}).get(DOMAIN, {}).get("router_http", {}).get(entry.entry_id, {})
     for usage in result["flow"]["usages"]:
         if usage["id"] in native:
