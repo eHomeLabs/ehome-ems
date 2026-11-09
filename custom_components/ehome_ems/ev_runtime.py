@@ -1,7 +1,7 @@
 """Persistent EV charging sessions driven by Home Assistant state changes."""
-from datetime import datetime
 from homeassistant.core import callback
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
+from datetime import timedelta
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -15,6 +15,7 @@ class EVRuntime:
         self.store = Store(hass, 1, f"{DOMAIN}_ev_{entry.entry_id}")
         self.trackers = {}
         self.unsubscribe = None
+        self.unsubscribe_timer = None
 
     async def async_start(self):
         saved = await self.store.async_load() or {}
@@ -26,8 +27,14 @@ class EVRuntime:
                    for field in ("power", "energy")}
         if sources:
             self.unsubscribe = async_track_state_change_event(self.hass, list(sources), self._changed)
+            self.unsubscribe_timer = async_track_time_interval(self.hass, self._tick, timedelta(seconds=60))
             for key in self.trackers:
                 self._sample(key)
+
+    @callback
+    def _tick(self, now):
+        for key in self.trackers:
+            self._sample(key)
 
     @callback
     def _changed(self, event):
@@ -72,6 +79,9 @@ class EVRuntime:
         if self.unsubscribe:
             self.unsubscribe()
             self.unsubscribe = None
+        if self.unsubscribe_timer:
+            self.unsubscribe_timer()
+            self.unsubscribe_timer = None
         await self.store.async_save(self._save())
 
 
