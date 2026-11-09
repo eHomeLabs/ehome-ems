@@ -1,9 +1,17 @@
 """Tests for EV charging session accounting; no Home Assistant runtime required."""
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from custom_components.ehome_ems.ev_session_math import (
-    energy_delta, interval_cost, rate_at, session_peak,
-)
+import importlib.util
+from pathlib import Path
+
+MODULE = Path(__file__).resolve().parents[1] / 'custom_components' / 'ehome_ems' / 'ev_session_math.py'
+spec = importlib.util.spec_from_file_location('ev_session_math', MODULE)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+energy_delta = module.energy_delta
+interval_cost = module.interval_cost
+rate_at = module.rate_at
+session_peak = module.session_peak
 
 PARIS = ZoneInfo("Europe/Paris")
 
