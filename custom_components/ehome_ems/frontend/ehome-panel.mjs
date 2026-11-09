@@ -504,7 +504,13 @@ export class EhomeEmsPanel extends BaseElement {
   }
   _usageEnergy(config) {
     const box=this._node("div",undefined,"usage-energy"),daily=this._node("p",undefined,"energy-value"),caption=this._node("p",undefined,"note"),raw=this._node("p",undefined,"note");const progress=this._node("p",undefined,"note goal-progress");box.append(daily,caption,progress);
-    this._flowUpdates.push(()=>{const n=this._dayEnergy(config),session=config.energy_period==="session";
+    this._flowUpdates.push(()=>{if(config.kind==="ev_charger"){
+      const session=config.ev_session||{},last=session.last_session||{},shown=session.active?session:last;
+      daily.textContent=shown.energy_kwh==null?this._t("Session indisponible","Session unavailable"):displayNumber(shown.energy_kwh,this._hass?.language)+" kWh";
+      daily.classList.toggle("bad",shown.energy_kwh==null);
+      caption.textContent=session.active?this._t("Recharge en cours · depuis le début de session","Charging · since session start"):this._t("Dernière recharge terminée","Last completed charging session");
+      progress.hidden=true;return;
+    }const n=this._dayEnergy(config),session=config.energy_period==="session";
       daily.textContent=session?reading(this._hass?.states,config.energy,undefined,this._hass?.language).text:n===null?this._t("Jour indisponible","Daily unavailable"):displayNumber(n,this._hass?.language)+" kWh";
       daily.classList.toggle("bad",!session&&n===null);
       const goal=dailyGoalPercent(n,config.daily_energy_goal_kwh);progress.hidden=!config.daily_energy_goal_kwh;progress.textContent=goal===null?this._t("Objectif : données du jour indisponibles","Goal: daily data unavailable"):percent(goal,this._hass?.language)+this._t(" % de l’objectif quotidien ("," % of daily goal (")+displayNumber(config.daily_energy_goal_kwh,this._hass?.language)+" kWh)";
@@ -513,7 +519,12 @@ export class EhomeEmsPanel extends BaseElement {
     });if(config.energy){this._historyLink(daily,config.energy);this._historyLink(raw,config.energy);this._editable(box,config.energy);}return box;
   }
   _usageCost(config) {
-    const el=this._node("p",undefined,"cost note");this._flowUpdates.push(()=>{const n=this._dayEnergy(config),tariff=this._snapshotData?.tariff_eur_kwh;
+    const el=this._node("p",undefined,"cost note");this._flowUpdates.push(()=>{if(config.kind==="ev_charger"){
+      const session=config.ev_session||{},shown=session.active?session:session.last_session||{},value=shown.cost_eur;
+      el.classList.toggle("bad",value==null);
+      el.textContent=value==null?this._t("Coût de session indisponible","Session cost unavailable"):"≈ "+new Intl.NumberFormat(this._hass?.language||"fr",{style:"currency",currency:"EUR"}).format(value)+this._t(" · session estimée"," · estimated session");
+      return;
+    }const n=this._dayEnergy(config),tariff=this._snapshotData?.tariff_eur_kwh;
       el.classList.toggle("bad",n===null||typeof tariff!=="number"||!Number.isFinite(tariff));
       el.textContent=n!==null&&typeof tariff==="number"&&Number.isFinite(tariff)?"≈ "+new Intl.NumberFormat(this._hass?.language||"fr",{style:"currency",currency:"EUR"}).format(n*tariff)+this._t(" aujourd’hui · estimation"," today · estimate"):this._t("€ du jour indisponible : historique à minuit et tarif requis","Daily EUR unavailable: midnight history and tariff required");
     });return el;
@@ -1073,7 +1084,7 @@ export class EhomeEmsPanel extends BaseElement {
     const details=this._node("div"),power=this._node("div",undefined,"vessel-main"),energy=this._node("div",undefined,"energy-value"),status=this._node("p",undefined,"note");
     this._bind(power,config.power);this._editable(power,config.power);
     status.append(this._manualControl(config));
-    const mode=this._node("p",undefined,"note");this._flowUpdates.push(()=>{const watts=flowPower(this._hass?.states,config.power);mode.textContent=watts===null?this._t("Puissance indisponible","Power unavailable"):watts>=10?this._t("Puissance mesurée ≥ 10 W","Measured power ≥ 10 W"):this._t("Veille / faible puissance","Idle / low power");});
+    const mode=this._node("p",undefined,"note");this._flowUpdates.push(()=>{const watts=flowPower(this._hass?.states,config.power);mode.textContent=watts===null?this._t("Puissance indisponible","Power unavailable"):watts>=10?this._t("Puissance mesurée ≥ 10 W","Measured power ≥ 10 W"):((config.ev_session?.active?config.ev_session:config.ev_session?.last_session)?.peak_w!=null?this._t("Veille · ","Idle · ")+displayNumber((config.ev_session.active?config.ev_session:config.ev_session.last_session).peak_w,this._hass?.language)+" W max":this._t("Veille / faible puissance","Idle / low power"));});
     details.append(power,mode,this._usageEnergy(config),this._usageCost(config),status);
     layout.append(visual,details);root.append(layout);return root;
   }
@@ -1163,6 +1174,14 @@ export class EhomeEmsPanel extends BaseElement {
         add("icon","Icône du produit","Product icon","select",PRODUCT_ICONS.map(icon=>[icon,icon==="auto"?this._t("Automatique selon le nom","Automatic by name"):icon]),null,current.icon||"auto");
         source("power","Puissance (W/kW)","Power (W/kW)");source("energy","Énergie (Wh/kWh)","Energy (Wh/kWh)",["Wh","kWh"]);
         add("energy_period","Période du compteur d’énergie","Energy counter period","select",[["today",this._t("Aujourd’hui (remis à zéro chaque jour)","Today (resets daily)")],["session",this._t("Session","Session")],["total",this._t("Compteur cumulé","Lifetime counter")]],null,current.energy_period||"total");
+        if(section==="usages" && current.kind==="ev_charger"){
+          add("ev_tariff_mode","Tarification borne VE","EV charging tariff","select",[["flat",this._t("Tarif unique","Flat rate")],["hp_hc",this._t("Heures pleines / creuses","Peak / off-peak")]],null,current.ev_tariff_mode||"flat");
+          for(const [key,fr,en] of [["ev_tariff_flat","Tarif unique (€/kWh)","Flat rate (EUR/kWh)"],["ev_tariff_hp","Heures pleines (€/kWh)","Peak rate (EUR/kWh)"],["ev_tariff_hc","Heures creuses (€/kWh)","Off-peak rate (EUR/kWh)"]]){
+            const field=add(key,fr,en,"number",null,null,current[key]??"");field.max="10";
+          }
+          add("ev_hc_start","Début heures creuses (HH:MM)","Off-peak start (HH:MM)","text",null,null,current.ev_hc_start||"22:00");
+          add("ev_hc_end","Fin heures creuses (HH:MM)","Off-peak end (HH:MM)","text",null,null,current.ev_hc_end||"06:00");
+        }
         const tolerance=add("negative_power_tolerance_w","Tolérance puissance négative (W)","Negative power tolerance (W)","number",null,null,current.negative_power_tolerance_w??5);tolerance.max="20";
         const goal=add("daily_energy_goal_kwh","Objectif énergie quotidien (kWh, facultatif)","Daily energy goal (kWh, optional)","number");goal.min="0.001";goal.max="1000";
         source("status","État (facultatif)","Status (optional)",[]);

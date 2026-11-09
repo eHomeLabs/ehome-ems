@@ -21,6 +21,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     try:
         await async_setup_entry_panel(hass, entry)
+        from .ev_runtime import async_setup_ev
+        await async_setup_ev(hass, entry)
         from .alerts import async_setup_alerts
         await async_setup_alerts(hass, entry)
         if (entry.options or entry.data).get("energy_goals"):
@@ -45,6 +47,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     runtime = hass.data.get(DOMAIN, {}).get("energy_goal_runtime", {}).get(entry.entry_id)
     if runtime:
         await runtime.async_stop()
+    ev = hass.data.get(DOMAIN, {}).get("ev_runtime", {}).pop(entry.entry_id, None)
+    if ev:
+        await ev.async_stop()
     alerts = hass.data.get(DOMAIN, {}).get("alerts_runtime", {}).get(entry.entry_id)
     if alerts:
         await alerts.async_stop()
