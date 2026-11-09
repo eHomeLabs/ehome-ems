@@ -44,6 +44,9 @@ class EVSessionTracker:
         previous_at = datetime.fromisoformat(d["last_at"])
         if when <= previous_at:
             return self.snapshot()
+        # Long gaps cannot be allocated reliably across HP/HC boundaries.
+        if (when - previous_at).total_seconds() > 900:
+            d["incomplete"] = True
         delta = energy_delta(d["last_meter"], meter_kwh)
         if delta is None:
             d["incomplete"] = True
