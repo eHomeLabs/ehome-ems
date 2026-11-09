@@ -51,13 +51,14 @@ class EVSessionTracker:
         if delta is None:
             d["incomplete"] = True
         elif not d["incomplete"]:
-            try:
-                cost = interval_cost(previous_at, when, delta, **tariff)
-            except (ValueError, TypeError):
-                d["incomplete"] = True
-            else:
-                d["energy_kwh"] += delta
-                d["cost_eur"] += cost
+            d["energy_kwh"] += delta
+            if d["cost_eur"] is not None:
+                try:
+                    cost = interval_cost(previous_at, when, delta, **tariff)
+                except (ValueError, TypeError):
+                    d["cost_eur"] = None
+                else:
+                    d["cost_eur"] += cost
         d["last_meter"] = meter_kwh
         d["last_at"] = stamp
         if active:
