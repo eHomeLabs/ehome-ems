@@ -1174,10 +1174,10 @@ export class EhomeEmsPanel extends BaseElement {
         add("icon","Icône du produit","Product icon","select",PRODUCT_ICONS.map(icon=>[icon,icon==="auto"?this._t("Automatique selon le nom","Automatic by name"):icon]),null,current.icon||"auto");
         source("power","Puissance (W/kW)","Power (W/kW)");source("energy","Énergie (Wh/kWh)","Energy (Wh/kWh)",["Wh","kWh"]);
         add("energy_period","Période du compteur d’énergie","Energy counter period","select",[["today",this._t("Aujourd’hui (remis à zéro chaque jour)","Today (resets daily)")],["session",this._t("Session","Session")],["total",this._t("Compteur cumulé","Lifetime counter")]],null,current.energy_period||"total");
-        if(section==="usages"){
+        if(section==="usages" && current.kind==="ev_charger"){
           add("ev_tariff_mode","Tarification borne VE","EV charging tariff","select",[["flat",this._t("Tarif unique","Flat rate")],["hp_hc",this._t("Heures pleines / creuses","Peak / off-peak")]],null,current.ev_tariff_mode||"flat");
           for(const [key,fr,en] of [["ev_tariff_flat","Tarif unique (€/kWh)","Flat rate (EUR/kWh)"],["ev_tariff_hp","Heures pleines (€/kWh)","Peak rate (EUR/kWh)"],["ev_tariff_hc","Heures creuses (€/kWh)","Off-peak rate (EUR/kWh)"]]){
-            const field=add(key,fr,en,"number",null,null,current[key]??0);field.max="10";
+            const field=add(key,fr,en,"number",null,null,current[key]??"");field.max="10";
           }
           add("ev_hc_start","Début heures creuses (HH:MM)","Off-peak start (HH:MM)","text",null,null,current.ev_hc_start||"22:00");
           add("ev_hc_end","Fin heures creuses (HH:MM)","Off-peak end (HH:MM)","text",null,null,current.ev_hc_end||"06:00");
