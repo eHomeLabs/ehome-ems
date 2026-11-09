@@ -89,6 +89,7 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
                     "control_enabled": usage.get("control_enabled", False),
                     "control_entity": usage.get("control_entity"),
                     "energy_period": usage.get("energy_period", "total"),
+                    **{key: usage.get(key) for key in ("ev_tariff_mode", "ev_tariff_flat", "ev_tariff_hp", "ev_tariff_hc", "ev_hc_start", "ev_hc_end")},
                     **{key: entities.get(f"usage_{identifier}_{key}") for key in USAGE_SOURCES}}
                    for identifier, usage in mapping.get(CONF_USAGES, {}).items()],
     }
