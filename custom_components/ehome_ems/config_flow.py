@@ -97,9 +97,9 @@ def usage_schema(existing):
         vol.Optional("control_entity", description={"suggested_value": existing["control_entity"]} if existing.get("control_entity") else None): selector.EntitySelector(selector.EntitySelectorConfig(domain=["switch", "input_boolean", "light", "fan"])),
         vol.Optional("icon", default=existing.get("icon", "auto")): selector.SelectSelector(selector.SelectSelectorConfig(options=["auto","mdi:power-plug","mdi:washing-machine","mdi:dishwasher","mdi:tumble-dryer","mdi:fridge","mdi:radiator","mdi:air-conditioner","mdi:pool","mdi:coffee-maker","mdi:printer-3d-nozzle","mdi:lightbulb","mdi:television","mdi:desktop-classic","mdi:water-boiler","mdi:ev-station"])),
         vol.Optional("ev_tariff_mode", default=existing.get("ev_tariff_mode", "flat")): vol.In(["flat", "hp_hc"]),
-        vol.Optional("ev_tariff_flat", default=existing.get("ev_tariff_flat", 0)): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
-        vol.Optional("ev_tariff_hp", default=existing.get("ev_tariff_hp", 0)): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
-        vol.Optional("ev_tariff_hc", default=existing.get("ev_tariff_hc", 0)): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
+        vol.Optional("ev_tariff_flat", description={"suggested_value": existing["ev_tariff_flat"]} if existing.get("ev_tariff_flat") is not None else None): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
+        vol.Optional("ev_tariff_hp", description={"suggested_value": existing["ev_tariff_hp"]} if existing.get("ev_tariff_hp") is not None else None): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
+        vol.Optional("ev_tariff_hc", description={"suggested_value": existing["ev_tariff_hc"]} if existing.get("ev_tariff_hc") is not None else None): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
         vol.Optional("ev_hc_start", default=existing.get("ev_hc_start", "22:00")): vol.Match(r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"),
         vol.Optional("ev_hc_end", default=existing.get("ev_hc_end", "06:00")): vol.Match(r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"),
         vol.Required("energy_period", default=existing.get("energy_period", "total")): selector.SelectSelector(
