@@ -1213,7 +1213,24 @@ export class EhomeEmsPanel extends BaseElement {
         form.append(this._node("p",this._t("En observation, une source ancienne est signalée sans effacer le bilan. Le mode strict bloque après le délai. Une source absente, invalide ou indisponible bloque toujours le calcul.","Observation warns about old reports without hiding the balance. Strict mode blocks after the timeout. Missing, invalid and unavailable readings always block calculation."),"note"));
         const mode=controls.home_power_mode,homeInput=controls.home_power;
         const sync=()=>{homeInput.disabled=mode.value==="calculated";};mode.addEventListener("change",sync);sync();
-      }else for(const [key,fr,en] of section==="solar"?[["solar_power","Production solaire","Solar production"]]:[["grid_power","Réseau signé (facultatif)","Signed grid (optional)"],["grid_import","Import réseau","Grid import"],["grid_export","Export réseau","Grid export"]])source(key,fr,en);
+      }else if(section==="grid"){
+        // Shelly channels are existing Home Assistant power entities; no Shelly API or extra integration.
+        const shellyChannels=Object.entries(this._hass?.states||{}).filter(([id,state])=>
+          id.startsWith("sensor.") && ["W","kW"].includes(state.attributes?.unit_of_measurement) &&
+          /shelly/i.test(id+" "+(state.attributes?.friendly_name||"")) &&
+          !/total|energy|voltage|current|frequency|factor/i.test(id+" "+(state.attributes?.friendly_name||""))
+        ).sort(([a],[b])=>a.localeCompare(b,"fr",{numeric:true}));
+        if(shellyChannels.length){
+          const choices=[["",this._t("Choisir un canal Shelly…","Choose a Shelly channel…")],
+            ...shellyChannels.map(([id,state])=>[id,(state.attributes?.friendly_name||id)+" · "+id])];
+          const picker=add("shelly_grid_channel","Canal Shelly dédié au réseau","Shelly channel dedicated to grid","select",choices,null,"");
+          form.append(this._node("p",this._t("Sélectionnez le canal mesurant l'échange net avec le réseau (+ import, − injection). Le choix remplit le capteur Réseau signé ci-dessous. Un canal de phase isolé ne représente pas le réseau complet d'une installation triphasée.","Select the channel measuring net grid power (+ import, − export). This fills the signed grid sensor below. A single phase channel does not represent the entire grid on three-phase installations."),"note"));
+          picker.addEventListener("change",()=>{if(picker.value){controls.grid_power.value=picker.value;}});
+        }else{
+          form.append(this._node("p",this._t("Aucun canal Shelly de puissance détecté dans les entités Home Assistant. Vous pouvez toujours choisir manuellement un capteur réseau ci-dessous.","No Shelly power channel detected among Home Assistant entities. You can still select a grid sensor manually below."),"note"));
+        }
+        for(const [key,fr,en] of [["grid_power","Réseau signé (facultatif)","Signed grid (optional)"],["grid_import","Import réseau","Grid import"],["grid_export","Export réseau","Grid export"]])source(key,fr,en);
+      }else source("solar_power","Production solaire","Solar production");
     }
     if(section==="usages"&&!remove){
       const syncRouter=()=>{const router=controls.kind.value==="solar_router",f1atb=router&&controls.router_type.value==="f1atb",http=f1atb&&controls.router_connection.value==="http";
@@ -1230,7 +1247,7 @@ export class EhomeEmsPanel extends BaseElement {
     const revision=this._snapshotData.revision;
     const save=this._button(remove?this._t("Confirmer le retrait","Confirm removal"):this._t("Enregistrer","Save"),async()=>{
       if(!remove && !form.reportValidity())return;
-      const values={};for(const [key,input] of Object.entries(controls)){if(key==="router_discover_button")continue;if(input.type==="checkbox")values[key]=input.checked;else if(input.value.trim()!=="")values[key]=input.type==="number"?Number(input.value):input.value.trim();}
+      const values={};for(const [key,input] of Object.entries(controls)){if(key==="router_discover_button"||key==="shelly_grid_channel")continue;if(input.type==="checkbox")values[key]=input.checked;else if(input.value.trim()!=="")values[key]=input.type==="number"?Number(input.value):input.value.trim();}
       if(section==="usages"&&!remove){values.router_action=Number(values.router_action??0);if(values.kind!=="solar_router"||values.router_type!=="f1atb"){delete values.router_connection;delete values.router_action;delete values.router_http_enabled;}}
       save.disabled=true;form.inert=true;
       try{
