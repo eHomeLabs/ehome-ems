@@ -290,7 +290,7 @@ class EnergyGoalRuntime:
             power_reported = getattr(power_state, "last_reported", None) if power_state else None
             try:
                 power_w = float(power_state.state) * (1000 if power_state.attributes.get("unit_of_measurement") == "kW" else 1)
-                power_valid = power_state.attributes.get("unit_of_measurement") in ("W", "kW") and 0 <= power_w < 100
+                power_valid = power_state.attributes.get("unit_of_measurement") in ("W", "kW") and -5 <= power_w < 100
             except (TypeError, ValueError, AttributeError, OverflowError):
                 power_valid = False
             power_fresh = (power_reported is not None and
