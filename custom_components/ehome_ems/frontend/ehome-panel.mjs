@@ -1,3 +1,22 @@
+export function pvSunshineEstimate(forecast,zone="UTC",date=new Date()){
+  if(!Array.isArray(forecast))return null;
+  const fmt=new Intl.DateTimeFormat("en-GB",{timeZone:zone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
+  const parts=d=>Object.fromEntries(fmt.formatToParts(d).map(p=>[p.type,p.value]));
+  const today=parts(date),hours=new Map();
+  for(const item of forecast){
+    const time=Date.parse(item?.datetime||"");if(!Number.isFinite(time))continue;
+    const p=parts(new Date(time)),hour=Number(p.hour);
+    if(p.year!==today.year||p.month!==today.month||p.day!==today.day||hour<8||hour>=17)continue;
+    const cloud=item.cloud_coverage;
+    let sun=cloud!=null&&Number.isFinite(Number(cloud))?Math.max(0,Math.min(1,1-Number(cloud)/100)):null;
+    if(sun===null){const weights={sunny:1,"clear-night":1,partlycloudy:.6,cloudy:.15,rainy:.05,pouring:0,snowy:.1,"snowy-rainy":.05,fog:.05,lightning:0,"lightning-rainy":0,windy:.65,"windy-variant":.45};sun=Object.hasOwn(weights,item.condition)?weights[item.condition]:null;}
+    if(sun!==null)hours.set(hour,sun);
+  }
+  if(hours.size<7)return null;
+  const sunshineHours=[...hours.values()].reduce((s,v)=>s+v,0);
+  let weighted=0,total=0;for(const [hour,v] of hours){const w=Math.sin(Math.PI*(hour+.5-8)/9);weighted+=w*v;total+=w;}
+  return {hours:Math.round(sunshineHours*10)/10,index:Math.round(100*weighted/total),coverage:hours.size};
+}
 export function rankEntityOptions(options,deviceName="") {
   const normal=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
   const name=normal(deviceName),tokens=name.split(" ").filter(t=>t.length>2&&!['les','des','une','pour','the'].includes(t));
@@ -173,7 +192,7 @@ export class EhomeEmsPanel extends BaseElement {
   get narrow() { return !!this._narrow; }
   disconnectedCallback() {
     clearInterval(this._clock); clearTimeout(this._settleRefresh);
-    this._weatherGeneration=(this._weatherGeneration||0)+1;this._weatherUnsubscribe?.();this._weatherUnsubscribe=null;this._weatherKey=null;
+    this._weatherGeneration=(this._weatherGeneration||0)+1;this._weatherUnsubscribe?.();this._weatherUnsubscribe=null;this._weatherHourlyUnsubscribe?.();this._weatherHourlyUnsubscribe=null;this._weatherKey=null;
     for (const observer of this._layoutObservers || []) observer.disconnect();
     for (const cancel of this._holdCancels || []) cancel();
   }
@@ -547,8 +566,20 @@ export class EhomeEmsPanel extends BaseElement {
   _integrationLink(text) {
     const a = this._node("a", text); a.href = "/config/integrations/integration/ehome_ems"; return a;
   }
+  _pvWeatherCard(snapshot){
+    const card=this._node("section",undefined,"card");card.append(this._node("h3",this._t("Prévisions solaires du jour","Today's solar outlook")));
+    const condition=this._node("p",undefined,"note"),hours=this._node("div",undefined,"value"),index=this._node("p",undefined,"note"),hint=this._node("p",undefined,"note");card.append(condition,hours,index,hint);
+    this._flowUpdates.push(()=>{
+      const state=this._hass?.states?.[snapshot.weather_entity],estimate=pvSunshineEstimate(this._hourlyForecast,snapshot.time_zone||"UTC");
+      condition.textContent=state&&!["unavailable","unknown"].includes(state.state)?this._t("Conditions : ","Conditions: ")+state.state:this._t("Météo non configurée ou indisponible","Weather not configured or unavailable");
+      hours.textContent=estimate?displayNumber(estimate.hours,this._hass?.language)+this._t(" h de soleil estimées (8h–17h)"," estimated sunshine hours (08:00–17:00)"):this._t("Prévision indisponible","Forecast unavailable");
+      index.textContent=estimate?this._t("Indice solaire : ","Solar index: ")+estimate.index+"/100 · "+estimate.coverage+"/9 h":this._t("Prévisions horaires insuffisantes","Insufficient hourly forecast");
+      hint.textContent=this._t("Estimation selon la nébulosité ou les conditions horaires, pondérée vers midi. Ni mesure d’ensoleillement ni prévision de production kWh.","Estimate from hourly cloud cover or conditions, weighted toward noon. Not measured sunshine or a kWh production forecast.");
+    });return card;
+  }
   _photovoltaic(snapshot) {
     const root=this._node("section",undefined,"stack");root.append(this._node("h2",this._t("Photovoltaïque","Photovoltaic")),this._node("p",this._t("Total des productions déclarées : une seule puissance par équipement (DC si disponible, sinon AC). Pour un hybride, une source DC solaire est nécessaire. Ce total indicatif ne remplace pas le bilan Maison AC.","Declared production total: one power per equipment (DC when available, otherwise AC). A hybrid requires a solar DC source. This indicative total does not replace the AC Home balance."),"note"));
+    root.append(this._pvWeatherCard(snapshot));
     const items=snapshot.flow?.photovoltaic||[],resolve=id=>snapshot.bindings?.[id]?.source||id;
     const productions=pvProductionSources(items,resolve),energyItems=items.filter(item=>item.kind!=="hybrid_inverter"&&item.energy&&item.energy_period!=="session").filter((item,i,all)=>all.findIndex(other=>resolve(other.energy)===resolve(item.energy))===i);
     const totals=this._node("div",undefined,"cards pv-totals"),powerTile=this._node("div",undefined,"card"),energyTile=this._node("div",undefined,"card");
@@ -760,9 +791,10 @@ export class EhomeEmsPanel extends BaseElement {
   _subscribeWeather() {
     const entity=this._snapshotData?.weather_entity||null;
     if(this._weatherKey===entity)return;
-    const generation=this._weatherGeneration=(this._weatherGeneration||0)+1;this._weatherUnsubscribe?.();this._weatherUnsubscribe=null;this._weatherKey=entity;this._forecast=null;
+    const generation=this._weatherGeneration=(this._weatherGeneration||0)+1;this._weatherUnsubscribe?.();this._weatherUnsubscribe=null;this._weatherHourlyUnsubscribe?.();this._weatherHourlyUnsubscribe=null;this._weatherKey=entity;this._forecast=null;this._hourlyForecast=null;
     if(!entity||!this._hass?.connection?.subscribeMessage)return;
     this._hass.connection.subscribeMessage(event=>{if(generation!==this._weatherGeneration)return;this._forecast=event?.forecast||null;for(const update of this._flowUpdates||[])update();},{type:"weather/subscribe_forecast",entity_id:entity,forecast_type:"daily"}).then(unsubscribe=>{if(generation!==this._weatherGeneration)unsubscribe();else this._weatherUnsubscribe=unsubscribe;}).catch(()=>{if(generation===this._weatherGeneration)this._forecast=null;});
+    this._hass.connection.subscribeMessage(event=>{if(generation!==this._weatherGeneration)return;this._hourlyForecast=event?.forecast||null;for(const update of this._flowUpdates||[])update();},{type:"weather/subscribe_forecast",entity_id:entity,forecast_type:"hourly"}).then(unsubscribe=>{if(generation!==this._weatherGeneration)unsubscribe();else this._weatherHourlyUnsubscribe=unsubscribe;}).catch(()=>{if(generation===this._weatherGeneration)this._hourlyForecast=null;});
   }
   _weatherCard(snapshot) {
     const tile=this._node("section",undefined,"kpi weather-card");tile.style.setProperty("--tone","#90caf9");tile.append(this._icon("mdi:weather-partly-cloudy"),this._node("span",this._t("Météo du jour","Today's weather"),"kpi-label"));
