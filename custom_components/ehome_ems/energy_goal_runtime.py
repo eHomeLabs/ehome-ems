@@ -59,6 +59,7 @@ class EnergyGoalRuntime:
         self.day_records = {}
         self.weather_cache = {}
         self.manual_full = set()
+        self.manual_deadlines = {}
         self.lock, self.stopped, self.unsubscribers = asyncio.Lock(), False, []
 
     async def async_start(self):
@@ -101,6 +102,7 @@ class EnergyGoalRuntime:
             self.faults.pop(identifier, None)
             await self.persist()
             self.manual_full.add(identifier)
+            self.manual_deadlines[identifier] = cycle(goal, self.now(), self.zone)[1]
 
     def manual_goal(self, identifier, goal, now):
         if identifier not in self.manual_full:
@@ -116,6 +118,7 @@ class EnergyGoalRuntime:
                 if goal.get("router_usage") == router_identifier and goal.get("mode") == "auto":
                     self.owned.pop(identifier, None)
                     self.manual_full.discard(identifier)
+                    self.manual_deadlines.pop(identifier, None)
                     await self.fault(identifier, cycle(goal, self.now(), self.zone)[1].isoformat(), "manual_override")
 
     async def async_stop(self, _event=None):
@@ -390,6 +393,9 @@ class EnergyGoalRuntime:
                 try:
                     if identifier in self.owned and self.owned[identifier]["cycle"] != cycle(goal, now, self.zone)[1].isoformat():
                         await self.release(identifier)
+                    if identifier in self.manual_full and now >= self.manual_deadlines.get(identifier, now):
+                        self.manual_full.discard(identifier)
+                        self.manual_deadlines.pop(identifier, None)
                     stage_goal = self.manual_goal(identifier, goal, now) if identifier in self.manual_full else await self.weather_goal(identifier, goal, now)
                     result = await self.reading(identifier, stage_goal, now)
                     result["weather_stage"] = bool(stage_goal.get("_weather_stage"))
