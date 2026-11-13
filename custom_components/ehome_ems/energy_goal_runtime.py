@@ -183,7 +183,27 @@ class EnergyGoalRuntime:
         if quality != "valid":
             result.update(reason=quality, should_heat=False)
         elif reported is None or (now - reported).total_seconds() > goal["max_age_seconds"] or reported > now + timedelta(seconds=5):
-            result.update(reason="target_reached" if result["reason"]=="target_reached" else "stale_energy", warning="stale_energy", should_heat=False)
+            # A cumulative energy sensor may legitimately remain unchanged while
+            # the heater is idle. A fresh, independent power reading can confirm
+            # the idle state, but cannot replace the energy counter during heating.
+            usage = self.mapping.get("usages", {}).get(identifier, {})
+            power_entity = usage.get("power")
+            power_state = self.hass.states.get(power_entity) if power_entity else None
+            power_reported = getattr(power_state, "last_reported", None) if power_state else None
+            try:
+                power_w = float(power_state.state) * (1000 if power_state.attributes.get("unit_of_measurement") == "kW" else 1)
+                power_valid = power_state.attributes.get("unit_of_measurement") in ("W", "kW") and 0 <= power_w < 100
+            except (TypeError, ValueError, AttributeError, OverflowError):
+                power_valid = False
+            power_fresh = (power_reported is not None and
+                           timedelta(0) <= now - power_reported <= timedelta(seconds=goal["max_age_seconds"]))
+            if power_valid and power_fresh and identifier not in self.owned:
+                # Keep scheduling visible, but never issue a heater command on
+                # stale energy data: a fresh cumulative counter is required.
+                result.update(reason="stale_energy_idle_confirmed", warning="stale_energy", should_heat=False)
+            else:
+                result.update(reason="target_reached" if result["reason"]=="target_reached" else "stale_energy",
+                              warning="stale_energy", should_heat=False)
         return result
 
     async def control(self, identifier, goal, result, now):
