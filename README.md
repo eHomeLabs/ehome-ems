@@ -109,6 +109,8 @@ Depuis la b15, conserver l'entrée et ses associations. Aucun serveur supplémen
 
 Le bouton de création de copie a été retiré. Les dashboards personnels déjà exportés restent préservés et indépendants. Le service `ehome_ems.generate_dashboard` génère une configuration sans écraser un dashboard existant.
 
+[Stratégie ECS v0.2.17 : météo HC, forçages et sécurité compteur](docs/STRATEGIE_ECS_0_2_17.md)
+
 ## Documentation et validation
 
 - [Wiki et parcours illustré](docs/wiki/Home.md)
