@@ -21,7 +21,7 @@ class EntityDouble:
 def load_sensor():
     modules = {name: ModuleType(name) for name in (
         "homeassistant", "homeassistant.components", "homeassistant.components.sensor",
-        "homeassistant.core", "homeassistant.helpers", "homeassistant.helpers.event",
+        "homeassistant.core", "homeassistant.helpers", "homeassistant.helpers.event", "homeassistant.helpers.restore_state",
         "ems_sensor_test",
     )}
     modules["ems_sensor_test"].__path__ = [str(ROOT / "custom_components/ehome_ems")]
@@ -30,6 +30,7 @@ def load_sensor():
     sensors.SensorDeviceClass = SimpleNamespace(POWER="power", BATTERY="battery", ENERGY="energy")
     sensors.SensorStateClass = SimpleNamespace(MEASUREMENT="measurement")
     modules["homeassistant.core"].callback = lambda f: f
+    modules["homeassistant.helpers.restore_state"].RestoreEntity = EntityDouble
 
     def subscribe(hass, entity_ids, callback):
         hass.listeners.append(callback)
