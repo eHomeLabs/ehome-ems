@@ -30,7 +30,7 @@ def load_sensor():
     sensors.SensorDeviceClass = SimpleNamespace(POWER="power", BATTERY="battery", ENERGY="energy")
     sensors.SensorStateClass = SimpleNamespace(MEASUREMENT="measurement", TOTAL_INCREASING="total_increasing")
     modules["homeassistant.core"].callback = lambda f: f
-    modules["homeassistant.helpers.restore_state"].RestoreEntity = EntityDouble
+    modules["homeassistant.helpers.restore_state"].RestoreEntity = type("RestoreEntityDouble", (), {})
 
     def subscribe(hass, entity_ids, callback):
         hass.listeners.append(callback)
