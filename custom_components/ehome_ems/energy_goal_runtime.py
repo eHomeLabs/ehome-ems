@@ -95,7 +95,7 @@ class EnergyGoalRuntime:
         async with self.lock:
             goal = self.goals[identifier]
             result = await self.reading(identifier, goal, self.now())
-            if result["quality"] != "valid" or result.get("warning") or result.get("missing_kwh") is None:
+            if result["quality"] != "valid" or (result.get("warning") and result.get("reason") != "stale_energy_idle_confirmed") or result.get("missing_kwh") is None:
                 raise ValueError("energy_counter_not_ready")
             if result["missing_kwh"] <= 0:
                 raise ValueError("target_reached")
@@ -272,7 +272,7 @@ class EnergyGoalRuntime:
             # the heater is idle. A fresh, independent power reading can confirm
             # the idle state, but cannot replace the energy counter during heating.
             usage = self.mapping.get("usages", {}).get(identifier, {})
-            power_entity = usage.get("power")
+            power_entity = goal.get("power_entity") or usage.get("power")
             power_state = self.hass.states.get(power_entity) if power_entity else None
             power_reported = getattr(power_state, "last_reported", None) if power_state else None
             try:
@@ -283,9 +283,10 @@ class EnergyGoalRuntime:
             power_fresh = (power_reported is not None and
                            timedelta(0) <= now - power_reported <= timedelta(seconds=goal["max_age_seconds"]))
             if power_valid and power_fresh and identifier not in self.owned:
-                # Keep scheduling visible, but never issue a heater command on
-                # stale energy data: a fresh cumulative counter is required.
-                result.update(reason="stale_energy_idle_confirmed", warning="stale_energy", should_heat=False)
+                # Permit only an initial short lease with a fresh independent
+                # idle-power reading; require new energy telemetry once running.
+                result.update(reason="stale_energy_idle_confirmed",
+                              warning="stale_energy_idle_confirmed")
             else:
                 result.update(reason="target_reached" if result["reason"]=="target_reached" else "stale_energy",
                               warning="stale_energy", should_heat=False)
