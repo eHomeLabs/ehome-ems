@@ -100,8 +100,8 @@ def usage_schema(existing):
         vol.Optional("ev_tariff_flat", description={"suggested_value": existing["ev_tariff_flat"]} if existing.get("ev_tariff_flat") is not None else None): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
         vol.Optional("ev_tariff_hp", description={"suggested_value": existing["ev_tariff_hp"]} if existing.get("ev_tariff_hp") is not None else None): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
         vol.Optional("ev_tariff_hc", description={"suggested_value": existing["ev_tariff_hc"]} if existing.get("ev_tariff_hc") is not None else None): vol.All(vol.Coerce(float), vol.Range(min=0, max=10)),
-        vol.Optional("ev_hc_start", default=existing.get("ev_hc_start", "22:00")): vol.Match(r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"),
-        vol.Optional("ev_hc_end", default=existing.get("ev_hc_end", "06:00")): vol.Match(r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"),
+        vol.Optional("ev_hc_start", default=existing.get("ev_hc_start", "22:00")): selector.TimeSelector(),
+        vol.Optional("ev_hc_end", default=existing.get("ev_hc_end", "06:00")): selector.TimeSelector(),
         vol.Required("energy_period", default=existing.get("energy_period", "total")): selector.SelectSelector(
             selector.SelectSelectorConfig(options=["today", "session", "total"], translation_key="usage_energy_period")),
         vol.Required("included_in_home", default=existing.get("included_in_home", False)): bool,
