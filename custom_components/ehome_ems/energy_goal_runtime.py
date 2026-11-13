@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
-from .energy_goal import cycle, counter_kwh, progress, evaluate, allowed_windows
+from .energy_goal import cycle, counter_kwh, progress, evaluate, allowed_windows, daytime_weather_target, wall
 from .f1atb_http import RouterError
 
 LEASE_MINUTES = 2
@@ -57,6 +57,10 @@ class EnergyGoalRuntime:
         self.store = Store(hass, 1, f"{DOMAIN}_energy_goals_{entry.entry_id}")
         self.faults, self.records, self.owned, self.results = {}, {}, {}, {}
         self.day_records = {}
+        self.weather_cache = {}
+        self.manual_full = set()
+        self.manual_deadlines = {}
+        self.manual_pauses = {}
         self.lock, self.stopped, self.unsubscribers = asyncio.Lock(), False, []
 
     async def async_start(self):
@@ -85,12 +89,49 @@ class EnergyGoalRuntime:
             await self.persist()
         # A separate scheduled tick evaluates the permission and actual state.
 
+    async def async_full_override(self, identifier):
+        """Manual full target, bounded by the existing energy goal and deadline."""
+        if identifier not in self.goals or self.goals[identifier].get("mode") != "auto":
+            raise ValueError("goal_not_automatic")
+        async with self.lock:
+            goal = self.goals[identifier]
+            result = await self.reading(identifier, goal, self.now())
+            if result["quality"] != "valid" or (result.get("warning") and result.get("reason") != "stale_energy_idle_confirmed") or result.get("missing_kwh") is None:
+                raise ValueError("energy_counter_not_ready")
+            if result["missing_kwh"] <= 0:
+                raise ValueError("target_reached")
+            self.faults.pop(identifier, None)
+            await self.persist()
+            self.manual_pauses.pop(identifier, None)
+            self.manual_full.add(identifier)
+            self.manual_deadlines[identifier] = cycle(goal, self.now(), self.zone)[1]
+
+    def manual_goal(self, identifier, goal, now):
+        if identifier not in self.manual_full:
+            return goal
+        local = now.astimezone(ZoneInfo(self.zone))
+        return {**goal, "window_start": local.strftime("%H:%M"),
+                "window_end": goal["deadline"], "_manual_full": True}
+
+    async def async_timed_manual_override(self, router_identifier, minutes):
+        """Pause automatic control during a confirmed timed manual override."""
+        async with self.lock:
+            for identifier, goal in self.goals.items():
+                if goal.get("router_usage") == router_identifier and goal.get("mode") == "auto":
+                    self.manual_full.discard(identifier)
+                    self.manual_deadlines.pop(identifier, None)
+                    self.manual_pauses[identifier] = self.now() + timedelta(minutes=minutes)
+                    self.owned.pop(identifier, None)
+
     async def async_manual_override(self, router_identifier):
         """Any EMS manual router command takes priority for the rest of this cycle."""
         async with self.lock:
             for identifier, goal in self.goals.items():
                 if goal.get("router_usage") == router_identifier and goal.get("mode") == "auto":
                     self.owned.pop(identifier, None)
+                    self.manual_full.discard(identifier)
+                    self.manual_deadlines.pop(identifier, None)
+                    self.manual_pauses.pop(identifier, None)
                     await self.fault(identifier, cycle(goal, self.now(), self.zone)[1].isoformat(), "manual_override")
 
     async def async_stop(self, _event=None):
@@ -152,6 +193,58 @@ class EnergyGoalRuntime:
         if current is not None:record["previous"]=current
         return value,quality
 
+    async def weather_goal(self, identifier, goal, now):
+        """Use hourly HA forecast; missing/stale forecast never triggers heating."""
+        if not goal.get("weather_enabled") or goal.get("mode") != "auto":
+            return goal
+        zone = ZoneInfo(self.zone)
+        local = now.astimezone(zone)
+        midday_start = wall(local.date(), goal["weather_window_start"], zone).astimezone(timezone.utc)
+        midday_end = wall(local.date(), goal["weather_window_end"], zone).astimezone(timezone.utc)
+        start, deadline = cycle(goal, now, self.zone)
+        if not (start <= midday_start < midday_end <= deadline and now < midday_end):
+            return goal
+        entity = goal.get("weather_entity")
+        cached = self.weather_cache.get(entity)
+        if cached is None or now >= cached["expires"]:
+            try:
+                response = await self.hass.services.async_call(
+                    "weather", "get_forecasts", {"entity_id": entity, "type": "hourly"},
+                    blocking=True, return_response=True)
+                forecast = response.get(entity, {}).get("forecast", [])
+                if not isinstance(forecast, list):
+                    forecast = []
+            except Exception:
+                forecast = []
+            cached = {"forecast": forecast, "expires": now + timedelta(minutes=30)}
+            self.weather_cache[entity] = cached
+        forecast = cached["forecast"]
+        selected = None
+        for item in forecast:
+            try:
+                stamp = datetime.fromisoformat(item["datetime"].replace("Z", "+00:00"))
+                if stamp.tzinfo is None:
+                    continue
+                if stamp <= midday_start and (midday_start - stamp) <= timedelta(hours=1):
+                    selected = item
+                    break
+            except (KeyError, TypeError, ValueError, AttributeError):
+                continue
+        if selected is None:
+            return goal
+        # Forecast decision uses only predicted weather, never current condition.
+        rain = selected.get("precipitation_probability")
+        try:
+            rain = float(rain) if rain is not None else None
+        except (ValueError, TypeError):
+            rain = None
+        condition = selected.get("condition")
+        if daytime_weather_target(goal["goal_kwh"], goal["weather_fraction"], 0, condition, rain) in (None, 0):
+            return goal
+        return {**goal, "goal_kwh": goal["goal_kwh"] * goal["weather_fraction"],
+                "window_start": goal["weather_window_start"], "window_end": goal["weather_window_end"],
+                "_weather_stage": True}
+
     async def reading(self, identifier, goal, now):
         start, end = cycle(goal, now, self.zone)
         key = (end.isoformat(), goal["energy_entity"])
@@ -176,6 +269,11 @@ class EnergyGoalRuntime:
         if current is not None:
             record["previous"] = current
         result = evaluate(goal, now, self.zone, consumed, running=identifier in self.owned)
+        if goal.get("_manual_full") and result.get("missing_kwh") is not None:
+            if result["missing_kwh"] > 0:
+                result.update(should_heat=True, reason="manual_full_due")
+            else:
+                self.manual_full.discard(identifier)
         result.update(id=identifier, name=self.mapping.get("usages", {}).get(identifier, {}).get("name", identifier), quality=quality)
         daily,daily_quality=await self.daily_reading(goal,now,current)
         result.update(day_energy_kwh=daily,day_quality=daily_quality,energy_entity=goal["energy_entity"],router_usage=goal["router_usage"])
@@ -183,7 +281,28 @@ class EnergyGoalRuntime:
         if quality != "valid":
             result.update(reason=quality, should_heat=False)
         elif reported is None or (now - reported).total_seconds() > goal["max_age_seconds"] or reported > now + timedelta(seconds=5):
-            result.update(reason="target_reached" if result["reason"]=="target_reached" else "stale_energy", warning="stale_energy", should_heat=False)
+            # A cumulative energy sensor may legitimately remain unchanged while
+            # the heater is idle. A fresh, independent power reading can confirm
+            # the idle state, but cannot replace the energy counter during heating.
+            usage = self.mapping.get("usages", {}).get(identifier, {})
+            power_entity = goal.get("power_entity") or usage.get("power")
+            power_state = self.hass.states.get(power_entity) if power_entity else None
+            power_reported = getattr(power_state, "last_reported", None) if power_state else None
+            try:
+                power_w = float(power_state.state) * (1000 if power_state.attributes.get("unit_of_measurement") == "kW" else 1)
+                power_valid = power_state.attributes.get("unit_of_measurement") in ("W", "kW") and -5 <= power_w < 100
+            except (TypeError, ValueError, AttributeError, OverflowError):
+                power_valid = False
+            power_fresh = (power_reported is not None and
+                           timedelta(0) <= now - power_reported <= timedelta(seconds=goal["max_age_seconds"]))
+            if power_valid and power_fresh and identifier not in self.owned:
+                # Permit only an initial short lease with a fresh independent
+                # idle-power reading; require new energy telemetry once running.
+                result.update(reason="stale_energy_idle_confirmed",
+                              warning="stale_energy_idle_confirmed")
+            else:
+                result.update(reason="target_reached" if result["reason"]=="target_reached" else "stale_energy",
+                              warning="stale_energy", should_heat=False)
         return result
 
     async def control(self, identifier, goal, result, now):
@@ -288,8 +407,20 @@ class EnergyGoalRuntime:
                 try:
                     if identifier in self.owned and self.owned[identifier]["cycle"] != cycle(goal, now, self.zone)[1].isoformat():
                         await self.release(identifier)
-                    result = await self.reading(identifier, goal, now)
-                    await self.control(identifier, goal, result, now)
+                    if identifier in self.manual_full and now >= self.manual_deadlines.get(identifier, now):
+                        self.manual_full.discard(identifier)
+                        self.manual_deadlines.pop(identifier, None)
+                    stage_goal = self.manual_goal(identifier, goal, now) if identifier in self.manual_full else await self.weather_goal(identifier, goal, now)
+                    result = await self.reading(identifier, stage_goal, now)
+                    result["weather_stage"] = bool(stage_goal.get("_weather_stage"))
+                    result["manual_full"] = bool(stage_goal.get("_manual_full"))
+                    result["cycle_goal_kwh"] = goal["goal_kwh"]
+                    pause = self.manual_pauses.get(identifier)
+                    if pause and now < pause:
+                        result.update(reason="manual_timed_override", should_heat=False)
+                    else:
+                        self.manual_pauses.pop(identifier, None)
+                        await self.control(identifier, stage_goal, result, now)
                     if not result["should_heat"] and identifier in self.owned:
                         await self.release(identifier)
                     result["running"] = identifier in self.owned

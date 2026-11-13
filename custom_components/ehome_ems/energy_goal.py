@@ -7,6 +7,7 @@ import re
 
 FIELDS = {"mode", "goal_kwh", "deadline", "window_start", "window_end", "nominal_power_w",
           "margin_minutes", "energy_entity", "counter_confirmed", "router_usage", "max_age_seconds"}
+WEATHER_FIELDS = {"power_entity", "weather_enabled", "weather_entity", "weather_window_start", "weather_window_end", "weather_fraction"}
 
 
 def clock(value):
@@ -25,9 +26,30 @@ def validate_goal(mapping, identifier, values, states):
     usage = mapping.get("usages", {}).get(identifier, {})
     if usage.get("kind") not in ("water_heater", "solar_router"):
         raise ValueError("goal_target_missing")
-    if not isinstance(values, dict) or set(values) != FIELDS or values.get("mode") not in ("observe", "auto"):
+    if not isinstance(values, dict) or not FIELDS.issubset(values) or set(values) - FIELDS - WEATHER_FIELDS or values.get("mode") not in ("observe", "auto"):
         raise ValueError("invalid_goal_settings")
     clean = {**values}
+    clean.setdefault("power_entity", "")
+    if clean["power_entity"]:
+        p = states.get(clean["power_entity"]) if isinstance(clean["power_entity"], str) else None
+        if p is None or p.attributes.get("unit_of_measurement") not in ("W", "kW"):
+            raise ValueError("invalid_heater_power_source")
+    clean.setdefault("weather_enabled", False)
+    clean.setdefault("weather_entity", "")
+    clean.setdefault("weather_window_start", "12:30")
+    clean.setdefault("weather_window_end", "14:30")
+    clean.setdefault("weather_fraction", 0.5)
+    if type(clean["weather_enabled"]) is not bool:
+        raise ValueError("invalid_weather_settings")
+    clean["weather_window_start"] = clock(clean["weather_window_start"])
+    clean["weather_window_end"] = clock(clean["weather_window_end"])
+    if clean["weather_window_start"] >= clean["weather_window_end"]:
+        raise ValueError("invalid_weather_window")
+    clean["weather_fraction"] = finite(clean["weather_fraction"], .01, 1)
+    if clean["weather_enabled"]:
+        weather = clean["weather_entity"]
+        if not isinstance(weather, str) or not weather.startswith("weather.") or states.get(weather) is None:
+            raise ValueError("invalid_weather_source")
     for key in ("deadline", "window_start", "window_end"):
         clean[key] = clock(values[key])
     for key, low, high in (("goal_kwh", .01, 100), ("nominal_power_w", 100, 15000),
@@ -151,3 +173,25 @@ def evaluate(goal, now, zone_name, consumed_kwh, *, running=False):
             "needed_minutes": ceil(minutes), "allowed_minutes": round(remaining, 1),
             "latest_start": latest.isoformat() if latest and not reached else None,
             "should_heat": due, "reachable": reached or remaining >= minutes}
+
+
+def daytime_weather_target(goal_kwh, fraction, cycle_energy_kwh, forecast_condition, rain_probability=None):
+    """Pure planning helper; does not authorize equipment commands.
+
+    A wet/overcast forecast requests a minimum fraction of the *whole cycle*
+    energy. Existing solar or grid heating counts toward that minimum.
+    Missing forecast data must not be interpreted as bad weather.
+    """
+    wet = {"rainy", "pouring", "lightning-rainy", "snowy-rainy", "snowy"}
+    dim = {"cloudy", "fog", "hail"}
+    if cycle_energy_kwh is None or not 0 <= fraction <= 1:
+        return None
+    if not isinstance(forecast_condition, str):
+        return None
+    condition = forecast_condition.lower()
+    adverse = condition in wet or condition in dim or (
+        rain_probability is not None and 0 <= rain_probability <= 100 and rain_probability >= 60
+    )
+    if not adverse:
+        return 0.0
+    return round(max(0.0, goal_kwh * fraction - cycle_energy_kwh), 4)

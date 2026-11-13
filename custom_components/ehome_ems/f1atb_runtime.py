@@ -55,7 +55,7 @@ async def async_http_command(hass, entry, identifier, revision, action, values):
             or usage.get("router_connection") != "http" or not usage.get("router_http_enabled")):
         raise RouterError("router_not_enabled")
     runtime = hass.data.get(DOMAIN, {}).get("energy_goal_runtime", {}).get(entry.entry_id)
-    if runtime:
+    if runtime and action != "boost_duration":
         await runtime.async_manual_override(identifier)
     coordinator = hass.data.get(DOMAIN, {}).get("router_http", {}).get(entry.entry_id, {}).get(identifier)
     if not coordinator:
@@ -84,7 +84,7 @@ async def async_http_command(hass, entry, identifier, revision, action, values):
             except RouterError:
                 confirmed = False
         else:
-            if action == "boost_hour" and set(values) == {"config_token"}:
+            if action in ("boost_hour", "boost_duration") and (set(values) == {"config_token"} if action == "boost_hour" else set(values) == {"config_token", "minutes"}):
                 if values["config_token"] != config_token(config):
                     raise RouterError("router_config_conflict")
                 if target.get("Actif") not in range(1,6):
@@ -95,7 +95,7 @@ async def async_http_command(hass, entry, identifier, revision, action, values):
                     if actions(actual)[index] != actions(expected)[index]:
                         raise RouterError("router_opening_unconfirmed")
                     check_revision()
-                minutes=60
+                minutes=60 if action == "boost_hour" else bounded_int(values["minutes"], 1, 1440)
             elif action in ("force_on", "force_off") and set(values) == {"minutes"}:
                 minutes = bounded_int(values["minutes"], 1, 1440) * (1 if action == "force_on" else -1)
             elif action == "release" and not values:
@@ -112,6 +112,8 @@ async def async_http_command(hass, entry, identifier, revision, action, values):
                     or (minutes * remaining > 0 and abs(minutes - remaining) <= 1)))
             except RouterError:
                 confirmed = False
+    if runtime and action == "boost_duration" and confirmed:
+        await runtime.async_timed_manual_override(identifier, minutes)
     # Refresh never sends another write. Failure does not imply the write was undone.
     await coordinator.async_refresh()
-    return {"sent": True, "confirmed_by_router": confirmed, "persistent": action in ("http_parameters","boost_hour")}
+    return {"sent": True, "confirmed_by_router": confirmed, "persistent": action in ("http_parameters","boost_hour","boost_duration")}
