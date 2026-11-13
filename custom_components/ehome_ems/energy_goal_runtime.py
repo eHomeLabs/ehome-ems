@@ -60,6 +60,7 @@ class EnergyGoalRuntime:
         self.weather_cache = {}
         self.manual_full = set()
         self.manual_deadlines = {}
+        self.manual_pauses = {}
         self.lock, self.stopped, self.unsubscribers = asyncio.Lock(), False, []
 
     async def async_start(self):
@@ -110,6 +111,16 @@ class EnergyGoalRuntime:
         local = now.astimezone(ZoneInfo(self.zone))
         return {**goal, "window_start": local.strftime("%H:%M"),
                 "window_end": goal["deadline"], "_manual_full": True}
+
+    async def async_timed_manual_override(self, router_identifier, minutes):
+        """Pause automatic control during a confirmed timed manual override."""
+        async with self.lock:
+            for identifier, goal in self.goals.items():
+                if goal.get("router_usage") == router_identifier and goal.get("mode") == "auto":
+                    self.manual_full.discard(identifier)
+                    self.manual_deadlines.pop(identifier, None)
+                    self.manual_pauses[identifier] = self.now() + timedelta(minutes=minutes)
+                    self.owned.pop(identifier, None)
 
     async def async_manual_override(self, router_identifier):
         """Any EMS manual router command takes priority for the rest of this cycle."""
@@ -402,7 +413,12 @@ class EnergyGoalRuntime:
                     result["weather_stage"] = bool(stage_goal.get("_weather_stage"))
                     result["manual_full"] = bool(stage_goal.get("_manual_full"))
                     result["cycle_goal_kwh"] = goal["goal_kwh"]
-                    await self.control(identifier, stage_goal, result, now)
+                    pause = self.manual_pauses.get(identifier)
+                    if pause and now < pause:
+                        result.update(reason="manual_timed_override", should_heat=False)
+                    else:
+                        self.manual_pauses.pop(identifier, None)
+                        await self.control(identifier, stage_goal, result, now)
                     if not result["should_heat"] and identifier in self.owned:
                         await self.release(identifier)
                     result["running"] = identifier in self.owned
