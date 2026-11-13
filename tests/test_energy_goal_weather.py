@@ -1,7 +1,17 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from custom_components.ehome_ems.energy_goal import daytime_weather_target, cycle
+import importlib
+from pathlib import Path
+import sys
+from types import ModuleType
+from unittest.mock import patch
+
+package = ModuleType("ems_goal_weather_test")
+package.__path__ = [str(Path(__file__).resolve().parents[1] / "custom_components/ehome_ems")]
+with patch.dict(sys.modules, {"ems_goal_weather_test": package}):
+    goal = importlib.import_module("ems_goal_weather_test.energy_goal")
+daytime_weather_target, cycle = goal.daytime_weather_target, goal.cycle
 
 
 def test_daytime_weather_top_up_uses_total_cycle_energy():
