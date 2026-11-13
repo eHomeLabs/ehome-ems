@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
-from .energy_goal import cycle, counter_kwh, progress, evaluate, allowed_windows
+from .energy_goal import cycle, counter_kwh, progress, evaluate, allowed_windows, daytime_weather_target, wall
 from .f1atb_http import RouterError
 
 LEASE_MINUTES = 2
@@ -57,6 +57,7 @@ class EnergyGoalRuntime:
         self.store = Store(hass, 1, f"{DOMAIN}_energy_goals_{entry.entry_id}")
         self.faults, self.records, self.owned, self.results = {}, {}, {}, {}
         self.day_records = {}
+        self.weather_cache = {}
         self.lock, self.stopped, self.unsubscribers = asyncio.Lock(), False, []
 
     async def async_start(self):
@@ -151,6 +152,58 @@ class EnergyGoalRuntime:
         if quality=="counter_reset":record["quality"]=quality
         if current is not None:record["previous"]=current
         return value,quality
+
+    async def weather_goal(self, identifier, goal, now):
+        """Use hourly HA forecast; missing/stale forecast never triggers heating."""
+        if not goal.get("weather_enabled") or goal.get("mode") != "auto":
+            return goal
+        zone = ZoneInfo(self.zone)
+        local = now.astimezone(zone)
+        midday_start = wall(local.date(), goal["weather_window_start"], zone).astimezone(timezone.utc)
+        midday_end = wall(local.date(), goal["weather_window_end"], zone).astimezone(timezone.utc)
+        start, deadline = cycle(goal, now, self.zone)
+        if not (start <= midday_start < midday_end <= deadline and now < midday_end):
+            return goal
+        entity = goal.get("weather_entity")
+        cached = self.weather_cache.get(entity)
+        if cached is None or now >= cached["expires"]:
+            try:
+                response = await self.hass.services.async_call(
+                    "weather", "get_forecasts", {"entity_id": entity, "type": "hourly"},
+                    blocking=True, return_response=True)
+                forecast = response.get(entity, {}).get("forecast", [])
+                if not isinstance(forecast, list):
+                    forecast = []
+            except Exception:
+                forecast = []
+            cached = {"forecast": forecast, "expires": now + timedelta(minutes=30)}
+            self.weather_cache[entity] = cached
+        forecast = cached["forecast"]
+        selected = None
+        for item in forecast:
+            try:
+                stamp = datetime.fromisoformat(item["datetime"].replace("Z", "+00:00"))
+                if stamp.tzinfo is None:
+                    continue
+                if stamp <= midday_start and (midday_start - stamp) <= timedelta(hours=1):
+                    selected = item
+                    break
+            except (KeyError, TypeError, ValueError, AttributeError):
+                continue
+        if selected is None:
+            return goal
+        # Forecast decision uses only predicted weather, never current condition.
+        rain = selected.get("precipitation_probability")
+        try:
+            rain = float(rain) if rain is not None else None
+        except (ValueError, TypeError):
+            rain = None
+        condition = selected.get("condition")
+        if daytime_weather_target(goal["goal_kwh"], goal["weather_fraction"], 0, condition, rain) in (None, 0):
+            return goal
+        return {**goal, "goal_kwh": goal["goal_kwh"] * goal["weather_fraction"],
+                "window_start": goal["weather_window_start"], "window_end": goal["weather_window_end"],
+                "_weather_stage": True}
 
     async def reading(self, identifier, goal, now):
         start, end = cycle(goal, now, self.zone)
@@ -308,8 +361,10 @@ class EnergyGoalRuntime:
                 try:
                     if identifier in self.owned and self.owned[identifier]["cycle"] != cycle(goal, now, self.zone)[1].isoformat():
                         await self.release(identifier)
-                    result = await self.reading(identifier, goal, now)
-                    await self.control(identifier, goal, result, now)
+                    stage_goal = await self.weather_goal(identifier, goal, now)
+                    result = await self.reading(identifier, stage_goal, now)
+                    result["weather_stage"] = bool(stage_goal.get("_weather_stage"))
+                    await self.control(identifier, stage_goal, result, now)
                     if not result["should_heat"] and identifier in self.owned:
                         await self.release(identifier)
                     result["running"] = identifier in self.owned
