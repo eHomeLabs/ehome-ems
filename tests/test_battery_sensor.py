@@ -28,7 +28,7 @@ def load_sensor():
     sensors = modules["homeassistant.components.sensor"]
     sensors.SensorEntity = EntityDouble
     sensors.SensorDeviceClass = SimpleNamespace(POWER="power", BATTERY="battery", ENERGY="energy")
-    sensors.SensorStateClass = SimpleNamespace(MEASUREMENT="measurement")
+    sensors.SensorStateClass = SimpleNamespace(MEASUREMENT="measurement", TOTAL_INCREASING="total_increasing")
     modules["homeassistant.core"].callback = lambda f: f
     modules["homeassistant.helpers.restore_state"].RestoreEntity = EntityDouble
 
