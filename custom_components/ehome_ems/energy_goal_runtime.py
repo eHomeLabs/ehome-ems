@@ -58,6 +58,7 @@ class EnergyGoalRuntime:
         self.faults, self.records, self.owned, self.results = {}, {}, {}, {}
         self.day_records = {}
         self.weather_cache = {}
+        self.manual_full = set()
         self.lock, self.stopped, self.unsubscribers = asyncio.Lock(), False, []
 
     async def async_start(self):
@@ -86,12 +87,35 @@ class EnergyGoalRuntime:
             await self.persist()
         # A separate scheduled tick evaluates the permission and actual state.
 
+    async def async_full_override(self, identifier):
+        """Manual full target, bounded by the existing energy goal and deadline."""
+        if identifier not in self.goals or self.goals[identifier].get("mode") != "auto":
+            raise ValueError("goal_not_automatic")
+        async with self.lock:
+            goal = self.goals[identifier]
+            result = await self.reading(identifier, goal, self.now())
+            if result["quality"] != "valid" or result.get("warning") or result.get("missing_kwh") is None:
+                raise ValueError("energy_counter_not_ready")
+            if result["missing_kwh"] <= 0:
+                raise ValueError("target_reached")
+            self.faults.pop(identifier, None)
+            await self.persist()
+            self.manual_full.add(identifier)
+
+    def manual_goal(self, identifier, goal, now):
+        if identifier not in self.manual_full:
+            return goal
+        local = now.astimezone(ZoneInfo(self.zone))
+        return {**goal, "window_start": local.strftime("%H:%M"),
+                "window_end": goal["deadline"], "_manual_full": True}
+
     async def async_manual_override(self, router_identifier):
         """Any EMS manual router command takes priority for the rest of this cycle."""
         async with self.lock:
             for identifier, goal in self.goals.items():
                 if goal.get("router_usage") == router_identifier and goal.get("mode") == "auto":
                     self.owned.pop(identifier, None)
+                    self.manual_full.discard(identifier)
                     await self.fault(identifier, cycle(goal, self.now(), self.zone)[1].isoformat(), "manual_override")
 
     async def async_stop(self, _event=None):
@@ -229,6 +253,11 @@ class EnergyGoalRuntime:
         if current is not None:
             record["previous"] = current
         result = evaluate(goal, now, self.zone, consumed, running=identifier in self.owned)
+        if goal.get("_manual_full") and result.get("missing_kwh") is not None:
+            if result["missing_kwh"] > 0:
+                result.update(should_heat=True, reason="manual_full_due")
+            else:
+                self.manual_full.discard(identifier)
         result.update(id=identifier, name=self.mapping.get("usages", {}).get(identifier, {}).get("name", identifier), quality=quality)
         daily,daily_quality=await self.daily_reading(goal,now,current)
         result.update(day_energy_kwh=daily,day_quality=daily_quality,energy_entity=goal["energy_entity"],router_usage=goal["router_usage"])
@@ -361,9 +390,10 @@ class EnergyGoalRuntime:
                 try:
                     if identifier in self.owned and self.owned[identifier]["cycle"] != cycle(goal, now, self.zone)[1].isoformat():
                         await self.release(identifier)
-                    stage_goal = await self.weather_goal(identifier, goal, now)
+                    stage_goal = self.manual_goal(identifier, goal, now) if identifier in self.manual_full else await self.weather_goal(identifier, goal, now)
                     result = await self.reading(identifier, stage_goal, now)
                     result["weather_stage"] = bool(stage_goal.get("_weather_stage"))
+                    result["manual_full"] = bool(stage_goal.get("_manual_full"))
                     await self.control(identifier, stage_goal, result, now)
                     if not result["should_heat"] and identifier in self.owned:
                         await self.release(identifier)
