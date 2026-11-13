@@ -151,3 +151,25 @@ def evaluate(goal, now, zone_name, consumed_kwh, *, running=False):
             "needed_minutes": ceil(minutes), "allowed_minutes": round(remaining, 1),
             "latest_start": latest.isoformat() if latest and not reached else None,
             "should_heat": due, "reachable": reached or remaining >= minutes}
+
+
+def daytime_weather_target(goal_kwh, fraction, cycle_energy_kwh, forecast_condition, rain_probability=None):
+    """Pure planning helper; does not authorize equipment commands.
+
+    A wet/overcast forecast requests a minimum fraction of the *whole cycle*
+    energy. Existing solar or grid heating counts toward that minimum.
+    Missing forecast data must not be interpreted as bad weather.
+    """
+    wet = {"rainy", "pouring", "lightning-rainy", "snowy-rainy", "snowy"}
+    dim = {"cloudy", "fog", "hail"}
+    if cycle_energy_kwh is None or not 0 <= fraction <= 1:
+        return None
+    if not isinstance(forecast_condition, str):
+        return None
+    condition = forecast_condition.lower()
+    adverse = condition in wet or condition in dim or (
+        rain_probability is not None and 0 <= rain_probability <= 100 and rain_probability >= 60
+    )
+    if not adverse:
+        return 0.0
+    return round(max(0.0, goal_kwh * fraction - cycle_energy_kwh), 4)
