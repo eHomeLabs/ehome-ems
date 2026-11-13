@@ -7,7 +7,7 @@ import re
 
 FIELDS = {"mode", "goal_kwh", "deadline", "window_start", "window_end", "nominal_power_w",
           "margin_minutes", "energy_entity", "counter_confirmed", "router_usage", "max_age_seconds"}
-WEATHER_FIELDS = {"weather_enabled", "weather_entity", "weather_window_start", "weather_window_end", "weather_fraction"}
+WEATHER_FIELDS = {"power_entity", "weather_enabled", "weather_entity", "weather_window_start", "weather_window_end", "weather_fraction"}
 
 
 def clock(value):
@@ -29,6 +29,11 @@ def validate_goal(mapping, identifier, values, states):
     if not isinstance(values, dict) or not FIELDS.issubset(values) or set(values) - FIELDS - WEATHER_FIELDS or values.get("mode") not in ("observe", "auto"):
         raise ValueError("invalid_goal_settings")
     clean = {**values}
+    clean.setdefault("power_entity", "")
+    if clean["power_entity"]:
+        p = states.get(clean["power_entity"]) if isinstance(clean["power_entity"], str) else None
+        if p is None or p.attributes.get("unit_of_measurement") not in ("W", "kW"):
+            raise ValueError("invalid_heater_power_source")
     clean.setdefault("weather_enabled", False)
     clean.setdefault("weather_entity", "")
     clean.setdefault("weather_window_start", "12:30")
