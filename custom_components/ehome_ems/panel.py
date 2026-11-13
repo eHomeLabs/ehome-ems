@@ -97,6 +97,7 @@ async def async_setup_panel_domain(hass):
     websocket_api.async_register_command(hass, websocket_save_energy_goal)
     websocket_api.async_register_command(hass, websocket_energy_goals)
     websocket_api.async_register_command(hass, websocket_rearm_energy_goal)
+    websocket_api.async_register_command(hass, websocket_full_energy_goal)
     websocket_api.async_register_command(hass, websocket_save_simulation)
     websocket_api.async_register_command(hass, websocket_simulate)
 
@@ -256,6 +257,27 @@ async def websocket_rearm_energy_goal(hass, connection, msg):
         return
     await runtime.async_rearm(msg["identifier"])
     connection.send_result(msg["id"],{"rearmed":True})
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({"type":"ehome_ems/full_energy_goal", "entry_id":str,
+    "identifier":str,"revision":str})
+@websocket_api.async_response
+async def websocket_full_energy_goal(hass, connection, msg):
+    entry=hass.config_entries.async_get_entry(msg["entry_id"])
+    if entry is None or entry.domain!=DOMAIN or entry.modified_at.isoformat()!=msg["revision"]:
+        connection.send_error(msg["id"],"conflict","Configuration changed.")
+        return
+    runtime=hass.data.get(DOMAIN,{}).get("energy_goal_runtime",{}).get(entry.entry_id)
+    if not runtime:
+        connection.send_error(msg["id"],"not_ready","Energy goal is not ready.")
+        return
+    try:
+        await runtime.async_full_override(msg["identifier"])
+    except ValueError as error:
+        connection.send_error(msg["id"],str(error),"Full override rejected.")
+        return
+    connection.send_result(msg["id"],{"accepted":True})
 
 
 @websocket_api.websocket_command({"type":"ehome_ems/alerts", "entry_id":str})
