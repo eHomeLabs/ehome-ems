@@ -102,6 +102,7 @@ class EnergyGoalRuntime:
                 raise ValueError("target_reached")
             self.faults.pop(identifier, None)
             await self.persist()
+            self.manual_pauses.pop(identifier, None)
             self.manual_full.add(identifier)
             self.manual_deadlines[identifier] = cycle(goal, self.now(), self.zone)[1]
 
@@ -130,6 +131,7 @@ class EnergyGoalRuntime:
                     self.owned.pop(identifier, None)
                     self.manual_full.discard(identifier)
                     self.manual_deadlines.pop(identifier, None)
+                    self.manual_pauses.pop(identifier, None)
                     await self.fault(identifier, cycle(goal, self.now(), self.zone)[1].isoformat(), "manual_override")
 
     async def async_stop(self, _event=None):
