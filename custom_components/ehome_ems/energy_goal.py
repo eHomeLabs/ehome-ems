@@ -7,6 +7,7 @@ import re
 
 FIELDS = {"mode", "goal_kwh", "deadline", "window_start", "window_end", "nominal_power_w",
           "margin_minutes", "energy_entity", "counter_confirmed", "router_usage", "max_age_seconds"}
+WEATHER_FIELDS = {"weather_enabled", "weather_entity", "weather_window_start", "weather_window_end", "weather_fraction"}
 
 
 def clock(value):
@@ -25,9 +26,25 @@ def validate_goal(mapping, identifier, values, states):
     usage = mapping.get("usages", {}).get(identifier, {})
     if usage.get("kind") not in ("water_heater", "solar_router"):
         raise ValueError("goal_target_missing")
-    if not isinstance(values, dict) or set(values) != FIELDS or values.get("mode") not in ("observe", "auto"):
+    if not isinstance(values, dict) or not FIELDS.issubset(values) or set(values) - FIELDS - WEATHER_FIELDS or values.get("mode") not in ("observe", "auto"):
         raise ValueError("invalid_goal_settings")
     clean = {**values}
+    clean.setdefault("weather_enabled", False)
+    clean.setdefault("weather_entity", "")
+    clean.setdefault("weather_window_start", "12:30")
+    clean.setdefault("weather_window_end", "14:30")
+    clean.setdefault("weather_fraction", 0.5)
+    if type(clean["weather_enabled"]) is not bool:
+        raise ValueError("invalid_weather_settings")
+    clean["weather_window_start"] = clock(clean["weather_window_start"])
+    clean["weather_window_end"] = clock(clean["weather_window_end"])
+    if clean["weather_window_start"] >= clean["weather_window_end"]:
+        raise ValueError("invalid_weather_window")
+    clean["weather_fraction"] = finite(clean["weather_fraction"], .01, 1)
+    if clean["weather_enabled"]:
+        weather = clean["weather_entity"]
+        if not isinstance(weather, str) or not weather.startswith("weather.") or states.get(weather) is None:
+            raise ValueError("invalid_weather_source")
     for key in ("deadline", "window_start", "window_end"):
         clean[key] = clock(values[key])
     for key, low, high in (("goal_kwh", .01, 100), ("nominal_power_w", 100, 15000),
