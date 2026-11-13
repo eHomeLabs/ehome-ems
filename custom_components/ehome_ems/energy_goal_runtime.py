@@ -401,6 +401,7 @@ class EnergyGoalRuntime:
                     result = await self.reading(identifier, stage_goal, now)
                     result["weather_stage"] = bool(stage_goal.get("_weather_stage"))
                     result["manual_full"] = bool(stage_goal.get("_manual_full"))
+                    result["cycle_goal_kwh"] = goal["goal_kwh"]
                     await self.control(identifier, stage_goal, result, now)
                     if not result["should_heat"] and identifier in self.owned:
                         await self.release(identifier)
