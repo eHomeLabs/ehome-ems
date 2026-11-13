@@ -923,8 +923,20 @@ export class EhomeEmsPanel extends BaseElement {
       const router=snapshot.flow?.usages?.find(u=>u.id===(goal.router_usage||snapshot.settings?.energy_goals?.[goal.id]?.router_usage));
       if(this._hass?.user?.is_admin&&router?.router_connection==="http"&&router.router_http_enabled){
         const message=this._node("p",undefined,"note");message.setAttribute("role","status");
-        const boost=this._button(this._t("Forcer 1 h à 100 %","Force 1 h at 100%"),async()=>{boost.disabled=true;try{const result=await this._hass.callWS({type:"ehome_ems/router_command",entry_id:this._panel.config.entry_id,identifier:router.id,revision:snapshot.revision,action:"boost_hour",values:{config_token:router.router_native.config_token}});message.textContent=result.confirmed_by_router?this._t("Forçage 60 min à 100 % confirmé. L’ouverture de marche forcée reste réglée à 100 %.","60 min override at 100% confirmed. Forced opening remains set to 100%."):this._t("Envoi non confirmé : vérifier le routeur avant de réessayer.","Send unconfirmed: check router before retrying.");}catch(error){message.textContent=this._t("Forçage refusé : ","Override rejected: ")+(error.code||"");}finally{boost.disabled=true;}});
-        boost.disabled=!router.router_native?.available||!router.router_native?.config_token;card.append(boost,message);
+        const durations=this._node("select");durations.setAttribute("aria-label",this._t("Durée du forçage manuel","Manual override duration"));
+        for(const [minutes,label] of [[30,"30 min"],[60,"1 h"]]){const option=this._node("option",label);option.value=String(minutes);durations.append(option);}
+        durations.value="60";
+        const boost=this._button(this._t("Forcer à 100 %","Override at 100%"),async()=>{
+          boost.disabled=true;
+          try{
+            const minutes=Number(durations.value);
+            const result=await this._hass.callWS({type:"ehome_ems/router_command",entry_id:this._panel.config.entry_id,identifier:router.id,revision:snapshot.revision,action:"boost_duration",values:{config_token:router.router_native.config_token,minutes}});
+            message.textContent=result.confirmed_by_router?this._t("Forçage confirmé : ","Override confirmed: ")+minutes+" min":this._t("Envoi non confirmé : vérifier le routeur avant de réessayer.","Send unconfirmed: check router before retrying.");
+          }catch(error){message.textContent=this._t("Forçage refusé : ","Override rejected: ")+(error.code||"");}
+          finally{boost.disabled=false;}
+        });
+        boost.disabled=!router.router_native?.available||!router.router_native?.config_token;
+        card.append(durations,boost,message);
       }
       if(this._hass?.user?.is_admin&&["manual_override","command_unconfirmed","runtime_unavailable"].includes(goal.reason))card.append(this._button(this._t("Réarmer après vérification","Re-arm after checking"),async()=>{try{await this._hass.callWS({type:"ehome_ems/rearm_energy_goal",entry_id:this._panel.config.entry_id,identifier:goal.id,revision:snapshot.revision});await refresh();}catch{this._message.textContent=this._t("Réarmement refusé. Actualisez.","Re-arm rejected. Refresh.");}}));stateBox.append(card);}};
     draw(snapshot.energy_goals||[]);root.append(stateBox);
