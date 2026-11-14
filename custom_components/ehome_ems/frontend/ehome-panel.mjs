@@ -1,3 +1,24 @@
+export function isMeteringEntity(state) {
+  const a=state?.attributes||{};
+  return ["power","energy","current","voltage","apparent_power","reactive_power"].includes(a.device_class)||["W","kW","MW","Wh","kWh","MWh","A","mA","V","mV","VA","var"].includes(a.unit_of_measurement);
+}
+export function meteringOptions(options,states,devices={},showAll=false) {
+  if(showAll)return options;
+  const metered=new Set(Object.entries(states||{}).filter(([,s])=>isMeteringEntity(s)).map(([id])=>devices[id]).filter(Boolean));
+  return options.filter(([id])=>isMeteringEntity(states?.[id])||(devices[id]&&metered.has(devices[id])&&(["switch","select","fan","light","input_boolean"].includes(id.split(".")[0])||["battery","connectivity","running"].includes(states?.[id]?.attributes?.device_class))));
+}
+export function applianceAvailability(config,states,bindings={}) {
+  // A measured zero or an actuator reporting off is still available.
+  const ids=[...new Set([config.power,config.energy,config.status,config.control_entity].filter(Boolean).map(id=>bindings[id]?.source||id))];
+  if(!ids.length)return "unknown";
+  const values=ids.map(id=>states?.[id]?.state);
+  if(values.includes("unavailable"))return "unavailable";
+  if(values.some(v=>v==null||v==="unknown"||v===""))return "unknown";
+  return "available";
+}
+export function powerFill(watts,maximum) {
+  return typeof watts==="number"&&Number.isFinite(watts)&&watts>=0&&typeof maximum==="number"&&Number.isFinite(maximum)&&maximum>0?Math.min(100,watts/maximum*100):null;
+}
 export function pvSunshineEstimate(forecast,zone="UTC",date=new Date()){
   if(!Array.isArray(forecast))return null;
   const fmt=new Intl.DateTimeFormat("en-GB",{timeZone:zone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
@@ -8,7 +29,7 @@ export function pvSunshineEstimate(forecast,zone="UTC",date=new Date()){
     const p=parts(new Date(time)),hour=Number(p.hour);
     if(p.year!==today.year||p.month!==today.month||p.day!==today.day||hour<8||hour>=17)continue;
     const cloud=item.cloud_coverage;
-    let sun=cloud!=null&&Number.isFinite(Number(cloud))?Math.max(0,Math.min(1,1-Number(cloud)/100)):null;
+    let sun=typeof cloud==="number"&&Number.isFinite(cloud)&&cloud>=0&&cloud<=100?Math.max(0,Math.min(1,1-Number(cloud)/100)):null;
     if(sun===null){const weights={sunny:1,"clear-night":1,partlycloudy:.6,cloudy:.15,rainy:.05,pouring:0,snowy:.1,"snowy-rainy":.05,fog:.05,lightning:0,"lightning-rainy":0,windy:.65,"windy-variant":.45};sun=Object.hasOwn(weights,item.condition)?weights[item.condition]:null;}
     if(sun!==null)hours.set(hour,sun);
   }
@@ -57,7 +78,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.17";
+export const UI_VERSION = "0.2.18";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -260,6 +281,10 @@ export class EhomeEmsPanel extends BaseElement {
     this._renderedAdmin = !!this._hass?.user?.is_admin;
     const style = this._node("style");
     style.textContent = `
+      .pv-hourly{overflow-x:auto}.pv-hourly table{width:100%;border-collapse:collapse}.pv-hourly th,.pv-hourly td{text-align:left;padding:5px;border-bottom:1px solid var(--divider-color,#394352)}
+      .power-gauge{height:10px;width:100%;border-radius:6px;background:#394352;overflow:hidden;margin:8px 0}
+      .power-gauge>div{height:100%;background:#ffcc45;transition:width .3s}
+      .appliance-availability{font-size:13px;color:#9aa4af}.appliance-availability[data-state="available"]{color:#42dca4}.appliance-availability[data-state="unavailable"]{color:#ff6565}
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color,#f4f6f8);color:var(--primary-text-color,#18232e);font:15px/1.5 system-ui,sans-serif}
       .integration-meta{font-size:12px;margin:6px 0 0}.equipment-name{cursor:context-menu;text-decoration:underline dotted;text-underline-offset:4px;touch-action:pan-y}.equipment-name:focus-visible{outline:3px solid var(--primary-color,#007b83);outline-offset:3px}.battery-direction .flow-small{color:inherit}
       .pv-meta{font-size:15px;color:var(--secondary-text-color,#91a4b8)}.flow-day-energy{display:block;font-size:12px;line-height:1.45;margin-top:3px;overflow-wrap:anywhere;letter-spacing:0}.flow-house .flow-day-energy{font-size:13px;margin-left:20%;max-width:80%}
@@ -569,7 +594,11 @@ export class EhomeEmsPanel extends BaseElement {
   _pvWeatherCard(snapshot){
     const card=this._node("section",undefined,"card");card.append(this._node("h3",this._t("Prévisions solaires du jour","Today's solar outlook")));
     const condition=this._node("p",undefined,"note"),hours=this._node("div",undefined,"value"),index=this._node("p",undefined,"note"),hint=this._node("p",undefined,"note");card.append(condition,hours,index,hint);
+    const hourly=this._node("div",undefined,"pv-hourly");card.append(hourly);
     this._flowUpdates.push(()=>{
+      hourly.replaceChildren();const zone=snapshot.time_zone||"UTC",today=localDayStart(new Date(),zone),format=new Intl.DateTimeFormat(this._hass?.language||"fr",{timeZone:zone,hour:"2-digit",minute:"2-digit"});
+      const rows=(this._hourlyForecast||[]).filter(f=>Number.isFinite(Date.parse(f?.datetime))&&localDayStart(new Date(f.datetime),zone)===today).sort((a,b)=>Date.parse(a.datetime)-Date.parse(b.datetime));
+      if(rows.length){const table=this._node("table"),head=this._node("tr");for(const title of [this._t("Heure","Hour"),this._t("Conditions météo","Weather conditions"),this._t("Nuages (%)","Cloud cover (%)")])head.append(this._node("th",title));table.append(head);const seen=new Set();for(const row of rows){if(seen.has(row.datetime))continue;seen.add(row.datetime);const tr=this._node("tr");for(const text of [format.format(new Date(row.datetime)),row.condition||this._t("Inconnu","Unknown"),typeof row.cloud_coverage==="number"&&Number.isFinite(row.cloud_coverage)&&row.cloud_coverage>=0&&row.cloud_coverage<=100?displayNumber(row.cloud_coverage,this._hass?.language):"—"])tr.append(this._node("td",text));table.append(tr);}hourly.append(table);}
       const state=this._hass?.states?.[snapshot.weather_entity],estimate=pvSunshineEstimate(this._hourlyForecast,snapshot.time_zone||"UTC");
       condition.textContent=state&&!["unavailable","unknown"].includes(state.state)?this._t("Conditions : ","Conditions: ")+state.state:this._t("Météo non configurée ou indisponible","Weather not configured or unavailable");
       hours.textContent=estimate?displayNumber(estimate.hours,this._hass?.language)+this._t(" h de soleil estimées (8h–17h)"," estimated sunshine hours (08:00–17:00)"):this._t("Prévision indisponible","Forecast unavailable");
@@ -707,11 +736,25 @@ export class EhomeEmsPanel extends BaseElement {
     if(this._hass?.user?.is_admin)root.append(this._button(appliances?this._t("Ajouter un appareil","Add appliance"):this._t("Ajouter un usage","Add load"),()=>this._settingsDialog(appliances?"appliances":"usages")));
     const grid=this._node("div",undefined,"cards");
     const usages=(snapshot.flow?.usages||[]).filter(u => (u.kind === "appliance") === appliances);
+    if(appliances){
+      const summary=this._node("p",undefined,"appliance-summary");summary.setAttribute("role","status");root.append(summary);
+      this._flowUpdates.push(()=>{const counts={available:0,unavailable:0,unknown:0};for(const u of usages)counts[applianceAvailability(u,this._hass?.states,snapshot.bindings)]++;
+        summary.textContent=`${usages.length} `+this._t("appareils suivis","tracked devices")+` · ${counts.available} `+this._t("disponibles","available")+` · ${counts.unavailable} `+this._t("indisponibles","unavailable")+` · ${counts.unknown} `+this._t("inconnus","unknown");});
+    }
     for(const u of usages) {
       if(["solar_router","water_heater"].includes(u.kind)) { const card=u.kind==="solar_router"&&u.router_type==="f1atb"?this._routerCard(u):this._vessel(u,true);this._equipmentActions(card,u,appliances?"appliances":"usages");grid.append(card);continue; }
       if(u.kind === "ev_charger") {const card=this._charger(u);this._equipmentActions(card,u,"usages");grid.append(card);continue;}
       const tile=this._metricTile(u.name,u.power,productIcon(u),this._tone(u.power));
       tile.classList.add("appliance-card");
+      const availability=this._node("span",undefined,"appliance-availability"),gauge=this._node("div",undefined,"power-gauge"),fill=this._node("div"),caption=this._node("span",undefined,"note");
+      gauge.append(fill);gauge.setAttribute("role","progressbar");gauge.setAttribute("aria-valuemin","0");gauge.setAttribute("aria-valuemax","100");gauge.setAttribute("aria-label",this._t("Puissance de ","Power of ")+u.name);
+      this._flowUpdates.push(()=>{const status=applianceAvailability(u,this._hass?.states,snapshot.bindings),labels={available:this._t("Disponible","Available"),unavailable:this._t("Indisponible","Unavailable"),unknown:this._t("État inconnu","Unknown state")};
+        availability.dataset.state=status;availability.textContent="● "+labels[status];
+        const level=powerFill(flowPower(this._hass?.states,u.power),u.nominal_power_w);fill.style.width=(level??0)+"%";
+        if(level===null)gauge.removeAttribute("aria-valuenow");else gauge.setAttribute("aria-valuenow",String(Math.round(level)));
+        caption.textContent=level===null?this._t("Jauge : puissance ou maximum non renseigné","Gauge: power or maximum not configured"):displayNumber(level,this._hass?.language)+" % · "+displayNumber(u.nominal_power_w,this._hass?.language)+" W max";
+        gauge.setAttribute("aria-valuetext",caption.textContent);});
+      tile.append(availability,gauge,caption);
       tile.append(this._usageEnergy(u),this._usageCost(u));
       tile.append(this._manualControl(u,appliances?"appliances":"usages"));
       this._equipmentActions(tile,u,appliances?"appliances":"usages");grid.append(tile);
@@ -775,7 +818,10 @@ export class EhomeEmsPanel extends BaseElement {
       } else autonomy.textContent=config.daily_energy_goal_kwh?this._t("Objectif quotidien : ","Daily goal: ")+displayNumber(config.daily_energy_goal_kwh,this._hass?.language)+this._t(" kWh · énergie consommée, pas chaleur restante. Température : "," kWh · consumed energy, not remaining heat. Temperature: ")+reading(this._hass?.states,config.temperature,undefined,this._hass?.language).text:this._t("Échelle température : 0–100 °C, pas un stock thermique.","Temperature scale: 0–100 °C, not thermal energy storage.");
     });
     details.append(main,direction,mode,thermal?this._usageEnergy(config):energy,thermal?this._usageCost(config):caption);
-    if(!thermal)details.append(autonomy);
+    if(!thermal){details.append(autonomy);const reserve=this._node("p",undefined,"note battery-reserve");details.append(reserve);
+      this._flowUpdates.push(()=>{const floor=Math.max(config.backup_reserve_percent??30,config.minimum_soc_percent??10),soc=reading(this._hass?.states,config.soc).number,capacity=config.capacity_kwh;
+        const usable=soc!==null&&Number.isFinite(capacity)&&capacity>0?Math.max(0,soc-floor)*capacity/100:null;
+        reserve.textContent=this._t("Réserve protégée : ","Protected reserve: ")+displayNumber(floor,this._hass?.language)+" % · "+(usable===null?this._t("Budget indisponible","Budget unavailable"):displayNumber(usable,this._hass?.language)+this._t(" kWh au-dessus de la réserve (estimés)"," kWh above reserve (estimated)"))+this._t(" · sans basculement électrique automatique"," · no automatic electrical transfer");});}
     if(thermal)details.append(autonomy);else details.append(this._node("p",`${config.role === "active"?this._t("Active","Active"):this._t("Secours","Backup")} · ${config.coupling?.toUpperCase()}`,"note"));
     if(thermal&&(config.router_type!=="f1atb"||config.control_enabled))details.append(this._manualControl(config));
     layout.append(visual,details);card.append(layout);return card;
@@ -1200,7 +1246,7 @@ export class EhomeEmsPanel extends BaseElement {
         for(const [id,state] of Object.entries(this._hass?.states||{}))if((key==="status"?["sensor","binary_sensor","switch","select"].includes(id.split(".")[0]):id.startsWith("sensor.")||(section==="usages"&&key==="temperature"&&id.startsWith("input_number."))) && (!units.length||units.includes(state.attributes?.unit_of_measurement)) && !this._snapshotData?.bindings?.[id]){
           const option=this._node("option");option.value=id;option.label=state.attributes?.friendly_name||id;list.append(option);
         }label.append(list);}
-      label.append(input);if(units)this._entityPicker(label,input,[...label.querySelectorAll("datalist option")].map(o=>[o.value,o.label]));form.append(label);controls[key]=input;return input;
+      label.append(input);if(units)this._entityPicker(label,input,[...label.querySelectorAll("datalist option")].map(o=>[o.value,o.label]),null,!units.includes("°C")&&!units.includes("%"));form.append(label);controls[key]=input;return input;
     };
     const source=(key,fr,en,units=["W","kW"])=>add(key,fr,en,"text",null,units);
     if(remove)dialog.append(this._node("p",this._t("Retirer uniquement l’association EMS de ","Remove only the EMS mapping of ")+(current.name||"")+this._t(" ? Aucun appareil ni capteur source ne sera supprimé.","? No device or source sensor will be deleted.")));
@@ -1214,6 +1260,9 @@ export class EhomeEmsPanel extends BaseElement {
       }else if(section==="batteries"){
         add("role","Rôle","Role","select",[["backup",this._t("Secours","Backup")],["active",this._t("Active","Active")]],null,current.role||"backup");
         add("coupling","Couplage","Coupling","select",[["ac","AC"],["dc","DC"]],null,current.coupling||"ac");add("capacity_kwh","Capacité utile (kWh, facultatif)","Usable capacity (kWh, optional)","number");
+        const reserve=add("backup_reserve_percent","Réserve de secours (%)","Backup reserve (%)","number",null,null,current.backup_reserve_percent??30);reserve.max=100;
+        const minimum=add("minimum_soc_percent","Seuil minimal natif (%)","Native minimum SOC (%)","number",null,null,current.minimum_soc_percent??10);minimum.max=100;
+        form.append(this._node("p",this._t("Le budget d’optimisation exclut la réserve et le seuil minimal (le plus élevé des deux). Aucun réglage Zendure/BMS ni basculement électrique automatique n’est envoyé. Conservez les protections natives.","The optimization budget excludes reserve and minimum SOC (the higher of both). No Zendure/BMS setting or automatic electrical transfer is sent. Keep native protections."),"note"));
         add("remaining_energy_is_stock","Je confirme que le capteur d’énergie représente le stock restant, même si sa classe HA indique un cumul","I confirm the energy sensor is remaining stock even if HA class says total","checkbox");
         source("charge_power","Puissance de charge","Charge power");source("discharge_power","Puissance de décharge","Discharge power");source("soc","État de charge (%)","State of charge (%)",["%"]);source("remaining_energy","Énergie restante mesurée","Measured remaining energy",["Wh","kWh"]);
       }else{
@@ -1233,6 +1282,7 @@ export class EhomeEmsPanel extends BaseElement {
           form.append(this._node("p",this._t("HTTP : connexion directe, sans autre intégration F1ATB. Saisissez l’adresse puis lisez les actions. MQTT : utilise le broker HA existant. Enregistrer cette fiche n’envoie aucune commande au routeur.","HTTP connects directly without another F1ATB integration. Enter the address then read actions. MQTT uses the existing HA broker. Saving this card sends no router command."),"note"));
         }
         add("icon","Icône du produit","Product icon","select",PRODUCT_ICONS.map(icon=>[icon,icon==="auto"?this._t("Automatique selon le nom","Automatic by name"):icon]),null,current.icon||"auto");
+        const rated=add("nominal_power_w","Puissance nominale ou maximale (W)","Nominal or maximum power (W)","number");rated.min=1;rated.max=1000000;
         source("power","Puissance (W/kW)","Power (W/kW)");source("energy","Énergie (Wh/kWh)","Energy (Wh/kWh)",["Wh","kWh"]);
         add("energy_period","Période du compteur d’énergie","Energy counter period","select",[["today",this._t("Aujourd’hui (remis à zéro chaque jour)","Today (resets daily)")],["session",this._t("Session","Session")],["total",this._t("Compteur cumulé","Lifetime counter")]],null,current.energy_period||"total");
         if(section==="usages" && current.kind==="ev_charger"){
@@ -1569,19 +1619,23 @@ export class EhomeEmsPanel extends BaseElement {
     }
     return root;
   }
-  _entityPicker(parent,input,options,contextName=null) {
+  _entityPicker(parent,input,options,contextName=null,meteringOnly=true) {
     if(!input.hasAttribute("aria-label"))input.setAttribute("aria-label",parent.firstChild?.textContent||this._t("Entité","Entity"));
-    const picker=this._node("div",undefined,"entity-picker"),list=this._node("div",undefined,"entity-options");list.hidden=true;
+    let showAll=false;const picker=this._node("div",undefined,"entity-picker"),list=this._node("div",undefined,"entity-options");list.hidden=true;
     const button=this._button(this._t("Choisir une entité","Choose an entity"),()=>{list.hidden=!list.hidden;if(!list.hidden){draw("");input.focus();}button.setAttribute("aria-expanded",String(!list.hidden));});
     button.setAttribute("aria-label",this._t("Choisir une entité · ","Choose an entity · ")+input.getAttribute("aria-label"));button.setAttribute("aria-expanded","false");
-    const draw=query=>{list.replaceChildren();const needle=query.toLocaleLowerCase(),matches=rankEntityOptions(options.filter(([id,name])=>(id+" "+name).toLocaleLowerCase().includes(needle)),contextName?.()||parent.closest("form")?.querySelector("[name=name]")?.value||"");
+    const draw=query=>{list.replaceChildren();const needle=query.toLocaleLowerCase(),matches=rankEntityOptions((meteringOnly?meteringOptions(options,this._hass?.states,this._snapshotData?.entity_devices,showAll):options).filter(([id,name])=>(id+" "+name).toLocaleLowerCase().includes(needle)),contextName?.()||parent.closest("form")?.querySelector("[name=name]")?.value||"");
+      const devices=this._snapshotData?.entity_devices||{},groups=new Map();for(const [i,[id]] of matches.entries()){const group=devices[id]||id;if(!groups.has(group))groups.set(group,i);}
+      matches.sort((a,b)=>groups.get(devices[a[0]]||a[0])-groups.get(devices[b[0]]||b[0]));
       for(const [id,name] of matches.slice(0,100)){const choice=this._button(name===id?id:name+" · "+id,()=>{input.value=id;list.hidden=true;button.setAttribute("aria-expanded","false");input.dispatchEvent(new Event("change",{bubbles:true}));input.focus();});choice.title=id;list.append(choice);}
       if(!matches.length)list.append(this._node("p",this._t("Aucune entité compatible","No compatible entity"),"note"));
       if(matches.length>100)list.append(this._node("p",this._t("Saisissez quelques lettres pour affiner les résultats.","Type a few letters to narrow the results."),"note"));
     };
     input.addEventListener("input",()=>{list.hidden=false;button.setAttribute("aria-expanded","true");draw(input.value);});
     input.addEventListener("keydown",e=>{if(e.key==="Escape"&&!list.hidden){e.preventDefault();e.stopPropagation();list.hidden=true;button.setAttribute("aria-expanded","false");}});
-    picker.append(button,list);parent.append(picker);
+    const allLabel=this._node("label",this._t("Afficher toutes les entités","Show all entities")),all=this._node("input");all.type="checkbox";all.setAttribute("aria-label",this._t("Afficher toutes les entités","Show all entities"));allLabel.prepend(all);
+    all.addEventListener("change",()=>{showAll=all.checked;list.hidden=false;button.setAttribute("aria-expanded","true");draw(input.value);});
+    picker.append(button,allLabel,list);parent.append(picker);
   }
   _historyLink(element,entities) {
     const ids=[...new Set((Array.isArray(entities)?entities:[entities]).filter(Boolean))];if(!ids.length)return;

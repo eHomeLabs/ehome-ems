@@ -40,13 +40,15 @@ def update_settings(hass, entry, section, action, values, identifier, revision):
                     clean = photovoltaic_schema(items.get(identifier, {}))(values)
                     sources = tuple(PV_FIELDS)
                 elif collection == "batteries":
+                    if any(isinstance(values.get(field), bool) for field in ("backup_reserve_percent", "minimum_soc_percent")):
+                        raise SettingsError("invalid_settings")
                     clean = battery_schema(items.get(identifier, {}))(values)
                     if clean.get("capacity_kwh") is not None:
                         clean["capacity_kwh"] = positive_capacity(clean["capacity_kwh"])
                     sources = ("charge_power", "discharge_power", "soc", "remaining_energy")
                 else:
                     values = dict(values)
-                    for field in ("negative_power_tolerance_w", "daily_energy_goal_kwh"):
+                    for field in ("negative_power_tolerance_w", "daily_energy_goal_kwh", "nominal_power_w"):
                         if field in values and isinstance(values[field], bool):
                             raise SettingsError("invalid_settings")
                     if section == "appliances":

@@ -89,7 +89,9 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)",
-          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total",
+          "backup_reserve_percent": "Backup energy reserve (%)",
+          "minimum_soc_percent": "Native minimum SOC (%)"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -115,7 +117,9 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)",
-          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total",
+          "backup_reserve_percent": "Backup energy reserve (%)",
+          "minimum_soc_percent": "Native minimum SOC (%)"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -179,7 +183,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -218,7 +223,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -279,7 +285,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -316,7 +323,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -475,7 +483,9 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)",
-          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total",
+          "backup_reserve_percent": "Backup energy reserve (%)",
+          "minimum_soc_percent": "Native minimum SOC (%)"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -501,7 +511,9 @@
           "discharge_power": "Positive discharge power (W/kW)",
           "soc": "State of charge (%)",
           "remaining_energy": "Measured remaining energy (Wh/kWh)",
-          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total"
+          "remaining_energy_is_stock": "I confirm this sensor represents remaining stock even if HA class says total",
+          "backup_reserve_percent": "Backup energy reserve (%)",
+          "minimum_soc_percent": "Native minimum SOC (%)"
         },
         "data_description": {
           "name": "Display name, for example Main battery or Backup battery.",
@@ -565,7 +577,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -604,7 +617,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -665,7 +679,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",
@@ -702,7 +717,8 @@
           "router_protocol_confirmed": "I confirm protocol compatibility and enabled MQTT subscription",
           "router_connection": "F1ATB connection (direct HTTP / MQTT)",
           "router_action": "F1ATB action index",
-          "router_http_enabled": "Enable manual HTTP commands"
+          "router_http_enabled": "Enable manual HTTP commands",
+          "nominal_power_w": "Nominal or maximum power (W)"
         },
         "data_description": {
           "name": "For example Water heater via F1ATB or EV charging.",

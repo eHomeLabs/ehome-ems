@@ -38,6 +38,15 @@ def positive_capacity(value):
     return value
 
 
+def bounded_percent(value):
+    if isinstance(value, bool):
+        raise vol.Invalid("invalid_reserve")
+    value = vol.Coerce(float)(value)
+    if not isfinite(value) or not 0 <= value <= 100:
+        raise vol.Invalid("invalid_reserve")
+    return value
+
+
 def battery_schema(existing):
     """Separate charge/discharge sources; no vendor-specific sign guesses."""
     schema = {
@@ -53,6 +62,8 @@ def battery_schema(existing):
                          vol.Coerce(float), vol.Range(min=0.001)
                      ),
     }
+    schema[vol.Optional("backup_reserve_percent", default=existing.get("backup_reserve_percent", 30))] = vol.All(vol.Coerce(float), vol.Range(min=0, max=100))
+    schema[vol.Optional("minimum_soc_percent", default=existing.get("minimum_soc_percent", 10))] = vol.All(vol.Coerce(float), vol.Range(min=0, max=100))
     schema[vol.Optional("remaining_energy_is_stock", default=existing.get("remaining_energy_is_stock", False))] = bool
     for key in BATTERY_SOURCES:
         device_class = "battery" if key == "soc" else "energy" if key == "remaining_energy" else "power"
@@ -94,6 +105,7 @@ def usage_schema(existing):
         vol.Optional("router_mqtt_enabled", default=existing.get("router_mqtt_enabled",False)): bool,
         vol.Optional("router_protocol_confirmed", default=existing.get("router_protocol_confirmed",False)): bool,
         vol.Optional("negative_power_tolerance_w", default=existing.get("negative_power_tolerance_w", 5)): vol.All(vol.Coerce(float), vol.Range(min=0, max=20)),
+        vol.Optional("nominal_power_w", description={"suggested_value": existing["nominal_power_w"]} if existing.get("nominal_power_w") else None): vol.All(vol.Coerce(float), vol.Range(min=1, max=1000000)),
         vol.Optional("daily_energy_goal_kwh", description={"suggested_value": existing["daily_energy_goal_kwh"]} if existing.get("daily_energy_goal_kwh") else None): vol.All(vol.Coerce(float), vol.Range(min=0.001, max=1000)),
         vol.Optional("control_enabled", default=existing.get("control_enabled", False)): bool,
         vol.Optional("control_entity", description={"suggested_value": existing["control_entity"]} if existing.get("control_entity") else None): selector.EntitySelector(selector.EntitySelectorConfig(domain=["switch", "input_boolean", "light", "fan"])),
@@ -185,8 +197,14 @@ class PowerWizard:
                 )
                 if reading.quality in ("cumulative_energy", "exceeds_capacity"):
                     errors[key] = reading.quality
+        for identifier, battery in candidate.get(CONF_BATTERIES, {}).items():
+            for field, default in (("backup_reserve_percent", 30), ("minimum_soc_percent", 10)):
+                try:
+                    bounded_percent(battery.get(field, default))
+                except vol.Invalid:
+                    errors[f"batteries.{identifier}.{field}"] = "invalid_value"
         for identifier, usage in candidate.get(CONF_USAGES, {}).items():
-            for field, minimum, maximum in (("negative_power_tolerance_w", 0, 20), ("daily_energy_goal_kwh", 0.001, 1000)):
+            for field, minimum, maximum in (("negative_power_tolerance_w", 0, 20), ("daily_energy_goal_kwh", 0.001, 1000), ("nominal_power_w", 1, 1000000)):
                 value = usage.get(field)
                 if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value) or not minimum <= value <= maximum):
                     errors[f"usages.{identifier}.{field}"] = "invalid_value"
@@ -298,6 +316,8 @@ class PowerWizard:
         if user_input is not None:
             # Validate scalar fields even when called outside the UI.
             try:
+                for field, default in (("backup_reserve_percent", 30), ("minimum_soc_percent", 10)):
+                    bounded_percent(user_input.get(field, existing.get(field, default)))
                 battery = battery_schema(existing)(user_input)
                 if "capacity_kwh" in battery:
                     battery["capacity_kwh"] = positive_capacity(battery["capacity_kwh"])

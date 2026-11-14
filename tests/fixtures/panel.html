@@ -2,7 +2,7 @@
 <html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>eHome EMS — fixture simulée</title><style>html{background:#101820}html,body{margin:0;min-height:100%;--primary-background-color:#101820;--primary-text-color:#eef4fa;--card-background-color:#15222d;--divider-color:#3b536b;--primary-color:#70a246;--text-primary-color:#fff}</style>
 <script>customElements.define("ehome-ems-panel",class extends HTMLElement{});</script>
-<ehome-ems-panel-0-2-17></ehome-ems-panel-0-2-17>
+<ehome-ems-panel-0-2-18></ehome-ems-panel-0-2-18>
 <script type="module">
 import "../../custom_components/ehome_ems/frontend/ehome-panel.mjs";
 const icons=await (await fetch("./mdi.json")).json();
@@ -42,7 +42,7 @@ Object.assign(settings,{solar_power:"sensor.pv_source",grid_import:"sensor.impor
 for(const b of flow.batteries)settings.batteries[b.id]={...b};
 flow.photovoltaic=[{id:"pv-demo",name:"Micro-onduleur Démo",kind:"micro_inverter",manufacturer:"Démonstration",model:"800",nominal_power_w:800,power:"sensor.pv_device",energy:"sensor.pv_device_energy",energy_period:"total"}];
 settings.photovoltaic={"pv-demo":{...flow.photovoltaic[0]}};
-for(const u of flow.usages){if(u.id==="b")u.daily_energy_goal_kwh=3;if(u.id==="d"){u.control_entity="switch.fridge";u.control_enabled=true;}settings.usages[u.id]={...u,included_in_home:true};}
+for(const u of flow.usages){if(u.id==="b")u.daily_energy_goal_kwh=3;if(u.id==="d"){u.nominal_power_w=170;u.control_entity="switch.fridge";u.control_enabled=true;}settings.usages[u.id]={...u,included_in_home:true};}
 window.fixtureHass={
  callApi:async(method,path)=>{
   const url=new URL(path,"http://fixture/"),ids=url.searchParams.get("filter_entity_id").split(","),start=Date.parse(url.pathname.split("/period/")[1]);
@@ -63,7 +63,7 @@ window.fixtureHass={
  callWS:async message=>{
   window.calls.push(message);
   if(message.type==="ehome_ems/dashboard")return {
-    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:structuredClone(flow),version:"0.2.17",settings:structuredClone(settings),time_zone:"Europe/Paris",weather_entity:"weather.home",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home",import:"sensor.daily_import",export:"sensor.daily_export"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history),energy_goals:structuredClone(energyGoalResults)};
+    dashboard:structuredClone(dashboard),missing_entities:[],bindings:structuredClone(bindings),revision,flow:window.omitFlow?undefined:structuredClone(flow),version:"0.2.18",settings:structuredClone(settings),time_zone:"Europe/Paris",weather_entity:"weather.home",daily:{solar:"sensor.daily_pv",home:"sensor.daily_home",import:"sensor.daily_import",export:"sensor.daily_export"},tariff_eur_kwh:.215,simulation:structuredClone(simulation),simulation_history:structuredClone(simulation_history),energy_goals:structuredClone(energyGoalResults)};
   if(message.type==="ehome_ems/alerts")return {rules:structuredClone(settings.alerts||[]),notify_services:["persistent_notification.create","notify.mobile_demo"],journal:[]};
   if(message.type==="ehome_ems/save_alerts"){if(!fixtureHass.user.is_admin)throw {code:"unauthorized"};settings.alerts=structuredClone(message.rules);revision="alerts-"+calls.length;return {saved:true};}
   if(message.type==="ehome_ems/energy_goals")return structuredClone(energyGoalResults);
@@ -145,7 +145,7 @@ fixtureHass.states["sensor.ac"]={state:"unavailable",attributes:{unit_of_measure
 fixtureHass.states["weather.home"]={state:"cloudy",attributes:{friendly_name:"Maison météo",temperature:16,temperature_unit:"°C",precipitation_unit:"mm",supported_features:1}};
 fixtureHass.states["switch.fridge"]={state:"on",attributes:{friendly_name:"Commande frigo simulée"}};
 for(const [id,value,unit] of [["pv_device",500,"W"],["pv_device_energy",1002.1,"kWh"],["pv_dc",550,"W"],["router_power",200,"W"]])fixtureHass.states["sensor."+id]={state:String(value),attributes:{unit_of_measurement:unit}};
-window.fixturePanel=document.querySelector("ehome-ems-panel-0-2-17");
+window.fixturePanel=document.querySelector("ehome-ems-panel-0-2-18");
 fixturePanel.hass=fixtureHass;fixturePanel.panel={config:{entry_id:"simulated",revision:"one"}};
 for(const [id,state,unit] of [["native_connection","online",""],["native_status","auto",""],["native_opening","50","%"],["native_force","0","min"],["native_power","800","W"]])fixtureHass.states["sensor."+id]={state,attributes:{unit_of_measurement:unit}};
 </script></html>

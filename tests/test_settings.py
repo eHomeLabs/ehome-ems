@@ -141,3 +141,23 @@ class SettingsTests(TestCase):
         self.assertEqual(self.entry.options['weather_entity'],'weather.home')
         self.assertEqual(self.entry.options['home_power'],'sensor.home')
         with self.assertRaises(settings.SettingsError):self.save('daily',{'weather_entity':'sensor.home'})
+
+    def test_reserves_and_power_gauge_settings_preserve_associations(self):
+        result = self.save('appliances', {'name': 'Fridge', 'power': 'sensor.fridge', 'included_in_home': True, 'nominal_power_w': 170})
+        identifier = result['identifier']
+        self.assertEqual(self.entry.options['usages'][identifier]['nominal_power_w'], 170)
+        self.save('appliances', {'name': 'Fridge renamed', 'power': 'sensor.fridge', 'included_in_home': True, 'nominal_power_w': 200}, identifier)
+        self.assertEqual(self.entry.options['usages'][identifier]['power'], 'sensor.fridge')
+        self.assertEqual(self.entry.options['home_power'], 'sensor.home')
+        for invalid in (True, 0, -1, float('nan'), float('inf')):
+            with self.assertRaises(settings.SettingsError):
+                self.save('appliances', {'name': 'Bad', 'power': 'sensor.other', 'included_in_home': True, 'nominal_power_w': invalid})
+        self.states['sensor.soc'] = state('50', '%')
+        battery = {'name': 'Backup', 'soc': 'sensor.soc', 'role': 'backup', 'coupling': 'ac'}
+        result = self.save('batteries', battery)
+        saved = self.entry.options['batteries'][result['identifier']]
+        self.assertEqual(saved['backup_reserve_percent'], 30)
+        self.assertEqual(saved['minimum_soc_percent'], 10)
+        for invalid in (True, -1, 101, float('nan'), float('inf')):
+            with self.assertRaises(settings.SettingsError):
+                self.save('batteries', {**battery, 'backup_reserve_percent': invalid}, result['identifier'])

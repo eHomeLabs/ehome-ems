@@ -89,7 +89,9 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
-          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul",
+          "backup_reserve_percent": "Réserve énergétique de secours (%)",
+          "minimum_soc_percent": "Seuil minimal natif (%)"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -115,7 +117,9 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
-          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul",
+          "backup_reserve_percent": "Réserve énergétique de secours (%)",
+          "minimum_soc_percent": "Seuil minimal natif (%)"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -179,7 +183,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -218,7 +223,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -279,7 +285,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -316,7 +323,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -475,7 +483,9 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
-          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul",
+          "backup_reserve_percent": "Réserve énergétique de secours (%)",
+          "minimum_soc_percent": "Seuil minimal natif (%)"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -501,7 +511,9 @@
           "discharge_power": "Puissance de décharge positive (W/kW)",
           "soc": "État de charge (%)",
           "remaining_energy": "Énergie restante mesurée (Wh/kWh)",
-          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul"
+          "remaining_energy_is_stock": "Je confirme que le capteur représente le stock restant, même si sa classe HA indique un cumul",
+          "backup_reserve_percent": "Réserve énergétique de secours (%)",
+          "minimum_soc_percent": "Seuil minimal natif (%)"
         },
         "data_description": {
           "name": "Nom affiché dans le suivi, par exemple Batterie principale ou Batterie de secours.",
@@ -565,7 +577,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -604,7 +617,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -665,7 +679,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
@@ -702,7 +717,8 @@
           "router_protocol_confirmed": "Je confirme le protocole compatible et la souscription MQTT activée",
           "router_connection": "Connexion F1ATB (HTTP direct / MQTT)",
           "router_action": "Index de l’action F1ATB",
-          "router_http_enabled": "Activer les commandes HTTP manuelles"
+          "router_http_enabled": "Activer les commandes HTTP manuelles",
+          "nominal_power_w": "Puissance nominale ou maximale (W)"
         },
         "data_description": {
           "name": "Par exemple Cumulus via F1ATB ou Recharge véhicule.",
