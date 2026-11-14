@@ -6,9 +6,9 @@
 
 Une intégration Home Assistant pour comprendre la production solaire, la consommation réelle de la maison, les échanges réseau, le stockage et les appareils. Elle utilise les entités déjà présentes dans HA et fournit son panneau sans YAML à recopier.
 
-**[Version 0.2.11](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.11)** — charge verte et décharge bleue, entités pertinentes en premier, onglet conservé, actions sur appui prolongé du nom et versions en en-tête. [Guide](docs/ALERTES_HISTORIQUES.md).
+**[Version 0.2.18](https://github.com/eHomeLabs/ehome-ems/releases/tag/v0.2.18)** — ECS/F1ATB consolidé, réserve énergétique batterie, jauges et disponibilité des appareils, filtrage metering et météo solaire horaire. [Fonctions, limites et mise à jour](docs/RELEASE_0_2_18.md).
 
-[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Notes 0.2.11](docs/RELEASE_0_2_11.md) · [Feuille de route](docs/ROADMAP.md)
+[Installer](docs/INSTALLATION.md) · [Wiki illustré](docs/wiki/Home.md) · [Conso Maison](docs/CONSOMMATION_MAISON.md) · [Changelog](CHANGELOG.md) · [Feuille de route](docs/ROADMAP.md)
 
 ## Découvrir le dashboard
 

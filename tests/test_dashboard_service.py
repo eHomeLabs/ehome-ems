@@ -39,6 +39,7 @@ class DashboardServiceTests(IsolatedAsyncioTestCase):
         self.registered = SimpleNamespace(disabled_by=None, config_entry_id="entry")
         self.hass = SimpleNamespace(
             services=Services(),
+            states=SimpleNamespace(get=lambda entity_id: None),
             config_entries=SimpleNamespace(async_entries=lambda domain: self.entries),
             config=SimpleNamespace(language="en"),
             registry=SimpleNamespace(

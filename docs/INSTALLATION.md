@@ -1,3 +1,5 @@
+Version actuelle : **0.2.18** — [notes et procédure de mise à jour](RELEASE_0_2_18.md).
+
 # Installer et mettre à jour eHome EMS 0.2.11
 
 L'intégration utilise votre Home Assistant et les entités de vos équipements déjà intégrés. Aucun serveur supplémentaire n'est nécessaire. Le dépôt est public ; son ajout comme dépôt personnalisé HACS / Marketplace ne constitue pas une validation officielle au catalogue.

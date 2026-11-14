@@ -1,0 +1,10 @@
+import {pvSunshineEstimate} from "../custom_components/ehome_ems/frontend/ehome-panel.mjs";
+import assert from "node:assert/strict";
+const date=new Date("2026-11-13T12:00:00Z");
+const hourly=Array.from({length:9},(_,i)=>({datetime:`2026-11-13T${String(i+8).padStart(2,"0")}:00:00Z`,cloud_coverage:0}));
+assert.deepEqual(pvSunshineEstimate(hourly,"UTC",date),{hours:9,index:100,coverage:9});
+assert.deepEqual(pvSunshineEstimate(hourly.map(h=>({...h,cloud_coverage:100})),"UTC",date),{hours:0,index:0,coverage:9});
+assert.equal(pvSunshineEstimate(hourly.slice(0,6),"UTC",date),null);
+assert.equal(pvSunshineEstimate(hourly,"UTC",new Date("2026-11-14T12:00:00Z")),null);
+assert.equal(pvSunshineEstimate([], "UTC",date),null);
+console.log("PV sunshine forecast tests passed");

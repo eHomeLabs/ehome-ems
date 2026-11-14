@@ -13,6 +13,7 @@ from .dashboard import build_dashboard
 from .source_editor import binding_metadata
 from .home_balance import grid_sources
 from .simulation import plan
+from .battery_reserve import reserve_budget
 
 SERVICE_GENERATE = "generate_dashboard"
 
@@ -80,11 +81,15 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
         "home_calculated": mapping.get("home_power_mode") == "calculated",
         "batteries": [{"id": identifier, "name": battery["name"], "role": battery["role"],
                        "coupling": battery["coupling"],
+                       "backup_reserve_percent": battery.get("backup_reserve_percent", 30),
+                       "minimum_soc_percent": battery.get("minimum_soc_percent", 10),
+                       "capacity_kwh": battery.get("capacity_kwh"),
                        **{key: entities.get(f"{identifier}_{key}") for key in BATTERY_SOURCES}}
                       for identifier, battery in mapping.get(CONF_BATTERIES, {}).items()],
         "usages": [{"id": identifier, "name": usage["name"], "kind": usage.get("kind", "other"),
                     "icon": usage.get("icon", "auto"),
                     **{key:usage.get(key) for key in ("router_connection","router_action","router_http_enabled","router_type","router_output","router_url","router_mqtt_topic","router_mqtt_enabled","router_protocol_confirmed")},
+                    "nominal_power_w": usage.get("nominal_power_w"),
                     "daily_energy_goal_kwh": usage.get("daily_energy_goal_kwh"),
                     "control_enabled": usage.get("control_enabled", False),
                     "control_entity": usage.get("control_entity"),
@@ -110,6 +115,12 @@ def dashboard_snapshot(hass, entry_id=None, language=None, max_power_w=10000):
             usage["router_entities"] = {key: registry.async_get_entity_id("sensor", DOMAIN,
                 f"{entry.entry_id}_router_{usage['id']}_{key}") for key in
                 ("probe_power", "probe_energy_total_kwh", "grid_import_power", "grid_export_power", "opening", "force_minutes", "status", "connection", *(f"temperature_{i}" for i in range(4)))}
+    # Public registry metadata only; no vendor-specific discovery or credentials.
+    result["entity_devices"] = {entity_id: item.device_id for entity_id, item in
+                                getattr(registry, "entities", {}).items() if getattr(item, "device_id", None)}
+    for battery in result["flow"]["batteries"]:
+        state = hass.states.get(battery.get("soc")) if battery.get("soc") else None
+        battery["reserve_budget"] = reserve_budget(battery, state.state if state else None)
     result["settings"] = deepcopy(dict(mapping))
     result["weather_entity"] = mapping.get("weather_entity")
     result["time_zone"] = getattr(hass.config, "time_zone", "UTC")

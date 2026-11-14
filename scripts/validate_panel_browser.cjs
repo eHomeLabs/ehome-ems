@@ -112,7 +112,7 @@ async function equipmentMenu(page,name) {
 
       assert.equal(await page.locator(".flow-links path.active").count(), 3);
       assert.equal(await page.locator(".flow-grid").evaluate(el=>getComputedStyle(el).color),"rgb(88, 174, 255)");
-      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-17").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => document.querySelector("ehome-ems-panel-0-2-18").shadowRoot.querySelector(".flow").scrollWidth <= innerWidth), true);
       assert.ok(await page.getByText("1500 W", { exact: true }).count());
       assert.equal(await page.evaluate(() =>
         fixturePanel.shadowRoot.querySelector("main").scrollWidth <= innerWidth), true);
@@ -218,7 +218,7 @@ async function equipmentMenu(page,name) {
       await page.locator(".scenario-result").first().screenshot({path:path.join(output,viewport.width<600?"simulation-result-mobile.png":"simulation-result-desktop.png")});
       assert.equal(await page.evaluate(()=>calls.some(call=>call.type==="call_service")),false);
       await page.getByRole("button", { name: "Configuration", exact: true }).click();
-      assert.ok((await page.locator("header .integration-meta").textContent()).includes("Interface 0.2.17 · Intégration 0.2.17"));
+      assert.ok((await page.locator("header .integration-meta").textContent()).includes("Interface 0.2.18 · Intégration 0.2.18"));
       await page.evaluate(()=>{fixtureHass.states["sensor.pv"]={state:"2000",attributes:{unit_of_measurement:"W",data_quality:"valid",friendly_name:"Production solaire"}};fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator('.source-item p[title="valid"]').evaluate(el=>getComputedStyle(el).color),"rgb(81, 213, 147)");
       await page.getByRole("button",{name:"Conso Maison",exact:true}).click();
@@ -242,13 +242,20 @@ async function equipmentMenu(page,name) {
       await page.getByText("Frigo",{exact:true}).waitFor();
       await page.getByText("0,81 kWh",{exact:true}).waitFor();
       assert.equal(await page.getByText(/Énergie Totale :/).count(),0);
+      assert.match(await page.locator('.appliance-summary').textContent(),/3 appareils suivis · 2 disponibles · 1 indisponibles · 0 inconnus/);
+      const fridgeCard=page.locator('.appliance-card').filter({has:page.getByText('Frigo',{exact:true})});
+      assert.equal(await fridgeCard.locator('.power-gauge').getAttribute('aria-valuenow'),'50');
+      assert.equal(await fridgeCard.locator('.power-gauge>div').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 204, 69)');
+      assert.equal(await fridgeCard.locator('.appliance-availability').getAttribute('data-state'),'available');
       const toggle=page.getByRole("button",{name:"Éteindre Frigo",exact:true});await toggle.click();
       await page.getByRole("button",{name:"Allumer Frigo",exact:true}).waitFor();
+      assert.equal(await fridgeCard.locator('.appliance-availability').getAttribute('data-state'),'available');
       assert.equal(await page.evaluate(()=>calls.filter(c=>c.type==="ehome_ems/manual_control").length),1);
       await page.getByRole("button",{name:"Allumer Frigo",exact:true}).click();
       await page.getByRole("button",{name:"Éteindre Frigo",exact:true}).waitFor();
       await page.evaluate(()=>{fixtureHass.states["switch.fridge"].state="unavailable";fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.getByRole("button",{name:"Allumer Frigo",exact:true}).isDisabled(),true);
+      assert.equal(await fridgeCard.locator('.appliance-availability').getAttribute('data-state'),'unavailable');
       await page.evaluate(()=>{fixtureHass.states["switch.fridge"].state="on";fixturePanel.hass={...fixtureHass};});
       assert.equal(await page.locator(".appliance-card .trend-head").first().textContent(),"→");
 
@@ -358,7 +365,7 @@ async function equipmentMenu(page,name) {
       await page.locator(".weather-card").getByText("Éclaircies",{exact:true}).waitFor();
       assert.ok(await page.locator(".weather-card").getByText(/9 \/ 19 °C/).count());
       assert.equal(await page.locator(".daily-ratios .ratio-value").first().textContent(),"25 %");
-      assert.equal(await page.evaluate(()=>window.weatherSubscriptions),1);
+      assert.equal(await page.evaluate(()=>window.weatherSubscriptions),2);
 
       await page.getByRole("heading",{name:"Part Import / Export dans les échanges réseau",exact:true}).waitFor();
       const todayHeights=await page.locator(".today .cards>.kpi").evaluateAll(cards=>cards.map(c=>c.getBoundingClientRect().height));
@@ -401,7 +408,7 @@ async function equipmentMenu(page,name) {
       assert.equal(await page.getByRole("checkbox",{name:"Inclure Zendure",exact:true}).isDisabled(),true);
       assert.deepEqual(errors, []);
       await page.evaluate(()=>fixturePanel.remove());
-      assert.equal(await page.evaluate(()=>window.weatherUnsubscriptions),1);
+      assert.equal(await page.evaluate(()=>window.weatherUnsubscriptions),2);
       await page.evaluate(()=>{const next=document.createElement(fixturePanel.localName);window.fixturePanel=next;document.body.append(next);next.hass=fixtureHass;next.panel={config:{entry_id:"simulated",revision:"restored"}};});
       await page.waitForFunction(()=>fixturePanel.shadowRoot.querySelector('nav button[aria-current="page"]')?.textContent==="Stratégie");
       await page.evaluate(()=>fixturePanel.remove());
