@@ -1,4 +1,4 @@
-Version actuelle : **0.2.19** — [notes et procédure de mise à jour](RELEASE_0_2_19.md).
+Version actuelle : **0.2.20** — [notes et procédure de mise à jour](RELEASE_0_2_20.md).
 
 # Installer et mettre à jour eHome EMS 0.2.11
 
