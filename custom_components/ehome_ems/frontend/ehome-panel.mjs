@@ -78,7 +78,7 @@ export function productIcon(config={}) {
   return "mdi:power-plug";
 }
 // Managed view uses authenticated HA state; editable copies use public WS APIs.
-export const UI_VERSION = "0.2.19";
+export const UI_VERSION = "0.2.20";
 export const PANEL_TAG = `ehome-ems-panel-${UI_VERSION.replaceAll(".", "-")}`;
 export const FLOW_MIN_WATTS = 10;
 export function flowActive(states, entity) {
@@ -145,6 +145,21 @@ export function dailyFromCounter(records, current, unit, start, now=Date.now()) 
   let previous=baseline.value,total=0;
   for(const p of [...points.filter(p=>p.time>start),{time:now,value:current*factor(unit)}]){const delta=p.value-previous;total+=delta>=-0.000001?Math.max(0,delta):p.value;previous=p.value;}
   return Math.round(total*1000000)/1000000;
+export function dailyEnergy(config, state, records, start, now=Date.now()) {
+  if(!state||config.energy_period==="session")return null;
+  const raw=state.state,unit=state.attributes?.unit_of_measurement;
+  const factor={Wh:.001,kWh:1}[unit];
+  const value=raw==null||String(raw).trim()===""?NaN:Number(raw);
+  if(!factor||!Number.isFinite(value)||value<0)return null;
+  if(config.energy_period==="today")return value*factor;
+  const measured=dailyFromCounter(records,value,unit,start,now);
+  if(measured!==null)return measured;
+  // HA's current state itself can establish the midnight baseline when it
+  // has remained valid and unchanged since before midnight. Do not infer
+  // zero from idle power, a missing counter, or a post-midnight first sample.
+  const since=Date.parse(state.last_updated||state.last_changed);
+  return Number.isFinite(since)&&since<=start&&start<=now?0:null;
+}
 }
 export function percent(value,language="fr") {return new Intl.NumberFormat(language,{maximumFractionDigits:0,useGrouping:false}).format(value);}
 
@@ -540,11 +555,10 @@ export class EhomeEmsPanel extends BaseElement {
     if(config.energy_period==="session")return null;
     const source=this._snapshotData?.bindings?.[config.energy]?.source||config.energy,state=this._hass?.states?.[source],value=reading(this._hass?.states,source).number;
     if(value===null)return null;
-    const start=this._dayStart(),records=this._dailyHistory?.[config.energy];
-    if(this._energyStart!==start||records?.[0]?.entity_id!==source)return null;
-    this._dayEnergyCache??=new Map();const unit=state?.attributes?.unit_of_measurement,cached=this._dayEnergyCache.get(config.energy);
-    if(cached?.records===records&&cached.source===source&&cached.value===value&&cached.unit===unit&&cached.start===start)return cached.result;
-    const result=dailyFromCounter(records,value,unit,start);this._dayEnergyCache.set(config.energy,{records,source,value,unit,start,result});return result;
+    const start=this._dayStart(),rows=this._dailyHistory?.[config.energy];
+    const records=this._energyStart===start&&rows?.[0]?.entity_id===source?rows:undefined;
+    return dailyEnergy(config,state,records,start);
+
   }
   _usageEnergy(config) {
     const box=this._node("div",undefined,"usage-energy"),daily=this._node("p",undefined,"energy-value"),caption=this._node("p",undefined,"note"),raw=this._node("p",undefined,"note");const progress=this._node("p",undefined,"note goal-progress");box.append(daily,caption,progress);
@@ -562,8 +576,8 @@ export class EhomeEmsPanel extends BaseElement {
       raw.textContent=(session?this._t("Énergie de session : ","Session energy: "):this._t("Énergie Totale : ","Total energy: "))+reading(this._hass?.states,config.energy,undefined,this._hass?.language).text+(n===null&&!session?this._t(" · référence à minuit absente"," · missing midnight baseline"):"");
     });if(config.energy){this._historyLink(daily,config.energy);this._historyLink(raw,config.energy);this._editable(box,config.energy);}return box;
   }
-  _usageCost(config) {
-    const el=this._node("p",undefined,"cost note");this._flowUpdates.push(()=>{if(config.kind==="ev_charger"){
+  _usageCost(config, daily=false) {
+    const el=this._node("p",undefined,"cost note");this._flowUpdates.push(()=>{if(config.kind==="ev_charger"&&!daily){
       const session=config.ev_session||{},shown=session.active?session:session.last_session||{},value=shown.cost_eur;
       el.classList.toggle("bad",value==null);
       el.textContent=value==null?this._t("Coût de session indisponible","Session cost unavailable"):"≈ "+new Intl.NumberFormat(this._hass?.language||"fr",{style:"currency",currency:"EUR"}).format(value)+this._t(" · session estimée"," · estimated session");
@@ -905,7 +919,7 @@ export class EhomeEmsPanel extends BaseElement {
     for (const usage of flow.usages || []) {
       const tile=this._metricTile(usage.name,usage.power,productIcon(usage),
         ["solar_router","water_heater"].includes(usage.kind)?"#e9a23d":usage.kind==="ev_charger"?"#ab78e2":"#6eafff");
-      const energy=this._node("p",undefined,"overview-daily-energy"),cost=this._usageCost(usage);
+      const energy=this._node("p",undefined,"overview-daily-energy"),cost=this._usageCost(usage,true);
       this._historyLink(energy,usage.energy);
       this._flowUpdates.push(()=>{
         const value=this._dayEnergy(usage);

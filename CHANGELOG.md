@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.20
+
+- Lit directement les compteurs journaliers, sans dépendance à History.
+- Utilise un état cumulatif inchangé depuis avant minuit comme référence valide pour 0 kWh aujourd’hui.
+- Affiche le coût quotidien de la borne dans la vue d’ensemble, distinct des sessions.
+
+Détails : [release 0.2.20](docs/RELEASE_0_2_20.md).
+
 ## 0.2.19
 
 - Supprime le blocage ECS basé sur l’âge des rapports du compteur cumulatif.

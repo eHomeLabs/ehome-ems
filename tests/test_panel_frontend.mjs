@@ -157,3 +157,22 @@ test("entity ordering prioritizes device names with accents without hiding other
  assert.equal(ranked[0][0],"sensor.seche_linge_power");assert.equal(ranked.length,options.length);assert.equal(options[0][0],"sensor.frigo");
  assert.equal(rankEntityOptions(options,"").length,3);
 });
+
+
+test("daily counters and stable lifetime meters work for every load including EV", async()=>{
+ const {dailyEnergy}=await import("../custom_components/ehome_ems/frontend/ehome-panel.mjs");
+ const start=Date.UTC(2026,10,17),now=start+12*3600000;
+ const state=(value,unit="kWh",stamp=start-86400000)=>({state:String(value),attributes:{unit_of_measurement:unit},last_updated:new Date(stamp).toISOString()});
+ for(const kind of ["appliance","ev_charger","water_heater","solar_router","micro_inverter"]){
+  const cfg={kind,energy_period:"total"};
+  assert.equal(dailyEnergy(cfg,state(123),undefined,start,now),0);
+  assert.equal(dailyEnergy(cfg,state(123),[],start,now),0);
+  assert.equal(dailyEnergy(cfg,state(123,"kWh",start+1000),[],start,now),null);
+  assert.equal(dailyEnergy({...cfg,energy_period:"today"},state(0),undefined,start,now),0);
+  assert.equal(dailyEnergy({...cfg,energy_period:"today"},state(810,"Wh"),undefined,start,now),.81);
+  assert.equal(dailyEnergy(cfg,state(123),[{state:"122",last_changed:new Date(start).toISOString()}],start,now),1);
+  for(const invalid of ["unknown","unavailable","NaN",-1,""])assert.equal(dailyEnergy(cfg,state(invalid),undefined,start,now),null);
+  assert.equal(dailyEnergy(cfg,undefined,[],start,now),null);
+  assert.equal(dailyEnergy({...cfg,energy_period:"session"},state(0),[],start,now),null);
+ }
+});
