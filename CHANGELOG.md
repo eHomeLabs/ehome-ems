@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.19
+
+- Supprime le blocage ECS basé sur l’âge des rapports du compteur cumulatif.
+- Conserve la dernière valeur connue pour information en cas d’indisponibilité, sans l’utiliser pour commander.
+- Maintient les suspensions sur source invalide, compteur en baisse et historique absent.
+- Retire le réglage d’ancienneté de l’éditeur ECS ; conserve les réglages existants.
+
+Détails et mise à jour : [release 0.2.19](docs/RELEASE_0_2_19.md).
+
 ## 0.2.18
 
 - Consolide les développements ECS/F1ATB et sessions VE existants, réutilise la PR #22 pour les prévisions horaires.

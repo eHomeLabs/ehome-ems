@@ -62,7 +62,7 @@ class GoalRuntimeTests(IsolatedAsyncioTestCase):
         await self.rt.async_tick()
         result=self.rt.results['h']
         self.assertEqual(result['reason'],'target_reached')
-        self.assertEqual(result['warning'],'stale_energy')
+        self.assertNotIn('warning',result)
         self.assertIsNone(result['latest_start'])
         self.assertFalse(result['running'])
 
@@ -87,13 +87,37 @@ class GoalRuntimeTests(IsolatedAsyncioTestCase):
         rt=self.make_runtime();await rt.async_start();await rt.async_tick()
         self.assertEqual(self.client.writes,[]);self.assertTrue(rt.results['h']['should_heat'])
 
-    async def test_stale_or_reset_energy_stops_and_never_becomes_zero(self):
+    async def test_stable_counter_renews_without_report_or_power_changes(self):
         self.goal["max_age_seconds"]=30
-        self.clock+=timedelta(seconds=60);await self.rt.async_tick()
-        self.assertEqual(self.rt.results['h']['reason'],'stale_energy');self.assertEqual(self.client.writes[-1],(0,0))
-        self.energy.state='1';self.energy.last_reported=self.clock;await self.rt.async_tick()
-        self.assertEqual(self.rt.results['h']['reason'],'counter_reset');self.assertIsNone(self.rt.results['h']['consumed_kwh'])
-        writes=len(self.client.writes);self.energy.state='104';await self.rt.async_tick();self.assertEqual(len(self.client.writes),writes)
+        self.clock+=timedelta(seconds=400)
+        await self.rt.async_tick()
+        self.assertTrue(self.rt.results['h']['running'])
+        self.assertEqual(self.rt.results['h']['consumed_kwh'],1)
+        self.assertEqual(self.client.writes[-1],(0,2))
+        # No report timestamp is required either (non-Z2M sources).
+        del self.energy.last_reported
+        self.clock+=timedelta(seconds=60)
+        await self.rt.async_tick()
+        self.assertTrue(self.rt.results['h']['running'])
+
+    async def test_unavailable_unknown_missing_and_reset_never_use_cached_energy(self):
+        for value in ('unavailable','unknown',None):
+            self.energy.state=value
+            self.clock+=timedelta(seconds=60)
+            await self.rt.async_tick()
+            result=self.rt.results['h']
+            self.assertFalse(result['running'])
+            self.assertIsNone(result['consumed_kwh'])
+            self.assertEqual(result['last_known_energy_kwh'],101)
+            self.assertFalse(result['energy_available'])
+        self.assertEqual(self.client.writes[-1],(0,0))
+        self.energy.state='101';await self.rt.async_tick()
+        self.assertTrue(self.rt.results['h']['running'])
+        self.energy.state='1';await self.rt.async_tick()
+        self.assertEqual(self.rt.results['h']['reason'],'counter_reset')
+        self.assertIsNone(self.rt.results['h']['consumed_kwh'])
+        writes=len(self.client.writes);self.energy.state='104';await self.rt.async_tick()
+        self.assertEqual(len(self.client.writes),writes)
 
     async def test_missing_baseline_blocks_start_and_survives_reload_without_resetting_energy(self):
         await self.rt.async_stop();self.client.writes.clear();self.history.return_value=(None,None,'baseline_missing')
