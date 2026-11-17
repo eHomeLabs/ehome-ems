@@ -96,7 +96,7 @@ class EnergyGoalRuntime:
         async with self.lock:
             goal = self.goals[identifier]
             result = await self.reading(identifier, goal, self.now())
-            if result["quality"] != "valid" or (result.get("warning") and result.get("reason") != "stale_energy_idle_confirmed") or result.get("missing_kwh") is None:
+            if result["quality"] != "valid" or result.get("warning") or result.get("missing_kwh") is None:
                 raise ValueError("energy_counter_not_ready")
             if result["missing_kwh"] <= 0:
                 raise ValueError("target_reached")
@@ -277,32 +277,16 @@ class EnergyGoalRuntime:
         result.update(id=identifier, name=self.mapping.get("usages", {}).get(identifier, {}).get("name", identifier), quality=quality)
         daily,daily_quality=await self.daily_reading(goal,now,current)
         result.update(day_energy_kwh=daily,day_quality=daily_quality,energy_entity=goal["energy_entity"],router_usage=goal["router_usage"])
-        reported = getattr(state, "last_reported", None) if state else None
+        # Availability comes from HA's source state, not the age of a cumulative
+        # meter report. Zigbee meters may publish only when their total changes.
+        # Retain the last valid counter for display only during an outage: never
+        # feed cached values into progress, scheduling or automatic commands.
+        if current is not None:
+            record["last_known_kwh"] = current
+        result["last_known_energy_kwh"] = record.get("last_known_kwh")
+        result["energy_available"] = current is not None
         if quality != "valid":
             result.update(reason=quality, should_heat=False)
-        elif reported is None or (now - reported).total_seconds() > goal["max_age_seconds"] or reported > now + timedelta(seconds=5):
-            # A cumulative energy sensor may legitimately remain unchanged while
-            # the heater is idle. A fresh, independent power reading can confirm
-            # the idle state, but cannot replace the energy counter during heating.
-            usage = self.mapping.get("usages", {}).get(identifier, {})
-            power_entity = goal.get("power_entity") or usage.get("power")
-            power_state = self.hass.states.get(power_entity) if power_entity else None
-            power_reported = getattr(power_state, "last_reported", None) if power_state else None
-            try:
-                power_w = float(power_state.state) * (1000 if power_state.attributes.get("unit_of_measurement") == "kW" else 1)
-                power_valid = power_state.attributes.get("unit_of_measurement") in ("W", "kW") and -5 <= power_w < 100
-            except (TypeError, ValueError, AttributeError, OverflowError):
-                power_valid = False
-            power_fresh = (power_reported is not None and
-                           timedelta(0) <= now - power_reported <= timedelta(seconds=goal["max_age_seconds"]))
-            if power_valid and power_fresh and identifier not in self.owned:
-                # Permit only an initial short lease with a fresh independent
-                # idle-power reading; require new energy telemetry once running.
-                result.update(reason="stale_energy_idle_confirmed",
-                              warning="stale_energy_idle_confirmed")
-            else:
-                result.update(reason="target_reached" if result["reason"]=="target_reached" else "stale_energy",
-                              warning="stale_energy", should_heat=False)
         return result
 
     async def control(self, identifier, goal, result, now):
