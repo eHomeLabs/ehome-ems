@@ -145,6 +145,7 @@ export function dailyFromCounter(records, current, unit, start, now=Date.now()) 
   let previous=baseline.value,total=0;
   for(const p of [...points.filter(p=>p.time>start),{time:now,value:current*factor(unit)}]){const delta=p.value-previous;total+=delta>=-0.000001?Math.max(0,delta):p.value;previous=p.value;}
   return Math.round(total*1000000)/1000000;
+}
 export function dailyEnergy(config, state, records, start, now=Date.now()) {
   if(!state||config.energy_period==="session")return null;
   const raw=state.state,unit=state.attributes?.unit_of_measurement;
@@ -159,7 +160,6 @@ export function dailyEnergy(config, state, records, start, now=Date.now()) {
   // zero from idle power, a missing counter, or a post-midnight first sample.
   const since=Date.parse(state.last_updated||state.last_changed);
   return Number.isFinite(since)&&since<=start&&start<=now?0:null;
-}
 }
 export function percent(value,language="fr") {return new Intl.NumberFormat(language,{maximumFractionDigits:0,useGrouping:false}).format(value);}
 
@@ -558,8 +558,8 @@ export class EhomeEmsPanel extends BaseElement {
     const start=this._dayStart(),rows=this._dailyHistory?.[config.energy];
     const records=this._energyStart===start&&rows?.[0]?.entity_id===source?rows:undefined;
     return dailyEnergy(config,state,records,start);
-
   }
+
   _usageEnergy(config) {
     const box=this._node("div",undefined,"usage-energy"),daily=this._node("p",undefined,"energy-value"),caption=this._node("p",undefined,"note"),raw=this._node("p",undefined,"note");const progress=this._node("p",undefined,"note goal-progress");box.append(daily,caption,progress);
     this._flowUpdates.push(()=>{if(config.kind==="ev_charger"){
